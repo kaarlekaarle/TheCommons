@@ -1,0 +1,20 @@
+# Bandit configuration file
+# See https://bandit.readthedocs.io/en/latest/config.html
+
+# Skip these tests
+skips: ['B101', 'B105', 'B311']
+
+# Set the minimum severity level
+severity: MEDIUM
+
+# Set the minimum confidence level
+confidence: MEDIUM
+
+# Exclude these directories
+exclude_dirs: ['tests', 'venv', '.venv', 'env', '.env']
+
+# Include these files
+include: ['*.py']
+
+# Exclude these files
+exclude: ['*/tests/*.py', '*/migrations/*.py'] 
