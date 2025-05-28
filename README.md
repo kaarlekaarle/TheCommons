@@ -137,13 +137,26 @@ docker-compose down -v
    ```
 
 ## Testing
-... *(Keep as is)*
+- Run the test suite using pytest:
+  ```bash
+  pytest
+  ```
+- The test suite includes unit tests, integration tests, and end-to-end tests.
+- Ensure all tests pass before submitting a pull request.
 
 ## API Documentation
-... *(Keep as is)*
+- Access the API documentation at:
+  - Swagger UI: http://localhost:8000/docs
+  - ReDoc: http://localhost:8000/redoc
+- The API supports RESTful endpoints for user management, voting, and delegation.
+- Authentication is required for most endpoints using JWT tokens.
 
 ## Development Guidelines
-... *(Keep as is)*
+- Follow the PEP 8 style guide for Python code.
+- Use meaningful variable and function names.
+- Write comments and docstrings for complex logic.
+- Create a new branch for each feature or bug fix.
+- Submit pull requests with a clear description of changes.
 
 ## Contributing
 
