@@ -24,7 +24,7 @@ graph TD
     Service --> Transparency[Transparency Layer]
     Model --> DB[(PostgreSQL)]
     Service --> Cache[(Redis)]
-
+```
 
 Core Components
 
