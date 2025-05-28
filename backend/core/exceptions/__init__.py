@@ -1,0 +1,53 @@
+# This file marks the exceptions directory as a Python package.
+
+from backend.core.exceptions.base import (
+    AuthenticationError,
+    AuthorizationError,
+    BaseError,
+    ConflictError,
+    DatabaseError,
+    ResourceNotFoundError,
+    ServerError,
+    UserAlreadyExistsError,
+    ValidationError,
+)
+from backend.core.exceptions.delegation import (
+    CircularDelegationError,
+    DelegationAlreadyExistsError,
+    DelegationChainError,
+    DelegationError,
+    DelegationExpiredError,
+    DelegationLimitExceededError,
+    DelegationNotActiveError,
+    DelegationNotFoundError,
+    DelegationStatsError,
+    DelegationValidationError,
+    InvalidDelegationPeriodError,
+    SelfDelegationError,
+    DelegationAuthorizationError,
+)
+
+__all__ = [
+    "BaseError",
+    "ValidationError",
+    "ResourceNotFoundError",
+    "ServerError",
+    "ConflictError",
+    "AuthorizationError",
+    "AuthenticationError",
+    "UserAlreadyExistsError",
+    "DatabaseError",
+    "DelegationError",
+    "DelegationValidationError",
+    "SelfDelegationError",
+    "CircularDelegationError",
+    "DelegationNotFoundError",
+    "DelegationChainError",
+    "InvalidDelegationPeriodError",
+    "DelegationAlreadyExistsError",
+    "DelegationExpiredError",
+    "DelegationNotActiveError",
+    "DelegationLimitExceededError",
+    "DelegationStatsError",
+    "DelegationAuthorizationError",
+]
