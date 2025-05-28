@@ -6,15 +6,21 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/commons_db
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/commons_db
+      - REDIS_URL=redis://redis:6379/0
+      - TEST_REDIS_URL=redis://redis:6379/1
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=False
+      - ALLOWED_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - .:/app
     healthcheck:
@@ -39,6 +45,19 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   loadtest:
     build: .
     command: locust -f tests/load_test.py --host http://web:8000
@@ -47,13 +66,17 @@ services:
     depends_on:
       - web
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/commons_db
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/commons_db
+      - REDIS_URL=redis://redis:6379/0
+      - TEST_REDIS_URL=redis://redis:6379/1
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=False
+      - ALLOWED_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
 
 volumes:
   postgres_data:
+  redis_data:
