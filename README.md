@@ -2,6 +2,8 @@
 
 The Commons is an open platform for continuous decision-making, where users can dynamically delegate their voting power, vote on issues, and see all actions transparently in a public log. It's not just a voting system—it's a foundation for participatory, trust-based decision models.
 
+For a deeper exploration of the philosophy behind The Commons, see [VISION.md](VISION.md).
+
 ## Features
 
 - 🔐 Secure user authentication and authorization
