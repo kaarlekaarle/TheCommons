@@ -26,8 +26,6 @@ graph TD
     Service --> Cache[(Redis)]
 
 
-⸻
-
 Core Components
 
 API Layer (backend/api/)
@@ -46,7 +44,7 @@ Transparency Layer (backend/services/activity_log.py)
 
 Logs all user actions (votes, delegations, poll creations) into a public activity feed for transparency and accountability.
 
-⸻
+---
 
 Data Flow Examples
 
@@ -73,7 +71,7 @@ sequenceDiagram
     API-->>Client: Return Response
 
 
-⸻
+---
 
 Database Design
 
@@ -85,7 +83,7 @@ Key Tables
 	•	delegations – Delegation records (dynamic, revocable)
 	•	activity_log – Public log of system actions (transparency layer)
 
-⸻
+---
 
 Security Overview
 	•	JWT authentication + token refresh
@@ -94,7 +92,7 @@ Security Overview
 	•	CSRF/XSS prevention
 	•	Rate limiting via Redis
 
-⸻
+---
 
 Performance Considerations
 	•	Connection pooling and query optimization
@@ -102,7 +100,7 @@ Performance Considerations
 	•	Async request handling
 	•	Pagination for large data sets
 
-⸻
+---
 
 Future Considerations
 	•	Trust metrics and reputation systems
@@ -111,6 +109,6 @@ Future Considerations
 	•	Microservices architecture (scalability)
 	•	Advanced analytics and reporting
 
-⸻
+---
 
 This architecture will evolve as the project grows—see docs/features.md for detailed features.
