@@ -19,7 +19,7 @@ For a deeper exploration of the philosophy behind The Commons, see [VISION.md](V
 - 📈 Structured logging and audit trails
 
 ## Project Structure
-Detailed architecture in docs/ARCHITECTURE.md.
+Detailed architecture in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Prerequisites
 - Python 3.8 or higher
