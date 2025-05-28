@@ -488,7 +488,9 @@ app = FastAPI(
 
 # Configure CORS based on environment
 allowed_origins: List[str] = (
-    settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS else []
+    settings.ALLOWED_ORIGINS if isinstance(settings.ALLOWED_ORIGINS, list)
+    else settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS
+    else []
 )
 if settings.DEBUG:
     allowed_origins.append("http://localhost:3000")
