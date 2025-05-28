@@ -11,6 +11,8 @@ class OptionBase(BaseModel):
     """Base schema for option data."""
 
     text: str = Field(..., min_length=1, max_length=200)
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 

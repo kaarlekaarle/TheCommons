@@ -70,4 +70,4 @@ class PollWithOptions(Poll):
 
     options: List["Option"] = []
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
