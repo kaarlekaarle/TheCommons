@@ -17,13 +17,51 @@ The Commons is an open platform for continuous decision-making, where users can 
 - 📈 Structured logging and audit trails
 
 ## Project Structure
-... *(Keep the structure as is)*
+Detailed architecture in docs/ARCHITECTURE.md.
 
 ## Prerequisites
-... *(Keep as is)*
+- Python 3.8 or higher
+- Docker and Docker Compose
+- Git
+- PostgreSQL (if running locally)
+- Redis (if running locally)
 
 ## Setup
-... *(Keep as is)*
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/the-commons.git
+   cd the-commons
+   ```
+
+2. Create a virtual environment and activate it:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\\Scripts\\activate`
+   ```
+
+3. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Create a `.env` file in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` and set your environment variables:
+   - `SECRET_KEY`: Your secret key for JWT tokens
+   - `ALGORITHM`: JWT algorithm (default: HS256)
+   - `ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiration time
+   - `ALLOWED_ORIGINS`: Comma-separated list of allowed origins
+
+5. Run the application:
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+6. Access the API documentation:
+   - Swagger UI: http://localhost:8000/docs
+   - ReDoc: http://localhost:8000/redoc
 
 ## Docker Setup
 
