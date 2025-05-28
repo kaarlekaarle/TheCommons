@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     # CORS settings
-    ALLOWED_ORIGINS: str = ""
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # Environment
     ENV: str = os.getenv("ENV", "development")
@@ -62,14 +62,12 @@ class Settings(BaseSettings):
     )
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
-    def assemble_cors_origins(cls, v):
+    def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str):
             if v.startswith("["):
                 return json.loads(v)
-            return [i.strip() for i in v.split(",") if i.strip()]
-        elif isinstance(v, list):
-            return v
-        raise ValueError(f"Invalid value for ALLOWED_ORIGINS: {v}")
+            return [origin.strip() for origin in v.split(",")]
+        return v
 
 
 @lru_cache()
