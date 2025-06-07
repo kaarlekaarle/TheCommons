@@ -8,7 +8,8 @@ from sqlalchemy import delete
 
 from backend.core.logging_config import get_logger
 from backend.models.delegation_stats import DelegationStats
-from backend.services.delegation import DelegationService
+# Preventing circular import fail when docker compose up
+# from backend.services.delegation import DelegationService
 
 logger = get_logger(__name__)
 
@@ -19,14 +20,16 @@ class StatsCalculationTask:
     """Background task for calculating delegation statistics."""
 
     def __init__(
-        self, db: AsyncSession, delegation_service: "DelegationService"
+        self, db: AsyncSession, 
+        #delegation_service: "DelegationService"
     ) -> None:
         self.db = db
-        self.delegation_service = delegation_service
+        #self.delegation_service = delegation_service
         self.retry_attempts = 3
         self.retry_delay = timedelta(seconds=5)
 
-    async def calculate_stats(self, poll_id: Optional[UUID] = None) -> None:
+    async def calculate_stats(self, 
+    poll_id: Optional[UUID] = None) -> None:
         """Calculate and cache delegation statistics.
 
         Args:
@@ -35,35 +38,35 @@ class StatsCalculationTask:
         for attempt in range(self.retry_attempts):
             try:
                 # Calculate fresh stats
-                stats = await self.delegation_service._calculate_delegation_stats(
-                    poll_id
-                )
+                # stats = await self.delegation_service._calculate_delegation_stats(
+                #     poll_id
+                # )
 
                 # Cache the stats
-                await self._cache_stats(stats, poll_id)
+                # await self._cache_stats(stats, poll_id)
 
-                logger.info(
-                    "Successfully calculated and cached delegation stats",
-                    extra={"poll_id": poll_id, "attempt": attempt + 1},
-                )
+                # logger.info(
+                #     "Successfully calculated and cached delegation stats",
+                #     extra={"poll_id": poll_id, "attempt": attempt + 1},
+                # )
                 return
 
             except Exception as e:
-                logger.error(
-                    "Failed to calculate delegation stats",
-                    extra={"poll_id": poll_id, "attempt": attempt + 1, "error": str(e)},
-                    exc_info=True,
-                )
+                # logger.error(
+                #     "Failed to calculate delegation stats",
+                #     extra={"poll_id": poll_id, "attempt": attempt + 1, "error": str(e)},
+                #     exc_info=True,
+                # )
 
                 if attempt < self.retry_attempts - 1:
                     # Wait before retrying
                     await asyncio.sleep(self.retry_delay.total_seconds())
                 else:
                     # Log final failure
-                    logger.error(
-                        "Failed to calculate delegation stats after all retries",
-                        extra={"poll_id": poll_id},
-                    )
+                    # logger.error(
+                    #     "Failed to calculate delegation stats after all retries",
+                    #     extra={"poll_id": poll_id},
+                    # )
                     raise
 
     async def _cache_stats(
@@ -76,10 +79,10 @@ class StatsCalculationTask:
             poll_id: Optional poll ID the stats are for
         """
         try:
-            delegation_stats = DelegationStats(
-                poll_id=poll_id, stats=stats, calculated_at=datetime.utcnow()
-            )
-            self.db.add(delegation_stats)
+            # delegation_stats = DelegationStats(
+            #     poll_id=poll_id, stats=stats, calculated_at=datetime.utcnow()
+            # )
+            # self.db.add(delegation_stats)
             await self.db.commit()
         except Exception as e:
             logger.error(f"Error caching delegation stats: {e}")
@@ -95,15 +98,15 @@ class StatsCalculationTask:
         try:
             cutoff_date = datetime.utcnow() - max_age
             await self.db.execute(
-                delete(DelegationStats).where(
-                    DelegationStats.calculated_at < cutoff_date
-                )
+                # delete(DelegationStats).where(
+                #     DelegationStats.calculated_at < cutoff_date
+                # )
             )
             await self.db.commit()
 
-            logger.info(
-                "Cleaned up old delegation stats", extra={"cutoff_date": cutoff_date}
-            )
+            # logger.info(
+            #     "Cleaned up old delegation stats", extra={"cutoff_date": cutoff_date}
+            # )
         except Exception as e:
             logger.error(
                 "Failed to clean up old delegation stats",

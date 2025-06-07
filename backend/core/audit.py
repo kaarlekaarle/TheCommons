@@ -13,6 +13,7 @@ class AuditAction(str, Enum):
     USER_CREATE = "user_create"
     USER_UPDATE = "user_update"
     USER_DELETE = "user_delete"
+    USER_READ = "user_read"
     USER_LOGIN = "user_login"
     USER_LOGOUT = "user_logout"
     USER_PASSWORD_CHANGE = "user_password_change"
