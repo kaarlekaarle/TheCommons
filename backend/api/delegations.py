@@ -19,7 +19,8 @@ from backend.core.exceptions.delegation import (
 )
 from backend.core.exceptions import DelegationAuthorizationError
 from backend.core.logging_config import get_logger
-from backend.core.tasks import StatsCalculationTask
+# StatsCalculationTask import causes web container to stop due to circular import
+#from backend.core.tasks import StatsCalculationTask
 from backend.database import get_db
 from backend.models.delegation import Delegation
 from backend.models.user import User
@@ -293,8 +294,10 @@ async def cleanup_stats_cache(
     Returns:
         dict: Success message
     """
-    stats_task = StatsCalculationTask(db)
-    background_tasks.add_task(stats_task.cleanup_old_stats)
+    
+# Commented out to fix circular import
+#    stats_task = StatsCalculationTask(db)
+#    background_tasks.add_task(stats_task.cleanup_old_stats)
 
     logger.info("Triggered background cleanup of old delegation stats")
     return {"status": "success", "message": "Cleanup task scheduled"}

@@ -1,0 +1,89 @@
+2025-06-07 10:36:20 Traceback (most recent call last):
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/networks.py", line 364, in import_email_validator
+2025-06-07 10:36:20     import email_validator
+2025-06-07 10:36:20 ModuleNotFoundError: No module named 'email_validator'
+2025-06-07 10:36:20 
+2025-06-07 10:36:20 The above exception was the direct cause of the following exception:
+2025-06-07 10:36:20 
+2025-06-07 10:36:20 Traceback (most recent call last):
+2025-06-07 10:36:20   File "/usr/local/bin/uvicorn", line 8, in <module>
+2025-06-07 10:36:20     sys.exit(main())
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1442, in __call__
+2025-06-07 10:36:20     return self.main(*args, **kwargs)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1363, in main
+2025-06-07 10:36:20     rv = self.invoke(ctx)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1226, in invoke
+2025-06-07 10:36:20     return ctx.invoke(self.callback, **ctx.params)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 794, in invoke
+2025-06-07 10:36:20     return callback(*args, **kwargs)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/uvicorn/main.py", line 418, in main
+2025-06-07 10:36:20     run(
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/uvicorn/main.py", line 587, in run
+2025-06-07 10:36:20     server.run()
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 62, in run
+2025-06-07 10:36:20     return asyncio.run(self.serve(sockets=sockets))
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/asyncio/runners.py", line 44, in run
+2025-06-07 10:36:20     return loop.run_until_complete(main)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+2025-06-07 10:36:20     return future.result()
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 69, in serve
+2025-06-07 10:36:20     config.load()
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/uvicorn/config.py", line 458, in load
+2025-06-07 10:36:20     self.loaded_app = import_from_string(self.app)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2025-06-07 10:36:20     module = importlib.import_module(module_str)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+2025-06-07 10:36:20     return _bootstrap._gcd_import(name[level:], package, level)
+2025-06-07 10:36:20   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+2025-06-07 10:36:20   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+2025-06-07 10:36:20   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+2025-06-07 10:36:20   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+2025-06-07 10:36:20   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+2025-06-07 10:36:20   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2025-06-07 10:36:20   File "/app/backend/main.py", line 20, in <module>
+2025-06-07 10:36:20     from backend.api import auth, delegations, options, polls, users, votes, health
+2025-06-07 10:36:20   File "/app/backend/api/__init__.py", line 1, in <module>
+2025-06-07 10:36:20     from .auth import router as auth_router
+2025-06-07 10:36:20   File "/app/backend/api/auth.py", line 5, in <module>
+2025-06-07 10:36:20     from backend.core.auth import get_current_active_user
+2025-06-07 10:36:20   File "/app/backend/core/auth.py", line 17, in <module>
+2025-06-07 10:36:20     from backend.schemas.token import TokenData
+2025-06-07 10:36:20   File "/app/backend/schemas/__init__.py", line 4, in <module>
+2025-06-07 10:36:20     from backend.schemas.user import User, UserCreate, UserUpdate
+2025-06-07 10:36:20   File "/app/backend/schemas/user.py", line 10, in <module>
+2025-06-07 10:36:20     class UserBase(BaseModel):
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_model_construction.py", line 183, in __new__
+2025-06-07 10:36:20     complete_model_class(
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_model_construction.py", line 517, in complete_model_class
+2025-06-07 10:36:20     schema = cls.__get_pydantic_core_schema__(cls, handler)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/main.py", line 584, in __get_pydantic_core_schema__
+2025-06-07 10:36:20     return __handler(__source)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_schema_generation_shared.py", line 82, in __call__
+2025-06-07 10:36:20     schema = self._handler(__source_type)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 499, in generate_schema
+2025-06-07 10:36:20     schema = self._generate_schema(obj)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 737, in _generate_schema
+2025-06-07 10:36:20     schema = self._post_process_generated_schema(self._generate_schema_inner(obj))
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 759, in _generate_schema_inner
+2025-06-07 10:36:20     return self._model_schema(obj)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 572, in _model_schema
+2025-06-07 10:36:20     {k: self._generate_md_field_schema(k, v, decorators) for k, v in fields.items()},
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 572, in <dictcomp>
+2025-06-07 10:36:20     {k: self._generate_md_field_schema(k, v, decorators) for k, v in fields.items()},
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 923, in _generate_md_field_schema
+2025-06-07 10:36:20     common_field = self._common_field_schema(name, field_info, decorators)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 1045, in _common_field_schema
+2025-06-07 10:36:20     schema = self._apply_annotations(
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 1747, in _apply_annotations
+2025-06-07 10:36:20     schema = get_inner_schema(source_type)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_schema_generation_shared.py", line 82, in __call__
+2025-06-07 10:36:20     schema = self._handler(__source_type)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 1726, in inner_handler
+2025-06-07 10:36:20     from_property = self._generate_schema_from_property(obj, obj)
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/_internal/_generate_schema.py", line 647, in _generate_schema_from_property
+2025-06-07 10:36:20     schema = get_schema(
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/networks.py", line 404, in __get_pydantic_core_schema__
+2025-06-07 10:36:20     import_email_validator()
+2025-06-07 10:36:20   File "/usr/local/lib/python3.10/site-packages/pydantic/networks.py", line 366, in import_email_validator
+2025-06-07 10:36:20     raise ImportError('email-validator is not installed, run `pip install pydantic[email]`') from e
+2025-06-07 10:36:20 ImportError: email-validator is not installed, run `pip install pydantic[email]`

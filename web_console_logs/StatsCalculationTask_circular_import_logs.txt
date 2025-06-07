@@ -1,0 +1,49 @@
+2025-06-07 10:48:50 2025-06-07 07:48:50,899 - root - INFO - Logging configured
+2025-06-07 10:48:50 2025-06-07 07:48:50,985 - backend.services.user - INFO - Registering routers...
+2025-06-07 10:48:50 2025-06-07 07:48:50,986 - backend.services.user - INFO - Routers registered successfully
+2025-06-07 10:48:51 Traceback (most recent call last):
+2025-06-07 10:48:51   File "/usr/local/bin/uvicorn", line 8, in <module>
+2025-06-07 10:48:51     sys.exit(main())
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1442, in __call__
+2025-06-07 10:48:51     return self.main(*args, **kwargs)
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1363, in main
+2025-06-07 10:48:51     rv = self.invoke(ctx)
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1226, in invoke
+2025-06-07 10:48:51     return ctx.invoke(self.callback, **ctx.params)
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/click/core.py", line 794, in invoke
+2025-06-07 10:48:51     return callback(*args, **kwargs)
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/uvicorn/main.py", line 418, in main
+2025-06-07 10:48:51     run(
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/uvicorn/main.py", line 587, in run
+2025-06-07 10:48:51     server.run()
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 62, in run
+2025-06-07 10:48:51     return asyncio.run(self.serve(sockets=sockets))
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/asyncio/runners.py", line 44, in run
+2025-06-07 10:48:51     return loop.run_until_complete(main)
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+2025-06-07 10:48:51     return future.result()
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/uvicorn/server.py", line 69, in serve
+2025-06-07 10:48:51     config.load()
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/uvicorn/config.py", line 458, in load
+2025-06-07 10:48:51     self.loaded_app = import_from_string(self.app)
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/site-packages/uvicorn/importer.py", line 21, in import_from_string
+2025-06-07 10:48:51     module = importlib.import_module(module_str)
+2025-06-07 10:48:51   File "/usr/local/lib/python3.10/importlib/__init__.py", line 126, in import_module
+2025-06-07 10:48:51     return _bootstrap._gcd_import(name[level:], package, level)
+2025-06-07 10:48:51   File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+2025-06-07 10:48:51   File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+2025-06-07 10:48:51   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+2025-06-07 10:48:51   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+2025-06-07 10:48:51   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+2025-06-07 10:48:51   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2025-06-07 10:48:51   File "/app/backend/main.py", line 20, in <module>
+2025-06-07 10:48:51     from backend.api import auth, delegations, options, polls, users, votes, health
+2025-06-07 10:48:51   File "/app/backend/api/__init__.py", line 2, in <module>
+2025-06-07 10:48:51     from .delegations import router as delegations_router
+2025-06-07 10:48:51   File "/app/backend/api/delegations.py", line 22, in <module>
+2025-06-07 10:48:51     from backend.core.tasks import StatsCalculationTask
+2025-06-07 10:48:51   File "/app/backend/core/tasks.py", line 11, in <module>
+2025-06-07 10:48:51     from backend.services.delegation import DelegationService
+2025-06-07 10:48:51   File "/app/backend/services/delegation.py", line 20, in <module>
+2025-06-07 10:48:51     from backend.core.tasks import StatsCalculationTask
+2025-06-07 10:48:51 ImportError: cannot import name 'StatsCalculationTask' from partially initialized module 'backend.core.tasks' (most likely due to a circular import) (/app/backend/core/tasks.py)
