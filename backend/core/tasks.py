@@ -31,7 +31,7 @@ class StatsCalculationTask:
         Args:
             poll_id: Optional poll ID to calculate stats for
         """
-        # Import here to avoid circular dependency
+        # Import here to avoid circular dependency with DelegationService
         from backend.services.delegation import DelegationService
         
         for attempt in range(self.retry_attempts):
