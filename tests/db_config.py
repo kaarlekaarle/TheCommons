@@ -47,15 +47,10 @@ test_session_factory = async_sessionmaker(
 )
 
 # Add event listener for soft delete filtering
-@event.listens_for(AsyncSession, "do_orm_execute")
-def _add_soft_delete_filter(execute_state):
-    """Add soft delete filter to all queries."""
-    if execute_state.is_select and not execute_state.is_column_load:
-        query = execute_state.statement
-        for entity in query._raw_columns:
-            if hasattr(entity, "entity") and issubclass(entity.entity, SQLAlchemyBase):
-                query = query.where(entity.entity.is_deleted.is_(False))
-                execute_state.statement = query
+# @event.listens_for(AsyncSession, "do_orm_execute")
+# def _do_orm_execute(orm_execute_state):
+#     # Your event handling code here
+#     pass
 
 async def init_test_db() -> None:
     """Initialize the test database."""

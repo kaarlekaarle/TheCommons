@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from httpx import AsyncClient
 from fastapi_limiter import FastAPILimiter
 
-from backend.main import app, get_redis_client
+from backend.main import app
 from backend.database import get_db
 from backend.core.auth import create_access_token
+from backend.core.redis import get_redis_client, close_redis_client
+from backend.core.rate_limiting import RateLimitTier, RATE_LIMITS
 from backend.models.user import User
 from backend.models.poll import Poll
 from backend.models.option import Option
@@ -110,6 +112,10 @@ async def client(db_session, redis_client):
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 
+    # Cleanup
+    app.dependency_overrides.clear()
+    await close_redis_client()
+
 @pytest_asyncio.fixture
 async def auth_headers(test_user) -> Dict[str, str]:
     """Create authentication headers for the test user."""
@@ -146,3 +152,14 @@ async def read_only_session(db_session) -> AsyncGenerator[AsyncSession, None]:
     """Create a read-only database session for queries."""
     async with managed_transaction(db_session, readonly=True) as session:
         yield session
+
+# Test rate limit configurations
+@pytest.fixture
+def test_rate_limits():
+    """Get test rate limit configurations."""
+    return {
+        RateLimitTier.PUBLIC: {"times": 100, "minutes": 1},
+        RateLimitTier.AUTHENTICATED: {"times": 200, "minutes": 1},
+        RateLimitTier.SENSITIVE: {"times": 10, "seconds": 60},
+        RateLimitTier.ADMIN: {"times": 500, "minutes": 1},
+    }
