@@ -199,17 +199,6 @@ async def startup():
     redis = await redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
     await FastAPILimiter.init(redis)
 
-# Health check endpoint
-@app.get(
-    "/health",
-    tags=["Health"],
-    summary="Health Check",
-    description="Check the health of the API and its dependencies",
-    response_description="Health status of the API and its dependencies",
-)
-async def health_check():
-    return await health.check_health()
-
 # Include routers with rate limiting
 logger.info("Registering routers...")
 app.include_router(
