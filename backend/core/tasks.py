@@ -8,7 +8,6 @@ from sqlalchemy import delete
 
 from backend.core.logging_config import get_logger
 from backend.models.delegation_stats import DelegationStats
-from backend.services.delegation import DelegationService
 
 logger = get_logger(__name__)
 
@@ -19,7 +18,7 @@ class StatsCalculationTask:
     """Background task for calculating delegation statistics."""
 
     def __init__(
-        self, db: AsyncSession, delegation_service: "DelegationService"
+        self, db: AsyncSession, delegation_service: Any
     ) -> None:
         self.db = db
         self.delegation_service = delegation_service
@@ -32,6 +31,9 @@ class StatsCalculationTask:
         Args:
             poll_id: Optional poll ID to calculate stats for
         """
+        # Import here to avoid circular dependency
+        from backend.services.delegation import DelegationService
+        
         for attempt in range(self.retry_attempts):
             try:
                 # Calculate fresh stats

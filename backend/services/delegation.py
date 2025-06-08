@@ -17,9 +17,7 @@ from backend.core.exceptions.delegation import (
     PostVoteDelegationError,
     SelfDelegationError,
 )
-from backend.core.tasks import StatsCalculationTask
 from backend.models.delegation import Delegation
-from backend.models.delegation_stats import DelegationStats
 from backend.models.vote import Vote
 from backend.core.logging_config import get_logger
 
@@ -31,6 +29,8 @@ class DelegationService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.stats_cache_ttl = timedelta(minutes=5)
+        # Import here to avoid circular dependency with StatsCalculationTask
+        from backend.core.background_tasks import StatsCalculationTask
         self.stats_task = StatsCalculationTask(db, self)
 
     async def create_delegation(
@@ -320,6 +320,9 @@ class DelegationService:
         Returns:
             Dict[str, Any]: Dict containing delegation statistics
         """
+        # Import here to avoid circular dependency with DelegationStats model
+        from backend.models.delegation_stats import DelegationStats
+        
         # Try to get cached stats
         cached_stats = await self._get_cached_stats(poll_id)
         if cached_stats:
@@ -338,8 +341,11 @@ class DelegationService:
 
     async def _get_cached_stats(
         self, poll_id: Optional[UUID] = None
-    ) -> Optional[DelegationStats]:
+    ) -> Optional[Any]:
         """Get cached stats if they exist and are not expired."""
+        # Import here to avoid circular dependency with DelegationStats model
+        from backend.models.delegation_stats import DelegationStats
+        
         if poll_id is not None:
             query = (
                 select(DelegationStats)
@@ -361,7 +367,7 @@ class DelegationService:
             return None
         return stats
 
-    def _format_stats(self, stats: DelegationStats) -> Dict[str, Any]:
+    def _format_stats(self, stats: Any) -> Dict[str, Any]:
         """Format cached stats into response format."""
         return {
             "top_delegatees": stats.top_delegatees,
@@ -385,6 +391,9 @@ class DelegationService:
         self, stats: Dict[str, Any], poll_id: Optional[UUID] = None
     ) -> None:
         """Cache delegation statistics."""
+        # Import here to avoid circular dependency with DelegationStats model
+        from backend.models.delegation_stats import DelegationStats
+        
         cached_stats = DelegationStats(
             top_delegatees=stats["top_delegatees"],
             avg_chain_length=stats["avg_chain_length"],
@@ -480,6 +489,9 @@ class DelegationService:
 
     async def invalidate_stats_cache(self, poll_id: Optional[UUID] = None) -> None:
         """Invalidate cached statistics for a poll or all polls."""
+        # Import here to avoid circular dependency with DelegationStats model
+        from backend.models.delegation_stats import DelegationStats
+        
         try:
             if poll_id is not None:
                 query = select(DelegationStats).where(

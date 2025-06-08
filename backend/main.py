@@ -8,7 +8,6 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_limiter import FastAPILimiter
-from fastapi_limiter.depends import RateLimiter
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -24,6 +23,13 @@ from backend.core.logging import configure_logging, get_logger
 from backend.core.middleware import RequestContextMiddleware
 from backend.core.audit import audit_log, AuditAction
 from backend.database import async_session_maker, get_db, init_db
+from backend.core.redis import get_redis_client, close_redis_client
+from backend.core.rate_limiting import (
+    public_rate_limiter,
+    authenticated_rate_limiter,
+    sensitive_rate_limiter,
+    admin_rate_limiter,
+)
 
 # Configure logging
 configure_logging(
@@ -49,7 +55,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize Redis
     try:
-        redis_client = redis.from_url(settings.REDIS_URL)
+        redis_client = await get_redis_client()
         await FastAPILimiter.init(redis_client)
         await FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
         logger.info("redis_initialized")
@@ -62,6 +68,7 @@ async def lifespan(app: FastAPI):
     logger.info("available_routes", routes=routes)
     yield
     # Shutdown logic
+    await close_redis_client()
     logger.info("shutting_down_application")
 
 
@@ -206,52 +213,45 @@ async def health_check():
 # Include routers with rate limiting
 logger.info("Registering routers...")
 app.include_router(
+    health.router,
+    prefix="/api",
+    tags=["health"],
+)  # No rate limiting for health checks
+app.include_router(
     auth.router,
     prefix="/api",
     tags=["auth"],
-    dependencies=[
-        Depends(RateLimiter(times=settings.RATE_LIMIT_PER_MINUTE, minutes=1))
-    ],
+    dependencies=[sensitive_rate_limiter],  # Sensitive operations
 )
 app.include_router(
     users.router,
     prefix="/api/users",
     tags=["users"],
-    dependencies=[
-        Depends(RateLimiter(times=settings.RATE_LIMIT_PER_MINUTE, minutes=1))
-    ],
+    dependencies=[authenticated_rate_limiter],  # Regular authenticated endpoints
 )
 app.include_router(
     votes.router,
     prefix="/api/votes",
     tags=["votes"],
-    dependencies=[
-        Depends(RateLimiter(times=settings.RATE_LIMIT_PER_MINUTE, minutes=1))
-    ],
+    dependencies=[authenticated_rate_limiter],
 )
 app.include_router(
     polls.router,
     prefix="/api/polls",
     tags=["polls"],
-    dependencies=[
-        Depends(RateLimiter(times=settings.RATE_LIMIT_PER_MINUTE, minutes=1))
-    ],
+    dependencies=[authenticated_rate_limiter],
 )
 app.include_router(
     options.router,
     prefix="/api/options",
     tags=["options"],
-    dependencies=[
-        Depends(RateLimiter(times=settings.RATE_LIMIT_PER_MINUTE, minutes=1))
-    ],
+    dependencies=[authenticated_rate_limiter],
 )
 app.include_router(
     delegations.router,
     prefix="/api/delegations",
     tags=["delegations"],
-    dependencies=[
-        Depends(RateLimiter(times=settings.RATE_LIMIT_PER_MINUTE, minutes=1))
-    ],
+    dependencies=[authenticated_rate_limiter],
 )
 logger.info("Routers registered successfully")
 
@@ -307,10 +307,6 @@ async def health_check_db():
                 "connection": "disconnected",
             },
         )
-
-
-async def get_redis_client():
-    return await redis.from_url(settings.REDIS_URL)
 
 
 @app.get("/health/redis")
