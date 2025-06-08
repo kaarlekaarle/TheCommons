@@ -61,6 +61,9 @@ class Poll(SQLAlchemyBase):
     votes = relationship(
         "Vote", back_populates="poll", cascade="all, delete-orphan"
     )  # type: Any
+    delegations = relationship(
+        "Delegation", back_populates="poll", cascade="all, delete-orphan"
+    )  # type: Any
 
     async def soft_delete(self, db_session: Session) -> None:
         """Soft delete the poll and all related data.

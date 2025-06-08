@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,10 +46,8 @@ async def test_create_delegation(
 
 @pytest.mark.asyncio
 async def test_self_delegation_prevention(db_session: AsyncSession, test_user: User):
-    from backend.services.delegation import DelegationService
-
     service = DelegationService(db_session)
-    with pytest.raises(Exception):
+    with pytest.raises(SelfDelegationError):
         await service.create_delegation(
             delegator_id=test_user.id,
             delegatee_id=test_user.id,
@@ -62,8 +61,6 @@ async def test_self_delegation_prevention(db_session: AsyncSession, test_user: U
 async def test_duplicate_delegation_prevention(
     db_session: AsyncSession, test_user: User, test_user2: User
 ):
-    from backend.services.delegation import DelegationService
-
     service = DelegationService(db_session)
     # Create first delegation
     await service.create_delegation(
@@ -74,7 +71,7 @@ async def test_duplicate_delegation_prevention(
         poll_id=None,
     )
     # Try to create duplicate
-    with pytest.raises(Exception):
+    with pytest.raises(DelegationAlreadyExistsError):
         await service.create_delegation(
             delegator_id=test_user.id,
             delegatee_id=test_user2.id,
@@ -88,8 +85,6 @@ async def test_duplicate_delegation_prevention(
 async def test_circular_delegation_prevention(
     db_session: AsyncSession, test_user: User, test_user2: User
 ):
-    from backend.services.delegation import DelegationService
-
     service = DelegationService(db_session)
     # Create first delegation
     await service.create_delegation(
@@ -100,7 +95,7 @@ async def test_circular_delegation_prevention(
         poll_id=None,
     )
     # Try to create circular delegation
-    with pytest.raises(Exception):
+    with pytest.raises(CircularDelegationError):
         await service.create_delegation(
             delegator_id=test_user2.id,
             delegatee_id=test_user.id,
@@ -127,22 +122,21 @@ async def test_revoke_delegation(
     # Revoke delegation
     await service.revoke_delegation(delegation.id)
     await db_session.refresh(delegation)
-    assert delegation.end_date is not None
+    assert delegation.revoked_at is not None
 
 
 @pytest.mark.asyncio
 async def test_poll_specific_delegation(
     db_session: AsyncSession, test_user: User, test_user2: User, test_poll: Poll
 ):
-    delegation = Delegation(
+    service = DelegationService(db_session)
+    delegation = await service.create_delegation(
         delegator_id=test_user.id,
         delegatee_id=test_user2.id,
         poll_id=test_poll.id,
         start_date=datetime.utcnow(),
+        end_date=None,
     )
-    db_session.add(delegation)
-    await db_session.commit()
-    await db_session.refresh(delegation)
     assert delegation.poll_id == test_poll.id
 
 
@@ -156,6 +150,7 @@ async def test_delegation_after_voting(
     option = Option(poll_id=test_poll.id, text="Test Option")
     db_session.add(option)
     await db_session.commit()
+    await db_session.refresh(option)
 
     # Create a vote with the option
     vote = Vote(user_id=test_user.id, poll_id=test_poll.id, option_id=option.id)
@@ -163,7 +158,7 @@ async def test_delegation_after_voting(
     await db_session.commit()
 
     # Try to create delegation after voting
-    with pytest.raises(ValueError, match="Cannot delegate after voting"):
+    with pytest.raises(DelegationError, match="Cannot delegate after voting"):
         await service.create_delegation(
             delegator_id=test_user.id,
             delegatee_id=test_user2.id,
@@ -177,8 +172,6 @@ async def test_delegation_after_voting(
 async def test_delegation_chain_depth(
     db_session: AsyncSession, test_user: User, test_user2: User
 ):
-    from backend.services.delegation import DelegationService
-
     service = DelegationService(db_session)
     # Create a chain of users
     users = [test_user, test_user2]
@@ -191,7 +184,9 @@ async def test_delegation_chain_depth(
         )
         db_session.add(u)
         await db_session.commit()
+        await db_session.refresh(u)
         users.append(u)
+
     # Create delegations in a chain
     for i in range(len(users) - 1):
         await service.create_delegation(
@@ -201,8 +196,9 @@ async def test_delegation_chain_depth(
             end_date=None,
             poll_id=None,
         )
+
     # Try to create delegation that would exceed depth limit
-    with pytest.raises(Exception):
+    with pytest.raises(DelegationError, match="Delegation chain depth limit exceeded"):
         await service.create_delegation(
             delegator_id=users[-1].id,
             delegatee_id=users[0].id,
@@ -229,6 +225,7 @@ async def test_delegation_stats(
         )
         db_session.add(u)
         await db_session.commit()
+        await db_session.refresh(u)
         delegatees.append(u)
 
     # Create a unique poll for each delegation
@@ -250,10 +247,12 @@ async def test_delegation_stats(
             poll_id=poll.id,
         )
 
-    # Get stats for the last poll
-    stats = await service.get_delegation_stats(poll_id=polls[-1].id)
-    assert stats["active_delegations"] >= 1
-    assert any(d["user_id"] == str(delegatees[-1].id) for d in stats["top_delegatees"])
+    # Get stats
+    stats = await service.get_delegation_stats(test_user.id)
+    assert stats["total_delegations"] == len(delegatees)
+    assert stats["active_delegations"] == len(delegatees)
+    assert stats["poll_specific_delegations"] == len(polls)
+    assert stats["global_delegations"] == 0
 
 
 @pytest.mark.asyncio
@@ -400,18 +399,6 @@ async def test_delegation_with_future_start_date(db_session, test_user, test_use
     assert (
         active_delegation is None
     ), "Delegation with future start date should not be active"
-
-
-@pytest.mark.asyncio
-async def test_delegation_to_self(db_session, test_user):
-    service = DelegationService(db_session)
-    with pytest.raises(SelfDelegationError):
-        await service.create_delegation(
-            delegator_id=test_user.id,
-            delegatee_id=test_user.id,
-            start_date=datetime.utcnow(),
-            end_date=None,
-        )
 
 
 @pytest.mark.asyncio

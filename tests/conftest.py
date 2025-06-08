@@ -51,13 +51,6 @@ from tests.utils import (
 logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="session")
-def event_loop():
-    """Create an event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-@pytest.fixture(scope="session")
 def test_env():
     """Set up and tear down test environment variables."""
     original_env = setup_test_env()
@@ -92,12 +85,56 @@ async def redis_client():
     async with get_test_redis() as client:
         yield client.client
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
-async def patch_fastapi_limiter():
-    """Patch FastAPILimiter.init globally for all tests."""
-    with patch('fastapi_limiter.FastAPILimiter.init', return_value=None) as mock_init:
-        await mock_init()
-        yield mock_init
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def override_rate_limits():
+    """Override rate limits for testing to be more permissive."""
+    from backend.core.rate_limiting import RATE_LIMITS, RateLimitTier, get_rate_limiter
+    from unittest.mock import AsyncMock, patch
+    from fastapi import Depends
+    from fastapi_limiter.depends import RateLimiter
+    import fastapi_limiter
+    
+    # Store original limits
+    original_limits = RATE_LIMITS.copy()
+    
+    # Set test-specific limits
+    RATE_LIMITS.update({
+        RateLimitTier.PUBLIC: {"times": 1000, "minutes": 1},
+        RateLimitTier.AUTHENTICATED: {"times": 1000, "minutes": 1},
+        RateLimitTier.SENSITIVE: {"times": 1000, "seconds": 60},
+        RateLimitTier.ADMIN: {"times": 1000, "minutes": 1}
+    })
+    
+    # Create an async mock that always returns True
+    async def mock_rate_limiter(*args, **kwargs):
+        return True
+    
+    # Create a mock RateLimiter class
+    class MockRateLimiter:
+        def __init__(self, *args, **kwargs):
+            pass
+        async def __call__(self, request, response):
+            return True
+    
+    # Dummy callables for FastAPILimiter attributes
+    async def dummy_identifier(request):
+        return "dummy-key"
+    async def dummy_callback(request, response, p1=None, p2=None):
+        return None
+    
+    # Patch get_rate_limiter, RateLimiter, and FastAPILimiter attributes
+    with patch('backend.core.rate_limiting.get_rate_limiter', 
+              lambda tier: Depends(mock_rate_limiter)), \
+         patch('fastapi_limiter.depends.RateLimiter', MockRateLimiter), \
+         patch.object(fastapi_limiter.FastAPILimiter, 'redis', new=AsyncMock()), \
+         patch.object(fastapi_limiter.FastAPILimiter, 'identifier', new=dummy_identifier), \
+         patch.object(fastapi_limiter.FastAPILimiter, 'http_callback', new=dummy_callback), \
+         patch.object(fastapi_limiter.FastAPILimiter, 'ws_callback', new=dummy_callback):
+        yield
+    
+    # Restore original limits
+    RATE_LIMITS.clear()
+    RATE_LIMITS.update(original_limits)
 
 @pytest_asyncio.fixture
 async def client(db_session, redis_client):
@@ -105,9 +142,6 @@ async def client(db_session, redis_client):
     # Override dependencies
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_redis_client] = lambda: redis_client
-
-    # Initialize FastAPILimiter with mock Redis
-    await FastAPILimiter.init(redis_client)
 
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
@@ -117,10 +151,10 @@ async def client(db_session, redis_client):
     await close_redis_client()
 
 @pytest_asyncio.fixture
-async def auth_headers(test_user) -> Dict[str, str]:
+def auth_headers(test_user) -> Dict[str, str]:
     """Create authentication headers for the test user."""
     access_token = create_access_token(
-        data={"sub": test_user.email},
+        data={"sub": str(test_user.id)},
         expires_delta=timedelta(minutes=30),
     )
     return {"Authorization": f"Bearer {access_token}"}

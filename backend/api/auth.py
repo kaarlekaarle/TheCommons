@@ -40,7 +40,7 @@ async def login_for_access_token(
         user = await user_service.authenticate_user(
             form_data.username, form_data.password
         )
-        access_token = await user_service.create_access_token(user)
+        access_token = user_service.create_access_token(user)
         token = Token(access_token=access_token, token_type="bearer")
 
         # Store user ID in session

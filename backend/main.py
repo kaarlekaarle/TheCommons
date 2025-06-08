@@ -193,12 +193,6 @@ async def custom_swagger_ui_html():
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
     )
 
-# Initialize rate limiter
-@app.on_event("startup")
-async def startup():
-    redis = await redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
-    await FastAPILimiter.init(redis)
-
 # Include routers with rate limiting
 logger.info("Registering routers...")
 app.include_router(
@@ -253,7 +247,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(
         "Unhandled exception",
         exc_info=exc,
-        request_id=request.state.request_id,
+        request_id=getattr(request.state, "request_id", None),
         path=request.url.path,
         method=request.method,
     )

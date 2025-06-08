@@ -161,7 +161,7 @@ class DelegationChainError(DelegationError):
         self,
         message: str,
         user_id: UUID,
-        poll_id: UUID,
+        poll_id: Optional[UUID] = None,
         status_code: int = 400,
         details: Optional[Dict[str, Any]] = None,
     ):

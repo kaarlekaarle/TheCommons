@@ -79,7 +79,12 @@ class StatsCalculationTask:
         """
         try:
             delegation_stats = DelegationStats(
-                poll_id=poll_id, stats=stats, calculated_at=datetime.utcnow()
+                poll_id=poll_id,
+                top_delegatees=stats["top_delegatees"],
+                avg_chain_length=stats["avg_chain_length"],
+                longest_chain=stats["longest_chain"],
+                active_delegations=stats["active_delegations"],
+                calculated_at=datetime.utcnow()
             )
             self.db.add(delegation_stats)
             await self.db.commit()

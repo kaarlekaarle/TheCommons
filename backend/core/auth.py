@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
 from backend.core.exceptions import AuthenticationError
-from backend.core.oauth2 import ALGORITHM, TOKEN_EXPIRE_MINUTES, oauth2_scheme
+from backend.core.oauth2 import ALGORITHM, TOKEN_EXPIRE_MINUTES
 from backend.database import get_db
 from backend.models.user import User
 from backend.schemas.token import TokenData
@@ -24,7 +24,7 @@ pwd_context = CryptContext(
 )
 
 # Configure JWT
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 
 
 
@@ -81,7 +81,11 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
     """Get current user from JWT token."""
-    credentials_exception = AuthenticationError("Could not validate credentials")
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]

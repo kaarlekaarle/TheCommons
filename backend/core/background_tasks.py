@@ -74,8 +74,19 @@ class StatsCalculationTask:
             poll_id: Optional poll ID the stats are for
         """
         try:
+            # Convert top_delegatees to a JSON-serializable format
+            top_delegatees = [
+                {"delegatee_id": str(delegatee_id), "count": count}
+                for delegatee_id, count in stats["top_delegatees"]
+            ]
+
             delegation_stats = DelegationStats(
-                poll_id=poll_id, stats=stats, calculated_at=datetime.utcnow()
+                poll_id=poll_id,
+                top_delegatees=top_delegatees,
+                avg_chain_length=float(stats["avg_chain_length"]),
+                longest_chain=int(stats["longest_chain"]),
+                active_delegations=int(stats["active_delegations"]),
+                calculated_at=datetime.utcnow()
             )
             self.db.add(delegation_stats)
             await self.db.commit()

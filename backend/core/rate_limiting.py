@@ -2,7 +2,7 @@
 
 from enum import Enum
 from typing import Optional, Callable, Any
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Response
 from fastapi_limiter.depends import RateLimiter
 from backend.config import settings
 from backend.core.logging import get_logger
@@ -48,12 +48,13 @@ def get_rate_limiter(tier: RateLimitTier) -> Callable:
     """
     limit_config = RATE_LIMITS[tier]
     
-    async def rate_limiter_dependency(request: Request) -> Any:
+    async def rate_limiter_dependency(request: Request, response: Response) -> Any:
         """
         Rate limiter dependency that applies the configured limit.
         
         Args:
             request: The FastAPI request object
+            response: The FastAPI response object
             
         Returns:
             The result of the rate limiter check
@@ -71,7 +72,7 @@ def get_rate_limiter(tier: RateLimitTier) -> Callable:
             )
             
         # Apply the rate limit
-        return await limiter(request)
+        return await limiter(request, response)
     
     return Depends(rate_limiter_dependency)
 

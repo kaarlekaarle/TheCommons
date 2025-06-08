@@ -42,7 +42,7 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError, TimeoutError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import selectinload
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.pool import NullPool
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from backend.config import settings
@@ -296,6 +296,17 @@ class UserService:
             raise AuthenticationError("Invalid username or password")
         return user
 
+    def create_access_token(self, user: User) -> str:
+        """Create access token for user.
+
+        Args:
+            user: User to create token for
+
+        Returns:
+            str: JWT access token
+        """
+        return create_access_token({"sub": str(user.id)})
+
     async def update_user(self, user_id: int, user_data: UserUpdate) -> UserResponse:
         """Update user information.
 
@@ -427,25 +438,6 @@ class UserService:
                 exc_info=True,
             )
             raise ValidationError("Failed to fetch users")
-
-    async def create_access_token(
-        self, user: User, expires_delta: Optional[timedelta] = None
-    ) -> str:
-        """Create access token for user.
-
-        Args:
-            user: User to create token for
-            expires_delta: Optional token expiration time
-
-        Returns:
-            str: Access token
-        """
-        if expires_delta is None:
-            expires_delta = timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-
-        return create_access_token(
-            data={"sub": user.username}, expires_delta=expires_delta
-        )
 
 
 # Set up logging
@@ -609,7 +601,7 @@ async def login_for_access_token(
                 detail="Incorrect username or password",
             )
 
-        access_token = create_access_token(data={"sub": user.username})
+        access_token = user_service.create_access_token(user)
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         logger.error(
@@ -673,7 +665,7 @@ async def recover_from_error(db: AsyncSession) -> None:
 
 # 14. Add connection pooling
 engine = create_async_engine(
-    settings.DATABASE_URL, poolclass=QueuePool, pool_size=5, max_overflow=10
+    settings.DATABASE_URL, poolclass=NullPool
 )
 
 

@@ -3,6 +3,7 @@ from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.orm import relationship
 
 from backend.core.types import GUID
 
@@ -22,6 +23,9 @@ class Delegation(SQLAlchemyBase):
     end_date = Column(DateTime, nullable=True)  # type: Any
     is_deleted = Column(Boolean, default=False)  # type: Any
     deleted_at = Column(DateTime(timezone=True), nullable=True)  # type: Any
+
+    # Relationships
+    poll = relationship("Poll", back_populates="delegations")  # type: Any
 
     def __repr__(self):
         return (
