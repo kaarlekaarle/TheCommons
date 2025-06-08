@@ -70,3 +70,10 @@ docker-compose.override.yml
 .env.development
 .env.test
 .env.production
+
+# Backup files
+backup.sh
+backups/
+*.backup
+*.bak
+*.tmp
