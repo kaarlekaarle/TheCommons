@@ -19,7 +19,7 @@ from backend.core.exceptions.delegation import (
 )
 from backend.core.exceptions import DelegationAuthorizationError
 from backend.core.logging_config import get_logger
-from backend.core.tasks import StatsCalculationTask
+from backend.core.background_tasks import StatsCalculationTask
 from backend.database import get_db
 from backend.models.delegation import Delegation
 from backend.models.user import User

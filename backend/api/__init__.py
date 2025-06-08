@@ -4,6 +4,7 @@ from .options import router as options_router
 from .polls import router as polls_router
 from .users import router as users_router
 from .votes import router as votes_router
+from .health import router as health_router
 
 __all__ = [
     "auth_router",
@@ -12,4 +13,5 @@ __all__ = [
     "polls_router",
     "options_router",
     "delegations_router",
+    "health_router",
 ]

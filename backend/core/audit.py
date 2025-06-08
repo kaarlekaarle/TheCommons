@@ -16,6 +16,7 @@ class AuditAction(str, Enum):
     USER_LOGIN = "user_login"
     USER_LOGOUT = "user_logout"
     USER_PASSWORD_CHANGE = "user_password_change"
+    USER_READ = "user_read"
     
     # Poll actions
     POLL_CREATE = "poll_create"
