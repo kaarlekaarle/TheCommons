@@ -13,7 +13,7 @@ from .base import SQLAlchemyBase
 
 
 class Delegation(SQLAlchemyBase):
-    __tablename__ = "delegation"
+    __tablename__ = "delegations"
     delegator_id = Column(GUID(), ForeignKey("users.id"), nullable=False)  # type: Any
     delegatee_id = Column(GUID(), ForeignKey("users.id"), nullable=False)  # type: Any
     poll_id = Column(GUID(), ForeignKey("polls.id"), nullable=True)  # type: Any

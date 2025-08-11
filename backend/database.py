@@ -81,10 +81,9 @@ async def init_db() -> None:
         raise
 
 
-@asynccontextmanager
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db() -> AsyncSession:
     """
-    Async context manager for database sessions.
+    FastAPI dependency for database sessions.
     Automatically handles session cleanup and rollback on errors.
 
     Yields:

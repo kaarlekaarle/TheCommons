@@ -17,8 +17,9 @@ from backend.models.poll import Poll
 from backend.models.user import User
 from backend.models.vote import Vote
 from backend.schemas.poll import Poll as PollSchema
-from backend.schemas.poll import PollCreate, PollUpdate, VoteStatus
+from backend.schemas.poll import PollCreate, PollUpdate, VoteStatus, PollResult
 from backend.services.delegation import DelegationService
+from backend.services.poll import get_poll_results
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -61,6 +62,9 @@ async def create_poll(
         return poll
     except Exception as e:
         await db.rollback()
+        import traceback
+        traceback.print_exc()
+        print(f"ERROR creating poll: {e!r}")
         logger.error(
             "Failed to create poll",
             extra={"user_id": current_user.id, "error": str(e)},
@@ -71,7 +75,10 @@ async def create_poll(
 
 @router.get("/", response_model=List[PollSchema])
 async def list_polls(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+    skip: int = 0, 
+    limit: int = 100, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> List[Poll]:
     """List all polls.
 
@@ -79,6 +86,7 @@ async def list_polls(
         skip: Number of records to skip
         limit: Maximum number of records to return
         db: Database session
+        current_user: Currently authenticated user
 
     Returns:
         List[Poll]: List of polls
@@ -87,7 +95,13 @@ async def list_polls(
     polls = result.scalars().all()
 
     logger.info(
-        "Retrieved polls", extra={"skip": skip, "limit": limit, "count": len(polls)}
+        "Retrieved polls", 
+        extra={
+            "skip": skip, 
+            "limit": limit, 
+            "count": len(polls),
+            "user_id": current_user.id
+        }
     )
     return polls
 
@@ -273,3 +287,48 @@ async def delete_poll(
 
     logger.info("Poll deleted successfully", extra={"poll_id": poll_id})
     return None
+
+
+@router.get("/{poll_id}/results", response_model=List[PollResult])
+async def get_poll_results_endpoint(
+    poll_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> List[PollResult]:
+    """Get poll results with delegation support.
+
+    Args:
+        poll_id: ID of the poll
+        db: Database session
+        current_user: Currently authenticated user
+
+    Returns:
+        List[PollResult]: List of poll results with vote counts
+
+    Raises:
+        ResourceNotFoundError: If poll not found
+        ValidationError: If poll data is invalid
+    """
+    try:
+        results = await get_poll_results(poll_id, db)
+        
+        logger.info(
+            "Retrieved poll results",
+            extra={
+                "poll_id": poll_id,
+                "user_id": current_user.id,
+                "results_count": len(results)
+            },
+        )
+        return results
+        
+    except ValueError as e:
+        logger.warning("Poll not found", extra={"poll_id": poll_id})
+        raise ResourceNotFoundError(str(e))
+    except Exception as e:
+        logger.error(
+            "Failed to get poll results",
+            extra={"poll_id": poll_id, "error": str(e)},
+            exc_info=True,
+        )
+        raise ValidationError("Failed to calculate poll results")

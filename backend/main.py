@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 import redis.asyncio as redis
 from fastapi import Depends, FastAPI, HTTPException, status, Request
@@ -61,15 +62,18 @@ async def lifespan(app: FastAPI):
         logger.info("redis_initialized")
     except Exception as e:
         logger.error("redis_initialization_failed", error=str(e))
-        raise
+        logger.warning("Continuing without Redis - rate limiting and caching will be disabled")
 
     # Log all available routes
     routes = [f"{route.methods} {route.path}" for route in app.routes]
     logger.info("available_routes", routes=routes)
     yield
     # Shutdown logic
-    await close_redis_client()
-    logger.info("shutting_down_application")
+    try:
+        await close_redis_client()
+        logger.info("shutting_down_application")
+    except Exception as e:
+        logger.error("Error closing Redis client", error=str(e))
 
 
 # Create FastAPI app
@@ -251,13 +255,15 @@ async def global_exception_handler(request: Request, exc: Exception):
         path=request.url.path,
         method=request.method,
     )
+    
+    # Generate unified error response
+    from backend.core.exception_handlers import get_error_response
+    request_id = getattr(request.state, "request_id", None)
+    response = get_error_response(exc, include_details=settings.DEBUG, request_id=request_id)
+    
     return JSONResponse(
-        status_code=500,
-        content={
-            "detail": "Internal server error",
-            "code": "INTERNAL_ERROR",
-            "status_code": 500,
-        },
+        status_code=response["status_code"],
+        content=response,
     )
 
 
@@ -270,7 +276,7 @@ async def root():
 async def health_check_db():
     """Check database health."""
     try:
-        logger.debug("checking_database_health", database_url=settings.DATABASE_URL)
+        logger.debug("checking_database_health")
         async with async_session_maker() as session:
             await session.execute(text("SELECT 1"))
             await session.commit()
@@ -281,13 +287,20 @@ async def health_check_db():
         }
     except Exception as e:
         logger.error("database_health_check_failed", error=str(e))
+        from backend.schemas.error import ErrorCodes
         raise HTTPException(
             status_code=503,
             detail={
-                "status": "unhealthy",
-                "message": "Database connection error",
-                "error": str(e),
-                "connection": "disconnected",
+                "detail": "Database connection error",
+                "code": ErrorCodes.DATABASE_UNAVAILABLE,
+                "status_code": 503,
+                "error_type": "DatabaseError",
+                "timestamp": datetime.utcnow().isoformat(),
+                "details": {
+                    "status": "unhealthy",
+                    "connection": "disconnected",
+                    "error": str(e),
+                },
             },
         )
 
@@ -307,12 +320,19 @@ async def redis_health(redis_client=Depends(get_redis_client)):
         logger.error("redis_health_check_failed", error=error_msg)
         if hasattr(redis_client, "is_mock") and redis_client.is_mock:
             error_msg = "Mock Redis client error"
+        from backend.schemas.error import ErrorCodes
         raise HTTPException(
             status_code=503,
             detail={
-                "status": "unhealthy",
-                "message": "Redis connection error",
-                "error": error_msg,
-                "connection": "disconnected",
+                "detail": "Redis connection error",
+                "code": ErrorCodes.REDIS_UNAVAILABLE,
+                "status_code": 503,
+                "error_type": "RedisError",
+                "timestamp": datetime.utcnow().isoformat(),
+                "details": {
+                    "status": "unhealthy",
+                    "connection": "disconnected",
+                    "error": error_msg,
+                },
             },
         )

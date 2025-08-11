@@ -129,7 +129,3 @@ class Poll(SQLAlchemyBase):
     def is_closed(self) -> bool:
         """Check if poll is closed."""
         return self.is_deleted is False and self.end_date is not None and self.end_date <= datetime.utcnow()
-
-    def is_deleted(self) -> bool:
-        """Check if poll is deleted."""
-        return self.is_deleted is False

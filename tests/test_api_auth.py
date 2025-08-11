@@ -34,7 +34,8 @@ async def test_get_current_user_invalid_token(client: AsyncClient) -> None:
         "/api/users/me", headers={"Authorization": "Bearer invalid_token"}
     )
     print("\nResponse status:", response.status_code)
-    print("Response headers:", response.headers)
-    print("Response body:", response.text)
+    print("Response headers:", dict(response.headers))
+    print("RESPONSE BODY:", response.text)
+    print("Request headers:", response.request.headers)
     assert response.status_code == 401
     assert response.json()["detail"] == "Could not validate credentials"

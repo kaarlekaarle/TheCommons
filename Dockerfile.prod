@@ -1,0 +1,82 @@
+# Multi-stage build for The Commons Backend
+# Stage 1: Builder
+FROM python:3.11-slim as builder
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Copy application code
+COPY backend/ ./backend/
+COPY alembic.ini .
+COPY migrations/ ./migrations/
+
+# Stage 2: Final production image
+FROM python:3.11-slim as final
+
+# Set production environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    ENVIRONMENT=production \
+    DEBUG=False
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create non-root user for security
+RUN groupadd -r commons && useradd -r -g commons commons
+
+# Create and set working directory
+WORKDIR /app
+
+# Copy Python packages from builder stage
+COPY --from=builder /root/.local /home/commons/.local
+
+# Copy application code from builder stage
+COPY --from=builder /app/backend ./backend
+COPY --from=builder /app/alembic.ini .
+COPY --from=builder /app/migrations ./migrations
+
+# Install production WSGI server
+RUN pip install --no-cache-dir gunicorn uvicorn
+
+# Set ownership to non-root user
+RUN chown -R commons:commons /app
+
+# Switch to non-root user
+USER commons
+
+# Add local bin to PATH for the user
+ENV PATH=/home/commons/.local/bin:$PATH
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
+
+# Run the application with Gunicorn
+CMD ["gunicorn", "backend.main:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]

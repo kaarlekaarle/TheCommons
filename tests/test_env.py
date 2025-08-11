@@ -6,8 +6,8 @@ from typing import Dict, Any
 def setup_test_env() -> None:
     """Set up test environment variables."""
     env_vars = {
-        # Database Configuration
-        "DATABASE_URL": "sqlite+aiosqlite:///./test.db",
+        # Database Configuration - Use the same PostgreSQL database as main app
+        "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/commons_db",
         "REDIS_URL": "redis://localhost:6379/1",
         "REDIS_MOCK": "true",
         

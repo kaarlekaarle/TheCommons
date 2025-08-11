@@ -180,14 +180,14 @@ class UserService:
         """
         self.db = db
 
-    async def get_user_by_username(self, username: str) -> Optional[UserSchema]:
+    async def get_user_by_username(self, username: str) -> Optional[User]:
         """Get user by username.
 
         Args:
             username: Username to search for
 
         Returns:
-            Optional[UserSchema]: User if found, None otherwise
+            Optional[User]: User if found, None otherwise
         """
         try:
             result = await self.db.execute(
@@ -205,14 +205,14 @@ class UserService:
             )
             raise ValidationError("Failed to fetch user")
 
-    async def get_user_by_email(self, email: str) -> Optional[UserSchema]:
+    async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email.
 
         Args:
             email: Email to search for
 
         Returns:
-            Optional[UserSchema]: User if found, None otherwise
+            Optional[User]: User if found, None otherwise
         """
         try:
             result = await self.db.execute(select(User).where(User.email == email))

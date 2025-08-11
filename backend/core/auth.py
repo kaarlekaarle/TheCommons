@@ -24,7 +24,7 @@ pwd_context = CryptContext(
 )
 
 # Configure JWT
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token", auto_error=False)
 
 
 
@@ -81,31 +81,58 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
     """Get current user from JWT token."""
+    from backend.schemas.error import ErrorCodes
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail={
+            "detail": "Could not validate credentials",
+            "code": ErrorCodes.INVALID_CREDENTIALS,
+            "status_code": 401,
+            "error_type": "AuthenticationError",
+            "timestamp": datetime.utcnow().isoformat(),
+        },
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    if not token:
+        raise credentials_exception
+        
     try:
+        # First try to decode the token
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except JWTError:
+            
+        # Then try to get the user
+        try:
+            user = await db.get(User, UUID(user_id))
+            if user is None:
+                raise credentials_exception
+            return user
+        except ValueError:  # Invalid UUID format
+            raise credentials_exception
+            
+    except JWTError:  # Invalid token format or signature
         raise credentials_exception
-
-    user = await db.get(User, UUID(user_id))
-    if user is None:
-        raise credentials_exception
-    return user
 
 
 async def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     """Get current active user."""
-    if not current_user.is_active:
-        raise AuthenticationError("Inactive user")
+    if not current_user.is_user_active():
+        from backend.schemas.error import ErrorCodes
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "detail": "Inactive user",
+                "code": ErrorCodes.AUTHENTICATION_ERROR,
+                "status_code": 401,
+                "error_type": "AuthenticationError",
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
     return current_user

@@ -49,6 +49,20 @@ class VoteStatus(BaseModel):
 
 
 
+class PollResult(BaseModel):
+    """Schema for poll result data."""
+
+    option_id: UUID = Field(..., description="ID of the option")
+    text: str = Field(..., description="Text of the option")
+    direct_votes: int = Field(..., description="Number of direct votes")
+    delegated_votes: int = Field(..., description="Number of delegated votes")
+    total_votes: int = Field(..., description="Total votes (direct + delegated)")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+
+
 class Poll(PollBase):
     """Schema for poll data as returned by the API."""
 

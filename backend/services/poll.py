@@ -1,0 +1,159 @@
+from typing import List, Dict, Any
+from uuid import UUID
+from sqlalchemy import select, and_
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.models.poll import Poll
+from backend.models.option import Option
+from backend.models.vote import Vote
+from backend.models.delegation import Delegation
+from backend.schemas.poll import PollResult
+from backend.services.delegation import DelegationService
+from backend.core.logging_config import get_logger
+
+logger = get_logger(__name__)
+
+
+async def get_poll_results(poll_id: UUID, db: AsyncSession) -> List[PollResult]:
+    """
+    Get poll results with delegation support.
+    
+    Args:
+        poll_id: ID of the poll
+        db: Database session
+        
+    Returns:
+        List[PollResult]: List of poll results with vote counts
+    """
+    # First, verify the poll exists
+    poll_result = await db.execute(
+        select(Poll).where(
+            and_(
+                Poll.id == poll_id,
+                Poll.is_deleted == False
+            )
+        )
+    )
+    poll = poll_result.scalar_one_or_none()
+    if not poll:
+        raise ValueError(f"Poll with id {poll_id} not found")
+    
+    # Get all options for the poll
+    options_result = await db.execute(
+        select(Option).where(
+            and_(
+                Option.poll_id == poll_id,
+                Option.is_deleted == False
+            )
+        )
+    )
+    options = options_result.scalars().all()
+    
+    if not options:
+        return []
+    
+    # Get all direct votes for this poll
+    votes_result = await db.execute(
+        select(Vote).where(
+            and_(
+                Vote.poll_id == poll_id,
+                Vote.is_deleted == False
+            )
+        )
+    )
+    direct_votes = votes_result.scalars().all()
+    
+    # Get all active delegations for this poll
+    delegation_service = DelegationService(db)
+    delegations_result = await db.execute(
+        select(Delegation).where(
+            and_(
+                Delegation.poll_id == poll_id,
+                Delegation.is_deleted == False,
+                Delegation.end_date.is_(None)  # Active delegations only
+            )
+        )
+    )
+    delegations = delegations_result.scalars().all()
+    
+    # Create a mapping of option_id to vote counts
+    option_votes: Dict[UUID, Dict[str, int]] = {}
+    
+    # Initialize all options with zero votes
+    for option in options:
+        option_votes[option.id] = {
+            "direct_votes": 0,
+            "delegated_votes": 0,
+            "total_votes": 0
+        }
+    
+    # Count direct votes
+    for vote in direct_votes:
+        weight = vote.weight or 1
+        option_votes[vote.option_id]["direct_votes"] += weight
+        option_votes[vote.option_id]["total_votes"] += weight
+    
+    # Process delegations and add delegated votes to final delegatees
+    for delegation in delegations:
+        try:
+            # Resolve the delegation chain to find the final delegatee
+            final_delegatee_id, _ = await delegation_service.resolve_delegation_chain(
+                delegation.delegator_id, poll_id
+            )
+            
+            # Find the vote of the final delegatee
+            final_vote_result = await db.execute(
+                select(Vote).where(
+                    and_(
+                        Vote.user_id == final_delegatee_id,
+                        Vote.poll_id == poll_id,
+                        Vote.is_deleted == False
+                    )
+                )
+            )
+            final_vote = final_vote_result.scalar_one_or_none()
+            
+            if final_vote:
+                # Add the delegation weight to the final delegatee's chosen option
+                delegation_weight = 1  # Default weight for delegation
+                option_votes[final_vote.option_id]["delegated_votes"] += delegation_weight
+                option_votes[final_vote.option_id]["total_votes"] += delegation_weight
+                
+        except Exception as e:
+            logger.warning(
+                "Failed to process delegation for vote counting",
+                extra={
+                    "poll_id": poll_id,
+                    "delegator_id": delegation.delegator_id,
+                    "error": str(e)
+                }
+            )
+            continue
+    
+    # Create PollResult objects
+    results = []
+    for option in options:
+        votes = option_votes[option.id]
+        result = PollResult(
+            option_id=option.id,
+            text=option.text,
+            direct_votes=votes["direct_votes"],
+            delegated_votes=votes["delegated_votes"],
+            total_votes=votes["total_votes"]
+        )
+        results.append(result)
+    
+    # Sort by total votes (descending)
+    results.sort(key=lambda x: x.total_votes, reverse=True)
+    
+    logger.info(
+        "Calculated poll results",
+        extra={
+            "poll_id": poll_id,
+            "options_count": len(options),
+            "direct_votes_count": len(direct_votes),
+            "delegations_count": len(delegations)
+        }
+    )
+    
+    return results

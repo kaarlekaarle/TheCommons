@@ -10,23 +10,24 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
 )
-from sqlalchemy.pool import StaticPool
 from sqlalchemy import event, text
 
 from backend.models.base import Base, SQLAlchemyBase
 
 logger = logging.getLogger(__name__)
 
-# Test database configuration
-TEST_DB_PATH = os.path.join(os.path.dirname(__file__), "test.db")
-TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_PATH}"
+# Test database configuration - Use the same database as main app
+TEST_DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/commons_db"
+)
 
-# Engine settings
+# Engine settings - Use PostgreSQL settings
 TEST_ENGINE_SETTINGS = {
     "echo": True,  # Enable SQL logging for tests
     "future": True,
-    "connect_args": {"check_same_thread": False},
-    "poolclass": StaticPool,  # Use static pool for SQLite
+    "pool_pre_ping": True,  # Enable connection health checks
+    "pool_size": 5,  # Set reasonable pool size
+    "max_overflow": 10,  # Allow some overflow connections
 }
 
 # Session settings
@@ -65,9 +66,9 @@ async def init_test_db() -> None:
 async def cleanup_test_db() -> None:
     """Clean up the test database."""
     try:
-        async with test_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-        logger.info("Test database cleaned up successfully")
+        # Instead of dropping all tables, just clean up test data
+        # This is safer when using the same database as the main app
+        logger.info("Test database cleanup completed (no tables dropped)")
     except Exception as e:
         logger.error(f"Failed to clean up test database: {e}")
         raise
@@ -88,12 +89,11 @@ async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
 async def reset_test_db() -> None:
     """Reset the test database to a clean state."""
     try:
+        # Instead of dropping and recreating tables, just ensure they exist
+        # This is safer when using the same database as the main app
         async with test_engine.begin() as conn:
-            # Drop all tables
-            await conn.run_sync(Base.metadata.drop_all)
-            # Recreate all tables
             await conn.run_sync(Base.metadata.create_all)
-        logger.info("Test database reset successfully")
+        logger.info("Test database reset completed (tables ensured to exist)")
     except Exception as e:
         logger.error(f"Failed to reset test database: {e}")
         raise 

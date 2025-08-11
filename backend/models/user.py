@@ -64,10 +64,10 @@ class User(SQLAlchemyBase):
         for vote in votes:
             await vote.soft_delete(db_session)
 
-    def is_active(self) -> bool:
+    def is_user_active(self) -> bool:
         """Check if user is active."""
-        return self.is_deleted is False and self.is_active is False
+        return self.is_deleted is False and self.is_active is True
 
-    def is_superuser(self) -> bool:
+    def is_user_superuser(self) -> bool:
         """Check if user is superuser."""
-        return self.is_deleted is False and self.is_superuser is False
+        return self.is_deleted is False and self.is_superuser is True

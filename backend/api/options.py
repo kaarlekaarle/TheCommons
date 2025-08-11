@@ -80,12 +80,14 @@ async def create_option(
 async def get_option(
     option_id: int,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> Option:
     """Get an option by ID.
 
     Args:
         option_id: ID of the option
         db: Database session
+        current_user: Currently authenticated user
 
     Returns:
         Option: Requested option
@@ -96,7 +98,13 @@ async def get_option(
     result = await db.execute(select(Option).where(Option.id == option_id))
     option = result.scalar_one_or_none()
     if not option:
-        raise HTTPException(status_code=404, detail="Option not found")
+        logger.warning("Option not found", extra={"option_id": option_id, "user_id": current_user.id})
+        raise ResourceNotFoundError("Option not found")
+    
+    logger.info(
+        "Retrieved option", 
+        extra={"option_id": option_id, "user_id": current_user.id}
+    )
     return option
 
 
@@ -104,12 +112,14 @@ async def get_option(
 async def get_poll_options(
     poll_id: int,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> List[Option]:
     """Get all options for a poll.
 
     Args:
         poll_id: ID of the poll
         db: Database session
+        current_user: Currently authenticated user
 
     Returns:
         List[Option]: List of options for the poll
@@ -121,7 +131,7 @@ async def get_poll_options(
     result = await db.execute(select(Poll).where(Poll.id == poll_id))
     poll = result.scalar_one_or_none()
     if not poll:
-        logger.warning("Poll not found", extra={"poll_id": poll_id})
+        logger.warning("Poll not found", extra={"poll_id": poll_id, "user_id": current_user.id})
         raise ResourceNotFoundError("Poll not found")
 
     result = await db.execute(
@@ -135,7 +145,11 @@ async def get_poll_options(
 
     logger.info(
         "Retrieved poll options",
-        extra={"poll_id": poll_id, "option_count": len(options)},
+        extra={
+            "poll_id": poll_id, 
+            "option_count": len(options),
+            "user_id": current_user.id
+        },
     )
     return options
 
