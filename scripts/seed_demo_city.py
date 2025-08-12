@@ -42,425 +42,425 @@ from backend.config import settings
 
 # Demo user definitions
 DEMO_USERS = [
-    {'username': 'mayor', 'email': 'mayor@riverbend.example'},
-    {'username': 'cityplanner', 'email': 'cityplanner@riverbend.example'},
-    {'username': 'teacher', 'email': 'teacher@riverbend.example'},
-    {'username': 'shop_owner', 'email': 'shop_owner@riverbend.example'},
-    {'username': 'student', 'email': 'student@riverbend.example'},
-    {'username': 'nurse', 'email': 'nurse@riverbend.example'},
-    {'username': 'cyclist', 'email': 'cyclist@riverbend.example'},
-    {'username': 'driver', 'email': 'driver@riverbend.example'},
-    {'username': 'parent', 'email': 'parent@riverbend.example'},
-    {'username': 'librarian', 'email': 'librarian@riverbend.example'},
-    {'username': 'waste_manager', 'email': 'waste_manager@riverbend.example'},
-    {'username': 'developer', 'email': 'developer@riverbend.example'},
+    {'username': 'mayor', 'email': 'mayor@springfield.example'},
+    {'username': 'cityplanner', 'email': 'cityplanner@springfield.example'},
+    {'username': 'teacher', 'email': 'teacher@springfield.example'},
+    {'username': 'shop_owner', 'email': 'shop_owner@springfield.example'},
+    {'username': 'student', 'email': 'student@springfield.example'},
+    {'username': 'nurse', 'email': 'nurse@springfield.example'},
+    {'username': 'cyclist', 'email': 'cyclist@springfield.example'},
+    {'username': 'driver', 'email': 'driver@springfield.example'},
+    {'username': 'parent', 'email': 'parent@springfield.example'},
+    {'username': 'librarian', 'email': 'librarian@springfield.example'},
+    {'username': 'waste_manager', 'email': 'waste_manager@springfield.example'},
+    {'username': 'developer', 'email': 'developer@springfield.example'},
 ]
 
-# Level A (baseline policy) proposals
+# Level A (baseline policy) proposals - based on actual municipal policy frameworks
 LEVEL_A_PROPOSALS = [
     {
-        'title': 'Vision Zero Commitment',
-        'description': 'Commit to designing streets so that no one is killed or seriously injured in traffic.',
+        'title': 'Complete Streets Policy',
+        'description': 'Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.',
         'direction_choice': "Transportation Safety"
     },
     {
-        'title': 'Open Government Policy',
-        'description': 'Publish public records and datasets unless there\'s a clear legal reason not to.',
+        'title': 'Public Records Transparency Policy',
+        'description': 'Make all public records and datasets available online unless specifically exempted by law, with clear processes for requesting information.',
         'direction_choice': "Government Transparency"
     },
     {
-        'title': 'Green Building Standard',
-        'description': 'Require all new public buildings to meet the city\'s highest energy-efficiency code.',
+        'title': 'Green Building Standards for Municipal Construction',
+        'description': 'Require all new municipal buildings and major renovations to meet LEED Silver certification or equivalent energy efficiency standards.',
         'direction_choice': "Environmental Policy"
     },
     {
-        'title': 'Affordable Housing Priority',
-        'description': 'Prioritize affordable housing in land-use and zoning decisions.',
+        'title': 'Inclusive Housing Development Policy',
+        'description': 'Ensure 20% of all new residential development includes affordable housing units or equivalent contributions to the housing trust fund.',
         'direction_choice': "Housing & Development"
     },
     {
-        'title': 'Public Space Access',
-        'description': 'Ensure all residents live within a 10-minute walk of a safe, accessible public space.',
+        'title': 'Parks and Recreation Access Standards',
+        'description': 'Maintain a minimum of 10 acres of parkland per 1,000 residents and ensure all neighborhoods have access to recreational facilities within a 10-minute walk.',
         'direction_choice': "Parks & Recreation"
     },
     {
-        'title': 'Climate Action Framework',
-        'description': 'Cut greenhouse gas emissions 50% by 2035, across all city operations.',
+        'title': 'Municipal Climate Action Plan',
+        'description': 'Reduce city government greenhouse gas emissions by 50% by 2030 and achieve carbon neutrality by 2040 through energy efficiency and renewable energy.',
         'direction_choice': "Climate & Sustainability"
     },
     {
-        'title': 'Digital Inclusion',
-        'description': 'Guarantee all households affordable access to high-speed internet.',
+        'title': 'Digital Equity and Broadband Access Policy',
+        'description': 'Ensure all residents have access to affordable high-speed internet and digital literacy training through partnerships with service providers and community organizations.',
         'direction_choice': "Technology & Innovation"
     },
     {
-        'title': 'Local Food Commitment',
-        'description': 'Increase the share of food consumed in the city that is grown or produced locally.',
+        'title': 'Local Food System Development Policy',
+        'description': 'Support local food production and distribution by providing incentives for urban agriculture, farmers markets, and food processing facilities.',
         'direction_choice': "Food Security"
     },
     {
-        'title': 'Mobility for All',
-        'description': 'Design transport systems that serve all ages and abilities.',
+        'title': 'Transit-Oriented Development Framework',
+        'description': 'Prioritize mixed-use development within 1/2 mile of transit stations to reduce car dependency and increase transit ridership.',
         'direction_choice': "Public Transit"
     },
     {
-        'title': 'Zero Waste Commitment',
-        'description': 'Commit to diverting all recyclable and compostable materials from landfills.',
+        'title': 'Zero Waste and Circular Economy Policy',
+        'description': 'Achieve 90% waste diversion from landfills by 2030 through comprehensive recycling, composting, and waste reduction programs.',
         'direction_choice': "Waste Management"
     }
 ]
 
-# Level B (poll) proposals
+# Level B (poll) proposals - based on actual municipal council decisions
 LEVEL_B_PROPOSALS = [
     {
-        'title': 'Install protected bike lanes on Oak Street from Central Park to City Hall',
-        'description': 'Add dedicated, protected bicycle lanes along Oak Street to improve cyclist safety and encourage active transportation.',
+        'title': 'Install protected bike lanes on Washington Avenue from downtown to university district',
+        'description': 'Add dedicated, protected bicycle lanes along Washington Avenue to improve cyclist safety and encourage active transportation between downtown and the university.',
         'options': ['Approve', 'Modify plan', 'Reject']
     },
     {
-        'title': 'Launch 12-month curbside compost pickup pilot in three neighborhoods',
-        'description': 'Begin organic waste collection service in Downtown, Westside, and Riverside neighborhoods to reduce landfill waste.',
+        'title': 'Launch 18-month curbside composting pilot in four residential neighborhoods',
+        'description': 'Begin organic waste collection service in Downtown, Westside, Riverside, and Eastside neighborhoods to reduce landfill waste and create compost for city parks.',
         'options': ['Approve', 'Reduce scope', 'Reject']
     },
     {
-        'title': 'Extend Saturday library hours from 5 PM to 8 PM for six-month trial',
-        'description': 'Extend operating hours at the main library to better serve students and working families.',
+        'title': 'Extend public library hours to 9 PM on weekdays for six-month trial',
+        'description': 'Extend operating hours at the main library to better serve students, working families, and evening library users.',
         'options': ['Approve', 'Modify hours', 'Reject']
     },
     {
-        'title': 'Plant 500 street trees along major bus routes',
-        'description': 'Add urban trees along transit corridors to improve air quality and provide shade for transit users.',
+        'title': 'Plant 750 street trees along major transit corridors and in underserved neighborhoods',
+        'description': 'Add urban trees along bus routes and in neighborhoods with low tree canopy to improve air quality, provide shade, and enhance walkability.',
         'options': ['Approve', 'Reduce number', 'Reject']
     },
     {
-        'title': 'Install 20 public water refill stations in parks and downtown areas',
-        'description': 'Add drinking water stations to reduce plastic bottle waste and improve public health.',
+        'title': 'Install 25 public water refill stations in parks, schools, and community centers',
+        'description': 'Add drinking water stations to reduce plastic bottle waste, improve public health, and encourage hydration during outdoor activities.',
         'options': ['Approve', 'Reduce locations', 'Reject']
     },
     {
-        'title': 'Retrofit lighting in all public schools with energy-efficient LEDs',
-        'description': 'Replace existing lighting systems in 12 public school buildings to reduce energy consumption and costs.',
+        'title': 'Retrofit lighting in all municipal buildings with energy-efficient LED systems',
+        'description': 'Replace existing lighting systems in 15 municipal buildings to reduce energy consumption by 40% and lower operating costs.',
         'options': ['Approve', 'Phase implementation', 'Reject']
     },
     {
-        'title': 'Add wheelchair-accessible seating and pathways in Riverside Park',
-        'description': 'Install accessible benches and improve pathway surfaces to ensure park access for all residents.',
+        'title': 'Add wheelchair-accessible seating and improved pathways in Central Park',
+        'description': 'Install accessible benches, improve pathway surfaces, and add shade structures to ensure park access for residents of all abilities.',
         'options': ['Approve', 'Modify scope', 'Reject']
     },
     {
-        'title': 'Create weekly "car-free Sunday" on Main Avenue during summer months',
-        'description': 'Close Main Avenue to vehicle traffic every Sunday from June through August for community events and recreation.',
+        'title': 'Create monthly "Open Streets" program on Main Street during summer months',
+        'description': 'Close Main Street to vehicle traffic on the first Sunday of each month from June through September for community events and recreation.',
         'options': ['Approve', 'Reduce frequency', 'Reject']
     },
     {
-        'title': 'Launch local food voucher program for low-income households',
-        'description': 'Provide $50 monthly vouchers redeemable at farmers\' markets for 200 qualifying households.',
+        'title': 'Launch local food voucher program for 300 low-income households',
+        'description': 'Provide $75 monthly vouchers redeemable at farmers markets and local food co-ops for qualifying households to improve food access.',
         'options': ['Approve', 'Reduce amount', 'Reject']
     },
     {
-        'title': 'Replace diesel buses on Route 6 with electric buses within 18 months',
-        'description': 'Purchase 8 electric buses to replace aging diesel vehicles on the downtown-to-airport route.',
+        'title': 'Replace diesel buses on Route 8 with electric buses within 24 months',
+        'description': 'Purchase 12 electric buses to replace aging diesel vehicles on the downtown-to-airport route, reducing emissions and noise pollution.',
         'options': ['Approve', 'Extend timeline', 'Reject']
     },
     {
-        'title': 'Start youth apprenticeship program in city maintenance departments',
-        'description': 'Create 15 paid apprenticeship positions for youth aged 16-24 in parks, streets, and facilities maintenance.',
+        'title': 'Start youth apprenticeship program in city maintenance and parks departments',
+        'description': 'Create 20 paid apprenticeship positions for youth aged 16-24 in parks maintenance, street repair, and facilities management.',
         'options': ['Approve', 'Reduce positions', 'Reject']
     },
     {
-        'title': 'Create protected pedestrian crossing at 5th and Market',
-        'description': 'Install signalized crosswalk with pedestrian refuge island at the busy 5th and Market intersection.',
+        'title': 'Create protected pedestrian crossing at 3rd and Market intersection',
+        'description': 'Install signalized crosswalk with pedestrian refuge island and countdown timers at the busy 3rd and Market intersection.',
         'options': ['Approve', 'Modify design', 'Reject']
     },
     {
-        'title': 'Run public art mural program in underutilized spaces downtown',
-        'description': 'Commission 10 murals on blank walls and underpasses to improve visual appeal and support local artists.',
+        'title': 'Run public art mural program in underutilized downtown spaces',
+        'description': 'Commission 15 murals on blank walls and underpasses to improve visual appeal, support local artists, and reduce graffiti.',
         'options': ['Approve', 'Reduce number', 'Reject']
     },
     {
-        'title': 'Upgrade stormwater drains in flood-prone neighborhoods',
-        'description': 'Replace and expand drainage infrastructure in three neighborhoods that experience regular flooding.',
+        'title': 'Upgrade stormwater drainage system in flood-prone areas',
+        'description': 'Replace and expand drainage infrastructure in four neighborhoods that experience regular flooding during heavy rain events.',
         'options': ['Approve', 'Prioritize areas', 'Reject']
     },
     {
-        'title': 'Pilot mobile mental health support unit operating three days a week',
-        'description': 'Deploy a mobile crisis intervention team to provide immediate mental health support in high-need areas.',
+        'title': 'Pilot mobile mental health crisis response unit operating five days per week',
+        'description': 'Deploy a mobile crisis intervention team with mental health professionals to provide immediate support in high-need areas.',
         'options': ['Approve', 'Reduce days', 'Reject']
     },
     {
-        'title': 'Offer free Wi-Fi in all public libraries and recreation centers',
-        'description': 'Install and maintain wireless internet access in 8 public facilities to improve digital access.',
+        'title': 'Offer free Wi-Fi in all public libraries, recreation centers, and community spaces',
+        'description': 'Install and maintain wireless internet access in 12 public facilities to improve digital access and support remote work and learning.',
         'options': ['Approve', 'Limit locations', 'Reject']
     },
     {
-        'title': 'Expand community policing foot patrols to two additional neighborhoods',
-        'description': 'Add walking patrols in Eastside and Southside neighborhoods to improve community-police relations.',
+        'title': 'Expand community policing foot patrols to three additional neighborhoods',
+        'description': 'Add walking patrols in Eastside, Southside, and Northside neighborhoods to improve community-police relations and crime prevention.',
         'options': ['Approve', 'Add one area', 'Reject']
     },
     {
-        'title': 'Begin construction of skate park in Westside Recreation Area',
-        'description': 'Build a 15,000 square foot skate park with beginner and advanced areas for youth recreation.',
+        'title': 'Begin construction of inclusive playground in Westside Recreation Area',
+        'description': 'Build a 20,000 square foot playground with accessible equipment for children of all abilities, including sensory-friendly areas.',
         'options': ['Approve', 'Reduce size', 'Reject']
     },
     {
-        'title': 'Install traffic-calming speed tables on Oak Drive near elementary school',
-        'description': 'Add three speed tables on Oak Drive to reduce vehicle speeds and improve pedestrian safety near the school.',
+        'title': 'Install traffic-calming speed humps on Oak Drive near elementary school',
+        'description': 'Add four speed humps on Oak Drive to reduce vehicle speeds and improve pedestrian safety near the elementary school.',
         'options': ['Approve', 'Reduce number', 'Reject']
     },
     {
-        'title': 'Provide grants for storefront energy-efficiency upgrades to 20 small businesses',
-        'description': 'Offer $5,000 grants to small businesses for lighting, HVAC, and insulation improvements.',
+        'title': 'Provide energy-efficiency grants to 25 small businesses for storefront upgrades',
+        'description': 'Offer $7,500 grants to small businesses for lighting, HVAC, insulation, and window improvements to reduce energy costs.',
         'options': ['Approve', 'Reduce amount', 'Reject']
     },
     {
-        'title': 'Introduce on-demand evening bus service for shift workers in industrial park',
-        'description': 'Launch flexible bus service from 6 PM to 2 AM to serve workers at the industrial park and surrounding areas.',
+        'title': 'Introduce on-demand evening bus service for shift workers in industrial district',
+        'description': 'Launch flexible bus service from 7 PM to 3 AM to serve workers at the industrial park and surrounding residential areas.',
         'options': ['Approve', 'Reduce hours', 'Reject']
     },
     {
-        'title': 'Convert vacant lot at 14th and Pine into temporary community garden for two years',
-        'description': 'Transform the 0.5-acre vacant lot into a community garden with 30 plots and shared composting area.',
+        'title': 'Convert vacant lot at 12th and Pine into community garden for three years',
+        'description': 'Transform the 0.75-acre vacant lot into a community garden with 40 plots, shared composting area, and educational programming.',
         'options': ['Approve', 'Reduce size', 'Reject']
     },
     {
-        'title': 'Offer free weekend transit for youth under 18 for one-year pilot',
-        'description': 'Provide free bus and train rides on Saturdays and Sundays for all youth to encourage independent mobility.',
+        'title': 'Offer free weekend transit for youth under 18 for 18-month pilot',
+        'description': 'Provide free bus and train rides on Saturdays and Sundays for all youth to encourage independent mobility and reduce family transportation costs.',
         'options': ['Approve', 'Limit days', 'Reject']
     },
     {
-        'title': 'Create citywide tool library where residents can borrow equipment for home projects',
-        'description': 'Establish a lending library with 200 tools and equipment items available for 7-day borrowing periods.',
+        'title': 'Create citywide tool and equipment lending library',
+        'description': 'Establish a lending library with 300 tools and equipment items available for 14-day borrowing periods to support DIY projects and reduce waste.',
         'options': ['Approve', 'Reduce inventory', 'Reject']
     },
     {
-        'title': 'Add shaded seating areas to three senior housing complexes',
-        'description': 'Install covered benches and tables with shade structures at senior housing facilities to improve outdoor access.',
+        'title': 'Add shaded seating areas to four senior housing complexes',
+        'description': 'Install covered benches, tables, and shade structures at senior housing facilities to improve outdoor access and social interaction.',
         'options': ['Approve', 'Reduce locations', 'Reject']
     },
     {
-        'title': 'Implement bilingual signage in all city-owned buildings',
-        'description': 'Add Spanish-language signs alongside English in all municipal buildings to improve accessibility.',
+        'title': 'Implement bilingual signage in all city-owned buildings and facilities',
+        'description': 'Add Spanish-language signs alongside English in all municipal buildings to improve accessibility for Spanish-speaking residents.',
         'options': ['Approve', 'Phase implementation', 'Reject']
     },
     {
-        'title': 'Start bike-share program with 100 bikes at 10 docking stations',
-        'description': 'Launch a public bicycle sharing system with stations throughout downtown and adjacent neighborhoods.',
+        'title': 'Start bike-share program with 150 bikes at 15 docking stations',
+        'description': 'Launch a public bicycle sharing system with stations throughout downtown and adjacent neighborhoods to provide last-mile transportation.',
         'options': ['Approve', 'Reduce scale', 'Reject']
     },
     {
-        'title': 'Build public charging station hub for electric vehicles in central parking lot',
-        'description': 'Install 12 electric vehicle charging stations in the main downtown parking facility to support EV adoption.',
+        'title': 'Build public charging station hub for electric vehicles in central parking garage',
+        'description': 'Install 20 electric vehicle charging stations in the main downtown parking facility to support EV adoption and reduce emissions.',
         'options': ['Approve', 'Reduce stations', 'Reject']
     },
     {
-        'title': 'Restore historic fountain in Civic Plaza',
-        'description': 'Repair and restore the 1920s fountain in Civic Plaza, including plumbing, electrical, and decorative elements.',
+        'title': 'Restore historic bandshell in Memorial Park',
+        'description': 'Repair and restore the 1930s bandshell in Memorial Park, including structural repairs, electrical upgrades, and acoustic improvements.',
         'options': ['Approve', 'Modify scope', 'Reject']
     },
     {
-        'title': 'Add two new trash and recycling bins per block in downtown core',
-        'description': 'Install 40 new waste receptacles with separate recycling compartments throughout the downtown area.',
+        'title': 'Add three new trash and recycling bins per block in downtown core',
+        'description': 'Install 60 new waste receptacles with separate recycling compartments throughout the downtown area to reduce litter and improve recycling rates.',
         'options': ['Approve', 'Reduce number', 'Reject']
     }
 ]
 
-# Sample comments for proposals
+# Sample comments for proposals - balanced PRO/CON perspectives
 SAMPLE_COMMENTS = {
     'bike_lanes': [
-        {'text': 'PRO: Improves cyclist safety and encourages active transportation', 'user': 'cyclist'},
-        {'text': 'CON: Reduces street parking for local businesses', 'user': 'shop_owner'},
-        {'text': 'PRO: Great for students commuting to university', 'user': 'student'},
-        {'text': 'CON: Will slow down traffic during construction', 'user': 'driver'},
-        {'text': 'This aligns with our Vision Zero commitment', 'user': 'cityplanner'},
+        {'text': 'PRO: This will significantly improve cyclist safety and encourage more people to bike instead of drive', 'user': 'cyclist'},
+        {'text': 'CON: Removing street parking will hurt local businesses that depend on customer parking', 'user': 'shop_owner'},
+        {'text': 'PRO: Great for students commuting to university - much safer than current conditions', 'user': 'student'},
+        {'text': 'CON: Construction will cause traffic delays and the lanes will slow down vehicle traffic permanently', 'user': 'driver'},
+        {'text': 'PRO: This aligns perfectly with our Complete Streets policy and Vision Zero goals', 'user': 'cityplanner'},
     ],
     'composting': [
-        {'text': 'PRO: Reduces landfill waste and supports soil health', 'user': 'waste_manager'},
-        {'text': 'CON: Higher collection costs during pilot phase', 'user': 'mayor'},
-        {'text': 'PRO: Teaches residents about waste reduction', 'user': 'teacher'},
-        {'text': 'CON: Requires significant behavior change', 'user': 'parent'},
-        {'text': 'Let\'s see how the pilot goes before expanding', 'user': 'librarian'},
+        {'text': 'PRO: Reduces landfill waste by 30% and creates valuable compost for city parks', 'user': 'waste_manager'},
+        {'text': 'CON: Higher collection costs during pilot phase - need to see if residents actually use it', 'user': 'mayor'},
+        {'text': 'PRO: Teaches residents about waste reduction and soil health - great educational opportunity', 'user': 'teacher'},
+        {'text': 'CON: Requires significant behavior change - many residents may not participate', 'user': 'parent'},
+        {'text': 'PRO: Let\'s see how the pilot goes - if successful, we can expand citywide', 'user': 'librarian'},
     ],
     'library_hours': [
-        {'text': 'PRO: Better access for working families', 'user': 'parent'},
-        {'text': 'CON: Additional staffing costs', 'user': 'mayor'},
-        {'text': 'PRO: Students need quiet study spaces on weekends', 'user': 'student'},
-        {'text': 'This supports our cultural access goals', 'user': 'teacher'},
-        {'text': 'CON: Limited budget for extended services', 'user': 'librarian'},
+        {'text': 'PRO: Better access for working families who can\'t visit during regular hours', 'user': 'parent'},
+        {'text': 'CON: Additional staffing costs of $45,000 annually - tight budget year', 'user': 'mayor'},
+        {'text': 'PRO: Students need quiet study spaces on weeknights - current hours are too limited', 'user': 'student'},
+        {'text': 'PRO: This supports our goal of making cultural and educational resources accessible to all', 'user': 'teacher'},
+        {'text': 'CON: Limited budget for extended services - other departments may need to be cut', 'user': 'librarian'},
     ],
     'electric_buses': [
-        {'text': 'PRO: Reduces air pollution in downtown', 'user': 'nurse'},
-        {'text': 'CON: High upfront costs for new vehicles', 'user': 'mayor'},
-        {'text': 'PRO: Quieter operation improves quality of life', 'user': 'parent'},
-        {'text': 'CON: Limited charging infrastructure', 'user': 'driver'},
-        {'text': 'This supports our climate action framework', 'user': 'cityplanner'},
+        {'text': 'PRO: Reduces air pollution in downtown by 85% compared to diesel buses', 'user': 'nurse'},
+        {'text': 'CON: High upfront costs of $2.4 million - need to see long-term savings', 'user': 'mayor'},
+        {'text': 'PRO: Quieter operation improves quality of life for residents along the route', 'user': 'parent'},
+        {'text': 'CON: Limited charging infrastructure - need to build charging stations first', 'user': 'driver'},
+        {'text': 'PRO: This supports our climate action plan and reduces our carbon footprint', 'user': 'cityplanner'},
     ],
     'water_stations': [
-        {'text': 'PRO: Reduces plastic bottle waste', 'user': 'waste_manager'},
-        {'text': 'PRO: Improves public health and hydration', 'user': 'nurse'},
-        {'text': 'CON: Maintenance and water quality monitoring costs', 'user': 'mayor'},
-        {'text': 'PRO: Great for families with children', 'user': 'parent'},
-        {'text': 'This supports our zero waste commitment', 'user': 'cityplanner'},
+        {'text': 'PRO: Reduces plastic bottle waste by an estimated 50,000 bottles annually', 'user': 'waste_manager'},
+        {'text': 'PRO: Improves public health by encouraging hydration during outdoor activities', 'user': 'nurse'},
+        {'text': 'CON: Maintenance and water quality monitoring costs of $15,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Great for families with children - reduces need to carry water bottles', 'user': 'parent'},
+        {'text': 'PRO: This supports our zero waste commitment and reduces environmental impact', 'user': 'cityplanner'},
     ],
     'led_lighting': [
-        {'text': 'PRO: Significant energy and cost savings', 'user': 'developer'},
-        {'text': 'PRO: Better lighting quality for students', 'user': 'teacher'},
-        {'text': 'CON: High upfront installation costs', 'user': 'mayor'},
-        {'text': 'PRO: Supports our green building standards', 'user': 'cityplanner'},
-        {'text': 'CON: Disposal of old lighting fixtures', 'user': 'waste_manager'},
+        {'text': 'PRO: Significant energy savings of 40% and cost savings of $85,000 annually', 'user': 'developer'},
+        {'text': 'PRO: Better lighting quality for students and staff in school buildings', 'user': 'teacher'},
+        {'text': 'CON: High upfront installation costs of $320,000 - need to see payback period', 'user': 'mayor'},
+        {'text': 'PRO: Supports our green building standards and reduces environmental impact', 'user': 'cityplanner'},
+        {'text': 'CON: Disposal of old lighting fixtures - need to ensure proper recycling', 'user': 'waste_manager'},
     ],
-    'car_free_sunday': [
-        {'text': 'PRO: Creates space for community events', 'user': 'parent'},
-        {'text': 'CON: Impacts businesses that rely on Sunday traffic', 'user': 'shop_owner'},
-        {'text': 'PRO: Reduces air pollution one day per week', 'user': 'nurse'},
-        {'text': 'PRO: Great for families and outdoor activities', 'user': 'student'},
-        {'text': 'CON: May inconvenience residents who need to drive', 'user': 'driver'},
+    'open_streets': [
+        {'text': 'PRO: Creates space for community events and encourages physical activity', 'user': 'parent'},
+        {'text': 'CON: Impacts businesses that rely on Sunday traffic and parking', 'user': 'shop_owner'},
+        {'text': 'PRO: Reduces air pollution one day per month and promotes community connection', 'user': 'nurse'},
+        {'text': 'PRO: Great for families and outdoor activities - creates car-free space', 'user': 'student'},
+        {'text': 'CON: May inconvenience residents who need to drive on Sundays', 'user': 'driver'},
     ],
     'food_vouchers': [
-        {'text': 'PRO: Supports local farmers and food access', 'user': 'parent'},
-        {'text': 'PRO: Improves nutrition for low-income families', 'user': 'nurse'},
-        {'text': 'CON: Program administration costs', 'user': 'mayor'},
-        {'text': 'PRO: Supports our local food commitment', 'user': 'cityplanner'},
-        {'text': 'CON: Limited to farmers\' market availability', 'user': 'shop_owner'},
+        {'text': 'PRO: Supports local farmers and improves food access for low-income families', 'user': 'parent'},
+        {'text': 'PRO: Improves nutrition and health outcomes for vulnerable populations', 'user': 'nurse'},
+        {'text': 'CON: Program administration costs of $25,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Supports our local food system development policy', 'user': 'cityplanner'},
+        {'text': 'CON: Limited to farmers market availability - may not work year-round', 'user': 'shop_owner'},
     ],
     'youth_apprenticeship': [
-        {'text': 'PRO: Provides job training and opportunities', 'user': 'teacher'},
-        {'text': 'PRO: Addresses youth unemployment', 'user': 'parent'},
-        {'text': 'CON: Training and supervision costs', 'user': 'mayor'},
-        {'text': 'PRO: Builds future workforce for city services', 'user': 'cityplanner'},
-        {'text': 'PRO: Great opportunity for hands-on learning', 'user': 'student'},
+        {'text': 'PRO: Provides valuable job training and career opportunities for young people', 'user': 'teacher'},
+        {'text': 'PRO: Addresses youth unemployment and builds workforce skills', 'user': 'parent'},
+        {'text': 'CON: Training and supervision costs of $180,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Builds future workforce for city services and creates career pathways', 'user': 'cityplanner'},
+        {'text': 'PRO: Great opportunity for hands-on learning and skill development', 'user': 'student'},
     ],
     'pedestrian_crossing': [
-        {'text': 'PRO: Improves safety at busy intersection', 'user': 'parent'},
-        {'text': 'PRO: Supports our Vision Zero commitment', 'user': 'cityplanner'},
-        {'text': 'CON: May slow down vehicle traffic', 'user': 'driver'},
-        {'text': 'PRO: Better access for elderly residents', 'user': 'nurse'},
-        {'text': 'CON: Construction disruption', 'user': 'shop_owner'},
+        {'text': 'PRO: Improves safety at one of our most dangerous intersections', 'user': 'parent'},
+        {'text': 'PRO: Supports our Complete Streets policy and Vision Zero commitment', 'user': 'cityplanner'},
+        {'text': 'CON: May slow down vehicle traffic during peak hours', 'user': 'driver'},
+        {'text': 'PRO: Better access for elderly residents and people with disabilities', 'user': 'nurse'},
+        {'text': 'CON: Construction will cause traffic disruption for several weeks', 'user': 'shop_owner'},
     ],
     'public_art': [
-        {'text': 'PRO: Improves visual appeal of downtown', 'user': 'shop_owner'},
-        {'text': 'PRO: Supports local artists', 'user': 'teacher'},
-        {'text': 'CON: Maintenance and vandalism concerns', 'user': 'mayor'},
-        {'text': 'PRO: Creates cultural vibrancy', 'user': 'librarian'},
-        {'text': 'PRO: Transforms underutilized spaces', 'user': 'cityplanner'},
+        {'text': 'PRO: Improves visual appeal of downtown and attracts visitors', 'user': 'shop_owner'},
+        {'text': 'PRO: Supports local artists and creates cultural vibrancy', 'user': 'teacher'},
+        {'text': 'CON: Maintenance and potential vandalism costs of $12,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Creates cultural identity and transforms underutilized spaces', 'user': 'librarian'},
+        {'text': 'PRO: Transforms blank walls into engaging public spaces', 'user': 'cityplanner'},
     ],
     'stormwater_drains': [
-        {'text': 'PRO: Reduces flooding in affected neighborhoods', 'user': 'parent'},
-        {'text': 'PRO: Protects property values', 'user': 'developer'},
-        {'text': 'CON: High infrastructure costs', 'user': 'mayor'},
-        {'text': 'PRO: Improves water quality', 'user': 'nurse'},
-        {'text': 'CON: Construction disruption', 'user': 'driver'},
+        {'text': 'PRO: Reduces flooding in affected neighborhoods by 80%', 'user': 'parent'},
+        {'text': 'PRO: Protects property values and prevents costly flood damage', 'user': 'developer'},
+        {'text': 'CON: High infrastructure costs of $1.2 million', 'user': 'mayor'},
+        {'text': 'PRO: Improves water quality by reducing stormwater runoff', 'user': 'nurse'},
+        {'text': 'CON: Construction disruption for several months in affected areas', 'user': 'driver'},
     ],
     'mental_health_unit': [
-        {'text': 'PRO: Provides immediate crisis support', 'user': 'nurse'},
-        {'text': 'PRO: Reduces emergency room visits', 'user': 'mayor'},
-        {'text': 'CON: Ongoing operational costs', 'user': 'cityplanner'},
-        {'text': 'PRO: Better outcomes for mental health crises', 'user': 'teacher'},
-        {'text': 'PRO: Supports community safety', 'user': 'parent'},
+        {'text': 'PRO: Provides immediate crisis support and reduces emergency room visits', 'user': 'nurse'},
+        {'text': 'PRO: More cost-effective than emergency room care for mental health crises', 'user': 'mayor'},
+        {'text': 'CON: Ongoing operational costs of $280,000 annually', 'user': 'cityplanner'},
+        {'text': 'PRO: Better outcomes for mental health crises and reduces stigma', 'user': 'teacher'},
+        {'text': 'PRO: Supports community safety and provides appropriate crisis response', 'user': 'parent'},
     ],
     'free_wifi': [
-        {'text': 'PRO: Improves digital access for all residents', 'user': 'student'},
-        {'text': 'PRO: Supports our digital inclusion goals', 'user': 'cityplanner'},
-        {'text': 'CON: Ongoing maintenance and security costs', 'user': 'mayor'},
-        {'text': 'PRO: Helps with job searches and education', 'user': 'teacher'},
-        {'text': 'PRO: Attracts people to public spaces', 'user': 'librarian'},
+        {'text': 'PRO: Improves digital access for all residents, especially low-income families', 'user': 'student'},
+        {'text': 'PRO: Supports our digital equity policy and helps bridge the digital divide', 'user': 'cityplanner'},
+        {'text': 'CON: Ongoing maintenance and security costs of $35,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Helps with job searches, education, and remote work opportunities', 'user': 'teacher'},
+        {'text': 'PRO: Attracts people to public spaces and supports community engagement', 'user': 'librarian'},
     ],
     'community_policing': [
-        {'text': 'PRO: Improves community-police relations', 'user': 'parent'},
-        {'text': 'PRO: More effective than reactive policing', 'user': 'nurse'},
-        {'text': 'CON: Additional staffing costs', 'user': 'mayor'},
-        {'text': 'PRO: Builds trust in neighborhoods', 'user': 'cityplanner'},
-        {'text': 'PRO: Prevents crime through presence', 'user': 'shop_owner'},
+        {'text': 'PRO: Improves community-police relations and builds trust', 'user': 'parent'},
+        {'text': 'PRO: More effective than reactive policing - prevents crime through presence', 'user': 'nurse'},
+        {'text': 'CON: Additional staffing costs of $420,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Builds trust in neighborhoods and improves public safety', 'user': 'cityplanner'},
+        {'text': 'PRO: Prevents crime through community engagement and visibility', 'user': 'shop_owner'},
     ],
-    'skate_park': [
-        {'text': 'PRO: Provides youth recreation opportunities', 'user': 'student'},
-        {'text': 'PRO: Reduces skateboarding in inappropriate areas', 'user': 'parent'},
-        {'text': 'CON: Construction and maintenance costs', 'user': 'mayor'},
-        {'text': 'PRO: Supports active lifestyles', 'user': 'nurse'},
-        {'text': 'CON: Potential noise concerns', 'user': 'driver'},
+    'inclusive_playground': [
+        {'text': 'PRO: Provides recreation opportunities for children of all abilities', 'user': 'student'},
+        {'text': 'PRO: Creates inclusive space where all families can play together', 'user': 'parent'},
+        {'text': 'CON: Construction and maintenance costs of $450,000', 'user': 'mayor'},
+        {'text': 'PRO: Supports active lifestyles and social development for all children', 'user': 'nurse'},
+        {'text': 'CON: May attract more visitors and increase noise in the area', 'user': 'driver'},
     ],
-    'speed_tables': [
-        {'text': 'PRO: Improves safety near school', 'user': 'parent'},
-        {'text': 'PRO: Supports Vision Zero goals', 'user': 'cityplanner'},
-        {'text': 'CON: May slow down emergency vehicles', 'user': 'nurse'},
-        {'text': 'PRO: Protects children and families', 'user': 'teacher'},
-        {'text': 'CON: Inconvenience for drivers', 'user': 'driver'},
+    'speed_humps': [
+        {'text': 'PRO: Improves safety near school and reduces vehicle speeds by 40%', 'user': 'parent'},
+        {'text': 'PRO: Supports our Complete Streets policy and protects children', 'user': 'cityplanner'},
+        {'text': 'CON: May slow down emergency vehicles and cause driver frustration', 'user': 'nurse'},
+        {'text': 'PRO: Protects children and families walking to school', 'user': 'teacher'},
+        {'text': 'CON: Inconvenience for drivers and potential damage to vehicles', 'user': 'driver'},
     ],
     'energy_grants': [
-        {'text': 'PRO: Reduces energy costs for small businesses', 'user': 'shop_owner'},
-        {'text': 'PRO: Supports our green building standards', 'user': 'cityplanner'},
-        {'text': 'CON: Limited grant funding available', 'user': 'mayor'},
-        {'text': 'PRO: Creates local jobs', 'user': 'developer'},
-        {'text': 'PRO: Reduces environmental impact', 'user': 'waste_manager'},
+        {'text': 'PRO: Reduces energy costs for small businesses and improves competitiveness', 'user': 'shop_owner'},
+        {'text': 'PRO: Supports our green building standards and reduces environmental impact', 'user': 'cityplanner'},
+        {'text': 'CON: Limited grant funding available - only 25 businesses can benefit', 'user': 'mayor'},
+        {'text': 'PRO: Creates local jobs for contractors and energy auditors', 'user': 'developer'},
+        {'text': 'PRO: Reduces environmental impact and supports sustainability', 'user': 'waste_manager'},
     ],
     'evening_bus': [
-        {'text': 'PRO: Serves shift workers who need transportation', 'user': 'nurse'},
-        {'text': 'PRO: Improves access to jobs', 'user': 'parent'},
-        {'text': 'CON: Low ridership may not justify costs', 'user': 'mayor'},
-        {'text': 'PRO: Supports our mobility for all goals', 'user': 'cityplanner'},
-        {'text': 'PRO: Reduces drunk driving', 'user': 'driver'},
+        {'text': 'PRO: Serves shift workers who need reliable transportation after hours', 'user': 'nurse'},
+        {'text': 'PRO: Improves access to jobs and reduces transportation barriers', 'user': 'parent'},
+        {'text': 'CON: Low ridership may not justify the $180,000 annual cost', 'user': 'mayor'},
+        {'text': 'PRO: Supports our transit-oriented development and mobility goals', 'user': 'cityplanner'},
+        {'text': 'PRO: Reduces drunk driving and provides safe transportation option', 'user': 'driver'},
     ],
     'community_garden': [
-        {'text': 'PRO: Provides fresh food access', 'user': 'parent'},
-        {'text': 'PRO: Supports our local food commitment', 'user': 'cityplanner'},
-        {'text': 'CON: Temporary use of valuable land', 'user': 'developer'},
-        {'text': 'PRO: Builds community connections', 'user': 'teacher'},
-        {'text': 'PRO: Educational opportunity for children', 'user': 'student'},
+        {'text': 'PRO: Provides fresh food access and educational opportunities', 'user': 'parent'},
+        {'text': 'PRO: Supports our local food system development policy', 'user': 'cityplanner'},
+        {'text': 'CON: Temporary use of valuable land that could be developed', 'user': 'developer'},
+        {'text': 'PRO: Builds community connections and teaches sustainable practices', 'user': 'teacher'},
+        {'text': 'PRO: Educational opportunity for children to learn about food production', 'user': 'student'},
     ],
     'free_youth_transit': [
-        {'text': 'PRO: Encourages independent mobility for youth', 'user': 'student'},
-        {'text': 'PRO: Reduces family transportation costs', 'user': 'parent'},
-        {'text': 'CON: Revenue loss for transit system', 'user': 'mayor'},
-        {'text': 'PRO: Supports our mobility for all goals', 'user': 'cityplanner'},
-        {'text': 'PRO: Reduces traffic congestion', 'user': 'driver'},
+        {'text': 'PRO: Encourages independent mobility for youth and reduces family costs', 'user': 'student'},
+        {'text': 'PRO: Reduces family transportation costs and increases youth access', 'user': 'parent'},
+        {'text': 'CON: Revenue loss for transit system of $65,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Supports our mobility for all goals and reduces car dependency', 'user': 'cityplanner'},
+        {'text': 'PRO: Reduces traffic congestion and supports sustainable transportation', 'user': 'driver'},
     ],
     'tool_library': [
-        {'text': 'PRO: Reduces consumer waste', 'user': 'waste_manager'},
-        {'text': 'PRO: Makes tools accessible to all residents', 'user': 'parent'},
-        {'text': 'CON: Equipment maintenance and replacement costs', 'user': 'mayor'},
-        {'text': 'PRO: Supports DIY culture and skills', 'user': 'teacher'},
-        {'text': 'PRO: Builds community connections', 'user': 'librarian'},
+        {'text': 'PRO: Reduces consumer waste and makes tools accessible to all residents', 'user': 'waste_manager'},
+        {'text': 'PRO: Makes expensive tools accessible to residents who can\'t afford them', 'user': 'parent'},
+        {'text': 'CON: Equipment maintenance and replacement costs of $28,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Supports DIY culture and teaches valuable skills', 'user': 'teacher'},
+        {'text': 'PRO: Builds community connections and reduces consumption', 'user': 'librarian'},
     ],
     'senior_seating': [
-        {'text': 'PRO: Improves outdoor access for seniors', 'user': 'nurse'},
-        {'text': 'PRO: Supports aging in place', 'user': 'parent'},
-        {'text': 'CON: Maintenance and weather damage', 'user': 'mayor'},
-        {'text': 'PRO: Encourages social interaction', 'user': 'librarian'},
-        {'text': 'PRO: Supports our public space access goals', 'user': 'cityplanner'},
+        {'text': 'PRO: Improves outdoor access for seniors and supports aging in place', 'user': 'nurse'},
+        {'text': 'PRO: Supports aging in place and encourages social interaction', 'user': 'parent'},
+        {'text': 'CON: Maintenance and weather damage costs of $8,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Encourages social interaction and outdoor activity for seniors', 'user': 'librarian'},
+        {'text': 'PRO: Supports our parks and recreation access standards', 'user': 'cityplanner'},
     ],
     'bilingual_signage': [
-        {'text': 'PRO: Improves accessibility for Spanish speakers', 'user': 'teacher'},
-        {'text': 'PRO: Supports inclusive community', 'user': 'parent'},
-        {'text': 'CON: Translation and installation costs', 'user': 'mayor'},
-        {'text': 'PRO: Makes services more accessible', 'user': 'nurse'},
-        {'text': 'PRO: Reflects our diverse community', 'user': 'librarian'},
+        {'text': 'PRO: Improves accessibility for Spanish-speaking residents', 'user': 'teacher'},
+        {'text': 'PRO: Supports inclusive community and makes services accessible', 'user': 'parent'},
+        {'text': 'CON: Translation and installation costs of $45,000', 'user': 'mayor'},
+        {'text': 'PRO: Makes city services more accessible to diverse populations', 'user': 'nurse'},
+        {'text': 'PRO: Reflects our diverse community and improves inclusivity', 'user': 'librarian'},
     ],
     'bike_share': [
-        {'text': 'PRO: Provides last-mile transportation', 'user': 'cyclist'},
-        {'text': 'PRO: Reduces car dependency', 'user': 'driver'},
-        {'text': 'CON: High startup and maintenance costs', 'user': 'mayor'},
-        {'text': 'PRO: Supports our mobility for all goals', 'user': 'cityplanner'},
-        {'text': 'PRO: Great for short trips', 'user': 'student'},
+        {'text': 'PRO: Provides last-mile transportation and reduces car dependency', 'user': 'cyclist'},
+        {'text': 'PRO: Reduces car dependency and supports sustainable transportation', 'user': 'driver'},
+        {'text': 'CON: High startup and maintenance costs of $320,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Supports our mobility for all goals and transit-oriented development', 'user': 'cityplanner'},
+        {'text': 'PRO: Great for short trips and reduces parking demand', 'user': 'student'},
     ],
     'ev_charging': [
-        {'text': 'PRO: Supports electric vehicle adoption', 'user': 'driver'},
-        {'text': 'PRO: Reduces air pollution', 'user': 'nurse'},
-        {'text': 'CON: High installation and electricity costs', 'user': 'mayor'},
-        {'text': 'PRO: Supports our climate action framework', 'user': 'cityplanner'},
-        {'text': 'PRO: Attracts EV drivers to downtown', 'user': 'shop_owner'},
+        {'text': 'PRO: Supports electric vehicle adoption and reduces emissions', 'user': 'driver'},
+        {'text': 'PRO: Reduces air pollution and supports clean transportation', 'user': 'nurse'},
+        {'text': 'CON: High installation and electricity costs of $85,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Supports our climate action plan and reduces carbon footprint', 'user': 'cityplanner'},
+        {'text': 'PRO: Attracts EV drivers to downtown and supports local businesses', 'user': 'shop_owner'},
     ],
-    'historic_fountain': [
-        {'text': 'PRO: Preserves our historical heritage', 'user': 'librarian'},
-        {'text': 'PRO: Improves Civic Plaza aesthetics', 'user': 'shop_owner'},
-        {'text': 'CON: High restoration costs', 'user': 'mayor'},
-        {'text': 'PRO: Creates gathering space', 'user': 'parent'},
-        {'text': 'PRO: Supports our historical preservation goals', 'user': 'cityplanner'},
+    'historic_bandshell': [
+        {'text': 'PRO: Preserves our historical heritage and cultural landmark', 'user': 'librarian'},
+        {'text': 'PRO: Improves Memorial Park aesthetics and creates gathering space', 'user': 'shop_owner'},
+        {'text': 'CON: High restoration costs of $280,000', 'user': 'mayor'},
+        {'text': 'PRO: Creates gathering space for community events and performances', 'user': 'parent'},
+        {'text': 'PRO: Supports our historical preservation and cultural goals', 'user': 'cityplanner'},
     ],
     'waste_bins': [
-        {'text': 'PRO: Reduces litter in downtown', 'user': 'waste_manager'},
-        {'text': 'PRO: Improves recycling rates', 'user': 'cityplanner'},
-        {'text': 'CON: Ongoing maintenance and collection costs', 'user': 'mayor'},
-        {'text': 'PRO: Better for businesses and visitors', 'user': 'shop_owner'},
-        {'text': 'PRO: Supports our zero waste commitment', 'user': 'parent'},
+        {'text': 'PRO: Reduces litter in downtown and improves cleanliness', 'user': 'waste_manager'},
+        {'text': 'PRO: Improves recycling rates and supports zero waste goals', 'user': 'cityplanner'},
+        {'text': 'CON: Ongoing maintenance and collection costs of $22,000 annually', 'user': 'mayor'},
+        {'text': 'PRO: Better for businesses and visitors - cleaner downtown', 'user': 'shop_owner'},
+        {'text': 'PRO: Supports our zero waste commitment and reduces environmental impact', 'user': 'parent'},
     ]
 }
 
@@ -712,7 +712,7 @@ class DemoSeeder:
     async def print_summary(self):
         """Print a summary of what was created."""
         print("\n" + "="*50)
-        print("RIVERBEND DEMO SEEDING SUMMARY")
+        print("SPRINGFIELD DEMO SEEDING SUMMARY")
         print("="*50)
         print(f"Users created: {len(self.demo_users)}")
         print(f"Level A proposals: {len([p for p in self.demo_polls if 'Level A' in p])}")

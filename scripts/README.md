@@ -86,10 +86,10 @@ Both scripts measure the response time of the `/api/polls/{poll_id}/results` end
 - Delegations are simple 1:1 chains (each delegator delegates to one direct voter)
 - All votes are cast for Option A to create a clear performance test scenario
 
-## Riverbend Demo Seeding
+## Springfield Demo Seeding
 
 ### `seed_demo_city.py`
-A comprehensive demo seeding script that creates a realistic small-city community called "Riverbend" with:
+A comprehensive demo seeding script that creates a realistic small-city community called "Springfield" with:
 
 **Users (12):**
 - mayor, cityplanner, teacher, shop_owner, student, nurse, cyclist, driver, parent, librarian, waste_manager, developer
@@ -108,36 +108,36 @@ A comprehensive demo seeding script that creates a realistic small-city communit
 - Zero Waste Commitment
 
 **Level B (Poll) Proposals (30):**
-- Install protected bike lanes on Oak Street from Central Park to City Hall
-- Launch 12-month curbside compost pickup pilot in three neighborhoods
-- Extend Saturday library hours from 5 PM to 8 PM for six-month trial
-- Plant 500 street trees along major bus routes
-- Install 20 public water refill stations in parks and downtown areas
-- Retrofit lighting in all public schools with energy-efficient LEDs
-- Add wheelchair-accessible seating and pathways in Riverside Park
-- Create weekly "car-free Sunday" on Main Avenue during summer months
-- Launch local food voucher program for low-income households
-- Replace diesel buses on Route 6 with electric buses within 18 months
-- Start youth apprenticeship program in city maintenance departments
-- Create protected pedestrian crossing at 5th and Market
-- Run public art mural program in underutilized spaces downtown
-- Upgrade stormwater drains in flood-prone neighborhoods
-- Pilot mobile mental health support unit operating three days a week
-- Offer free Wi-Fi in all public libraries and recreation centers
-- Expand community policing foot patrols to two additional neighborhoods
-- Begin construction of skate park in Westside Recreation Area
-- Install traffic-calming speed tables on Oak Drive near elementary school
-- Provide grants for storefront energy-efficiency upgrades to 20 small businesses
-- Introduce on-demand evening bus service for shift workers in industrial park
-- Convert vacant lot at 14th and Pine into temporary community garden for two years
-- Offer free weekend transit for youth under 18 for one-year pilot
-- Create citywide tool library where residents can borrow equipment for home projects
-- Add shaded seating areas to three senior housing complexes
-- Implement bilingual signage in all city-owned buildings
-- Start bike-share program with 100 bikes at 10 docking stations
-- Build public charging station hub for electric vehicles in central parking lot
-- Restore historic fountain in Civic Plaza
-- Add two new trash and recycling bins per block in downtown core
+- Install protected bike lanes on Washington Avenue from downtown to university district
+- Launch 18-month curbside composting pilot in four residential neighborhoods
+- Extend public library hours to 9 PM on weekdays for six-month trial
+- Plant 750 street trees along major transit corridors and in underserved neighborhoods
+- Install 25 public water refill stations in parks, schools, and community centers
+- Retrofit lighting in all municipal buildings with energy-efficient LED systems
+- Add wheelchair-accessible seating and improved pathways in Central Park
+- Create monthly "Open Streets" program on Main Street during summer months
+- Launch local food voucher program for 300 low-income households
+- Replace diesel buses on Route 8 with electric buses within 24 months
+- Start youth apprenticeship program in city maintenance and parks departments
+- Create protected pedestrian crossing at 3rd and Market intersection
+- Run public art mural program in underutilized downtown spaces
+- Upgrade stormwater drainage system in flood-prone areas
+- Pilot mobile mental health crisis response unit operating five days per week
+- Offer free Wi-Fi in all public libraries, recreation centers, and community spaces
+- Expand community policing foot patrols to three additional neighborhoods
+- Begin construction of inclusive playground in Westside Recreation Area
+- Install traffic-calming speed humps on Oak Drive near elementary school
+- Provide energy-efficiency grants to 25 small businesses for storefront upgrades
+- Introduce on-demand evening bus service for shift workers in industrial district
+- Convert vacant lot at 12th and Pine into community garden for three years
+- Offer free weekend transit for youth under 18 for 18-month pilot
+- Create citywide tool and equipment lending library
+- Add shaded seating areas to four senior housing complexes
+- Implement bilingual signage in all city-owned buildings and facilities
+- Start bike-share program with 150 bikes at 15 docking stations
+- Build public charging station hub for electric vehicles in central parking garage
+- Restore historic bandshell in Memorial Park
+- Add three new trash and recycling bins per block in downtown core
 
 **Content:**
 - 20+ comments with PRO:/CON: prefixes

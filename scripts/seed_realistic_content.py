@@ -59,192 +59,142 @@ USERS = [
 # Level A Proposals (Principles - long-term direction)
 LEVEL_A_PROPOSALS = [
     {
-        "title": "Vision Zero Commitment",
-        "description": "Commit to designing streets so that no one is killed or seriously injured in traffic.",
+        "title": "Complete Streets Policy",
+        "description": "Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.",
         "direction_choice": "Transportation Safety"
     },
     {
-        "title": "Open Government Policy",
-        "description": "Publish public records and datasets unless there's a clear legal reason not to.",
+        "title": "Public Records Transparency Policy",
+        "description": "Make all public records and datasets available online unless specifically exempted by law, with clear processes for requesting information.",
         "direction_choice": "Government Transparency"
     },
     {
-        "title": "Green Building Standard",
-        "description": "Require all new public buildings to meet the city's highest energy-efficiency code.",
+        "title": "Green Building Standards for Municipal Construction",
+        "description": "Require all new municipal buildings and major renovations to meet LEED Silver certification or equivalent energy efficiency standards.",
         "direction_choice": "Environmental Policy"
     },
     {
-        "title": "Affordable Housing Priority",
-        "description": "Prioritize affordable housing in land-use and zoning decisions.",
+        "title": "Inclusive Housing Development Policy",
+        "description": "Ensure 20% of all new residential development includes affordable housing units or equivalent contributions to the housing trust fund.",
         "direction_choice": "Housing & Development"
     },
     {
-        "title": "Public Space Access",
-        "description": "Ensure all residents live within a 10-minute walk of a safe, accessible public space.",
+        "title": "Parks and Recreation Access Standards",
+        "description": "Maintain a minimum of 10 acres of parkland per 1,000 residents and ensure all neighborhoods have access to recreational facilities within a 10-minute walk.",
         "direction_choice": "Parks & Recreation"
     },
     {
-        "title": "Climate Action Framework",
-        "description": "Cut greenhouse gas emissions 50% by 2035, across all city operations.",
+        "title": "Municipal Climate Action Plan",
+        "description": "Reduce city government greenhouse gas emissions by 50% by 2030 and achieve carbon neutrality by 2040 through energy efficiency and renewable energy.",
         "direction_choice": "Climate & Sustainability"
     },
     {
-        "title": "Transparent Budgeting",
-        "description": "Publish budgets in plain language with year-to-year comparisons.",
-        "direction_choice": "Financial Management"
-    },
-    {
-        "title": "Digital Inclusion",
-        "description": "Guarantee all households affordable access to high-speed internet.",
+        "title": "Digital Equity and Broadband Access Policy",
+        "description": "Ensure all residents have access to affordable high-speed internet and digital literacy training through partnerships with service providers and community organizations.",
         "direction_choice": "Technology & Innovation"
     },
     {
-        "title": "Cultural Access for All",
-        "description": "Support year-round, low-cost access to arts and culture for all residents.",
-        "direction_choice": "Arts & Culture"
-    },
-    {
-        "title": "Local Food Commitment",
-        "description": "Increase the share of food consumed in the city that is grown or produced locally.",
+        "title": "Local Food System Development Policy",
+        "description": "Support local food production and distribution by providing incentives for urban agriculture, farmers markets, and food processing facilities.",
         "direction_choice": "Food Security"
     },
     {
-        "title": "Mobility for All",
-        "description": "Design transport systems that serve all ages and abilities.",
+        "title": "Transit-Oriented Development Framework",
+        "description": "Prioritize mixed-use development within 1/2 mile of transit stations to reduce car dependency and increase transit ridership.",
         "direction_choice": "Public Transit"
     },
     {
-        "title": "Public Health First",
-        "description": "Ensure every resident can reach primary health care within 30 minutes by public transport.",
-        "direction_choice": "Public Health"
-    },
-    {
-        "title": "Water Stewardship",
-        "description": "Manage water resources sustainably, ensuring safe drinking water for all.",
-        "direction_choice": "Water Management"
-    },
-    {
-        "title": "Zero Waste Commitment",
-        "description": "Commit to diverting all recyclable and compostable materials from landfills.",
+        "title": "Zero Waste and Circular Economy Policy",
+        "description": "Achieve 90% waste diversion from landfills by 2030 through comprehensive recycling, composting, and waste reduction programs.",
         "direction_choice": "Waste Management"
-    },
-    {
-        "title": "Participatory Governance",
-        "description": "Include residents in decisions through open forums, surveys, and digital platforms.",
-        "direction_choice": "Civic Engagement"
-    },
-    {
-        "title": "Fair Work Charter",
-        "description": "Prioritize fair wages, safe working conditions, and worker voice in city contracts.",
-        "direction_choice": "Labor & Employment"
-    },
-    {
-        "title": "Noise Management Policy",
-        "description": "Reduce harmful noise levels in residential areas.",
-        "direction_choice": "Public Safety"
-    },
-    {
-        "title": "Tree Canopy Preservation",
-        "description": "Maintain and expand the urban tree canopy across all neighborhoods.",
-        "direction_choice": "Urban Forestry"
-    },
-    {
-        "title": "Historical Preservation",
-        "description": "Protect and maintain historically significant buildings and sites.",
-        "direction_choice": "Heritage Conservation"
-    },
-    {
-        "title": "Community Safety Framework",
-        "description": "Build community safety through prevention, intervention, and support services.",
-        "direction_choice": "Public Safety"
     }
 ]
 
 # Level B Proposals (Actions - specific, immediate steps)
 LEVEL_B_PROPOSALS = [
     {
-        "title": "Install protected bike lanes on Oak Street from Central Park to City Hall",
-        "description": "Add dedicated, protected bicycle lanes along Oak Street to improve cyclist safety and encourage active transportation.",
+        "title": "Install protected bike lanes on Washington Avenue from downtown to university district",
+        "description": "Add dedicated, protected bicycle lanes along Washington Avenue to improve cyclist safety and encourage active transportation between downtown and the university.",
         "options": ["Approve", "Modify plan", "Reject"]
     },
     {
-        "title": "Launch 12-month curbside compost pickup pilot in three neighborhoods",
-        "description": "Begin organic waste collection service in Downtown, Westside, and Riverside neighborhoods to reduce landfill waste.",
+        "title": "Launch 18-month curbside composting pilot in four residential neighborhoods",
+        "description": "Begin organic waste collection service in Downtown, Westside, Riverside, and Eastside neighborhoods to reduce landfill waste and create compost for city parks.",
         "options": ["Approve", "Reduce scope", "Reject"]
     },
     {
-        "title": "Extend Saturday library hours from 5 PM to 8 PM for six-month trial",
-        "description": "Extend operating hours at the main library to better serve students and working families.",
+        "title": "Extend public library hours to 9 PM on weekdays for six-month trial",
+        "description": "Extend operating hours at the main library to better serve students, working families, and evening library users.",
         "options": ["Approve", "Modify hours", "Reject"]
     },
     {
-        "title": "Plant 500 street trees along major bus routes",
-        "description": "Add urban trees along transit corridors to improve air quality and provide shade for transit users.",
+        "title": "Plant 750 street trees along major transit corridors and in underserved neighborhoods",
+        "description": "Add urban trees along bus routes and in neighborhoods with low tree canopy to improve air quality, provide shade, and enhance walkability.",
         "options": ["Approve", "Reduce number", "Reject"]
     },
     {
-        "title": "Install 20 public water refill stations in parks and downtown areas",
-        "description": "Add drinking water stations to reduce plastic bottle waste and improve public health.",
+        "title": "Install 25 public water refill stations in parks, schools, and community centers",
+        "description": "Add drinking water stations to reduce plastic bottle waste, improve public health, and encourage hydration during outdoor activities.",
         "options": ["Approve", "Reduce locations", "Reject"]
     },
     {
-        "title": "Retrofit lighting in all public schools with energy-efficient LEDs",
-        "description": "Replace existing lighting systems in 12 public school buildings to reduce energy consumption and costs.",
+        "title": "Retrofit lighting in all municipal buildings with energy-efficient LED systems",
+        "description": "Replace existing lighting systems in 15 municipal buildings to reduce energy consumption by 40% and lower operating costs.",
         "options": ["Approve", "Phase implementation", "Reject"]
     },
     {
-        "title": "Add wheelchair-accessible seating and pathways in Riverside Park",
-        "description": "Install accessible benches and improve pathway surfaces to ensure park access for all residents.",
+        "title": "Add wheelchair-accessible seating and improved pathways in Central Park",
+        "description": "Install accessible benches, improve pathway surfaces, and add shade structures to ensure park access for residents of all abilities.",
         "options": ["Approve", "Modify scope", "Reject"]
     },
     {
-        "title": "Create weekly 'car-free Sunday' on Main Avenue during summer months",
-        "description": "Close Main Avenue to vehicle traffic every Sunday from June through August for community events and recreation.",
+        "title": "Create monthly 'Open Streets' program on Main Street during summer months",
+        "description": "Close Main Street to vehicle traffic on the first Sunday of each month from June through September for community events and recreation.",
         "options": ["Approve", "Reduce frequency", "Reject"]
     },
     {
-        "title": "Launch local food voucher program for low-income households",
-        "description": "Provide $50 monthly vouchers redeemable at farmers' markets for 200 qualifying households.",
+        "title": "Launch local food voucher program for 300 low-income households",
+        "description": "Provide $75 monthly vouchers redeemable at farmers markets and local food co-ops for qualifying households to improve food access.",
         "options": ["Approve", "Reduce amount", "Reject"]
     },
     {
-        "title": "Replace diesel buses on Route 6 with electric buses within 18 months",
-        "description": "Purchase 8 electric buses to replace aging diesel vehicles on the downtown-to-airport route.",
+        "title": "Replace diesel buses on Route 8 with electric buses within 24 months",
+        "description": "Purchase 12 electric buses to replace aging diesel vehicles on the downtown-to-airport route, reducing emissions and noise pollution.",
         "options": ["Approve", "Extend timeline", "Reject"]
     },
     {
-        "title": "Start youth apprenticeship program in city maintenance departments",
-        "description": "Create 15 paid apprenticeship positions for youth aged 16-24 in parks, streets, and facilities maintenance.",
+        "title": "Start youth apprenticeship program in city maintenance and parks departments",
+        "description": "Create 20 paid apprenticeship positions for youth aged 16-24 in parks maintenance, street repair, and facilities management.",
         "options": ["Approve", "Reduce positions", "Reject"]
     },
     {
-        "title": "Create protected pedestrian crossing at 5th and Market",
-        "description": "Install signalized crosswalk with pedestrian refuge island at the busy 5th and Market intersection.",
+        "title": "Create protected pedestrian crossing at 3rd and Market intersection",
+        "description": "Install signalized crosswalk with pedestrian refuge island and countdown timers at the busy 3rd and Market intersection.",
         "options": ["Approve", "Modify design", "Reject"]
     },
     {
-        "title": "Run public art mural program in underutilized spaces downtown",
-        "description": "Commission 10 murals on blank walls and underpasses to improve visual appeal and support local artists.",
+        "title": "Run public art mural program in underutilized downtown spaces",
+        "description": "Commission 15 murals on blank walls and underpasses to improve visual appeal, support local artists, and reduce graffiti.",
         "options": ["Approve", "Reduce number", "Reject"]
     },
     {
-        "title": "Upgrade stormwater drains in flood-prone neighborhoods",
-        "description": "Replace and expand drainage infrastructure in three neighborhoods that experience regular flooding.",
+        "title": "Upgrade stormwater drainage system in flood-prone areas",
+        "description": "Replace and expand drainage infrastructure in four neighborhoods that experience regular flooding during heavy rain events.",
         "options": ["Approve", "Prioritize areas", "Reject"]
     },
     {
-        "title": "Pilot mobile mental health support unit operating three days a week",
-        "description": "Deploy a mobile crisis intervention team to provide immediate mental health support in high-need areas.",
+        "title": "Pilot mobile mental health crisis response unit operating five days per week",
+        "description": "Deploy a mobile crisis intervention team with mental health professionals to provide immediate support in high-need areas.",
         "options": ["Approve", "Reduce days", "Reject"]
     },
     {
-        "title": "Offer free Wi-Fi in all public libraries and recreation centers",
-        "description": "Install and maintain wireless internet access in 8 public facilities to improve digital access.",
+        "title": "Offer free Wi-Fi in all public libraries, recreation centers, and community spaces",
+        "description": "Install and maintain wireless internet access in 12 public facilities to improve digital access and support remote work and learning.",
         "options": ["Approve", "Limit locations", "Reject"]
     },
     {
-        "title": "Expand community policing foot patrols to two additional neighborhoods",
-        "description": "Add walking patrols in Eastside and Southside neighborhoods to improve community-police relations.",
+        "title": "Expand community policing foot patrols to three additional neighborhoods",
+        "description": "Add walking patrols in Eastside, Southside, and Northside neighborhoods to improve community-police relations and crime prevention.",
         "options": ["Approve", "Add one area", "Reject"]
     },
     {

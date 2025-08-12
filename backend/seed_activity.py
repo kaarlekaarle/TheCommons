@@ -78,38 +78,38 @@ async def create_seed_data():
         # Create proposals with spaced timestamps
         proposals_data = [
             {
-                "title": "Vision Zero Commitment",
-                "description": "Commit to designing streets so that no one is killed or seriously injured in traffic.",
+                "title": "Complete Streets Policy",
+                "description": "Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.",
                 "created_by": created_users["alex"],
                 "hours_ago": 2  # 2 hours ago
             },
             {
-                "title": "Install protected bike lanes on Oak Street from Central Park to City Hall", 
-                "description": "Add dedicated, protected bicycle lanes along Oak Street to improve cyclist safety and encourage active transportation.",
+                "title": "Install protected bike lanes on Washington Avenue from downtown to university district", 
+                "description": "Add dedicated, protected bicycle lanes along Washington Avenue to improve cyclist safety and encourage active transportation between downtown and the university.",
                 "created_by": created_users["jordan"],
                 "hours_ago": 4  # 4 hours ago
             },
             {
-                "title": "Launch 12-month curbside compost pickup pilot in three neighborhoods",
-                "description": "Begin organic waste collection service in Downtown, Westside, and Riverside neighborhoods to reduce landfill waste.",
+                "title": "Launch 18-month curbside composting pilot in four residential neighborhoods",
+                "description": "Begin organic waste collection service in Downtown, Westside, Riverside, and Eastside neighborhoods to reduce landfill waste and create compost for city parks.",
                 "created_by": created_users["maria"], 
                 "hours_ago": 6  # 6 hours ago
             },
             {
-                "title": "Open Government Policy",
-                "description": "Publish public records and datasets unless there's a clear legal reason not to.",
+                "title": "Public Records Transparency Policy",
+                "description": "Make all public records and datasets available online unless specifically exempted by law, with clear processes for requesting information.",
                 "created_by": created_users["sam"],
                 "hours_ago": 8  # 8 hours ago
             },
             {
-                "title": "Extend Saturday library hours from 5 PM to 8 PM for six-month trial",
-                "description": "Extend operating hours at the main library to better serve students and working families.",
+                "title": "Extend public library hours to 9 PM on weekdays for six-month trial",
+                "description": "Extend operating hours at the main library to better serve students, working families, and evening library users.",
                 "created_by": created_users["taylor"],
                 "hours_ago": 10  # 10 hours ago
             },
             {
-                "title": "Green Building Standard",
-                "description": "Require all new public buildings to meet the city's highest energy-efficiency code.",
+                "title": "Green Building Standards for Municipal Construction",
+                "description": "Require all new municipal buildings and major renovations to meet LEED Silver certification or equivalent energy efficiency standards.",
                 "created_by": created_users["casey"],
                 "hours_ago": 12  # 12 hours ago
             }
@@ -148,19 +148,19 @@ async def create_seed_data():
         # Create votes
         votes_data = [
             {
-                "poll_title": "Universal Basic Income",
+                "poll_title": "Complete Streets Policy",
                 "voter": "jordan",
                 "option_text": "Yes",
                 "hours_ago": 1  # 1 hour ago
             },
             {
-                "poll_title": "Climate Action Plan",
+                "poll_title": "Municipal Climate Action Plan",
                 "voter": "alex", 
                 "option_text": "Yes",
                 "hours_ago": 3  # 3 hours ago
             },
             {
-                "poll_title": "Open Data Initiative",
+                "poll_title": "Public Records Transparency Policy",
                 "voter": "jordan",
                 "option_text": "No", 
                 "hours_ago": 5  # 5 hours ago
