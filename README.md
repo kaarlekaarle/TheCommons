@@ -291,6 +291,35 @@ docker-compose down -v
 
 ## Testing
 
+### Testing (Online and Offline)
+
+**Online (normal)**
+```bash
+make dev-deps
+make test
+```
+
+**Offline / Sandboxed (e.g., Codex)**
+1. Pre-build and commit wheels once (do this locally with internet):
+```bash
+python3 -m pip install --upgrade pip wheel build
+mkdir -p tools/offline_wheels
+pip wheel --wheel-dir tools/offline_wheels -r requirements-dev.txt
+git add tools/offline_wheels
+git commit -m "chore: vendor test wheels for offline runs"
+```
+
+2. In offline environments:
+```bash
+make offline-deps
+make test
+```
+
+**Dockerized tests (alternative)**
+```bash
+make test-docker
+```
+
 ### Backend Tests
 
 Run the test suite:
