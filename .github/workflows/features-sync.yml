@@ -1,0 +1,57 @@
+name: Features Sync Validation
+
+on:
+  push:
+    paths:
+      - 'frontend/src/config/features.ts'
+      - 'frontend/src/config/features.generated.json'
+      - 'scripts/sync_features.ts'
+  pull_request:
+    paths:
+      - 'frontend/src/config/features.ts'
+      - 'frontend/src/config/features.generated.json'
+      - 'scripts/sync_features.ts'
+
+jobs:
+  validate-features:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+          
+      - name: Sync features
+        run: |
+          cd frontend
+          npm run sync:features
+          
+      - name: Check if features.generated.json is up to date
+        run: |
+          cd frontend
+          npm run check:features
+          
+      - name: Verify generated file structure
+        run: |
+          cd frontend
+          node -e "
+            const manifest = require('./src/config/features.generated.json');
+            if (!manifest.generatedAt || !manifest.items || !Array.isArray(manifest.items)) {
+              console.error('❌ Invalid manifest structure');
+              process.exit(1);
+            }
+            console.log('✅ Manifest structure is valid');
+            console.log('📅 Generated at:', manifest.generatedAt);
+            console.log('📋 Features count:', manifest.items.length);
+          "

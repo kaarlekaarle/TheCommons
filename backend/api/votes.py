@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status, Request
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +14,7 @@ from backend.core.exceptions import (
     ValidationError,
 )
 from backend.core.logging_config import get_logger
+from backend.core.audit_mw import audit_event
 from backend.core.voting import (
     cast_vote,
     create_vote,
@@ -37,6 +38,7 @@ for route in router.routes:
 
 @router.post("/", response_model=VoteSchema, status_code=status.HTTP_201_CREATED)
 async def create_new_vote(
+    request: Request,
     vote_in: VoteCreate,
     token: str = Depends(oauth2_scheme),
     current_user: User = Security(get_current_active_user),
@@ -81,6 +83,18 @@ async def create_new_vote(
             "Vote created successfully",
             extra={"vote_id": vote.id, "user_id": current_user.id},
         )
+        
+        # Audit the vote creation
+        audit_event(
+            "vote_cast",
+            {
+                "vote_id": str(vote.id),
+                "poll_id": str(vote.poll_id),
+                "option_id": str(vote.option_id),
+            },
+            request
+        )
+        
         return vote
     except ValueError as e:
         logger.warning(

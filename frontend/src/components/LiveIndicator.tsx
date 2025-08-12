@@ -1,10 +1,4 @@
-import { useState, useEffect } from 'react';
-import wsClient from '../lib/ws';
 
-interface LiveIndicatorProps {
-  room?: string;
-  className?: string;
-}
 
 export default function LiveIndicator() {
   return (

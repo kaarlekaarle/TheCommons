@@ -46,6 +46,9 @@ class User(SQLAlchemyBase):
     comments = relationship(
         "Comment", back_populates="user", cascade="all, delete-orphan"
     )  # type: Any
+    comment_reactions = relationship(
+        "CommentReaction", back_populates="user", cascade="all, delete-orphan"
+    )  # type: Any
 
     async def soft_delete(self, db_session: Session) -> None:
         """Soft delete the user and all related polls and votes.

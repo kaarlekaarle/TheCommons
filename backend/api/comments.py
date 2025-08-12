@@ -1,20 +1,58 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
 from backend.models.comment import Comment
+from backend.models.comment_reaction import CommentReaction, ReactionType
 from backend.models.poll import Poll
 from backend.models.user import User
 from backend.schemas.comment import CommentIn, CommentOut, CommentList, CommentUser
 from backend.core.auth import get_current_active_user
 from backend.core.logging_config import get_logger
+from backend.core.audit_mw import audit_event
+from backend.core.admin_audit import log_admin_action
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["comments"])
+
+
+async def get_comment_reaction_data(comment_id: UUID, user_id: Optional[UUID], db: AsyncSession) -> tuple[int, int, Optional[str]]:
+    """Get reaction data for a comment."""
+    # Get counts
+    up_count_result = await db.execute(
+        select(func.count(CommentReaction.id)).where(
+            CommentReaction.comment_id == comment_id,
+            CommentReaction.type == ReactionType.UP
+        )
+    )
+    up_count = up_count_result.scalar() or 0
+    
+    down_count_result = await db.execute(
+        select(func.count(CommentReaction.id)).where(
+            CommentReaction.comment_id == comment_id,
+            CommentReaction.type == ReactionType.DOWN
+        )
+    )
+    down_count = down_count_result.scalar() or 0
+    
+    # Get user's reaction if user_id provided
+    my_reaction = None
+    if user_id:
+        reaction_result = await db.execute(
+            select(CommentReaction).where(
+                CommentReaction.comment_id == comment_id,
+                CommentReaction.user_id == user_id
+            )
+        )
+        reaction = reaction_result.scalar_one_or_none()
+        if reaction:
+            my_reaction = reaction.type.value
+    
+    return up_count, down_count, my_reaction
 
 
 @router.get("/{poll_id}/comments", response_model=CommentList)
@@ -22,6 +60,7 @@ async def list_comments(
     poll_id: UUID,
     limit: int = Query(20, ge=1, le=100, description="Number of comments to return"),
     offset: int = Query(0, ge=0, description="Number of comments to skip"),
+    current_user: Optional[User] = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> CommentList:
     """Get comments for a specific poll.
@@ -71,6 +110,13 @@ async def list_comments(
         # Convert to output format
         comment_outputs = []
         for comment in comments:
+            # Get reaction data
+            up_count, down_count, my_reaction = await get_comment_reaction_data(
+                comment.id, 
+                current_user.id if current_user else None, 
+                db
+            )
+            
             comment_output = CommentOut(
                 id=str(comment.id),
                 poll_id=str(comment.poll_id),
@@ -79,7 +125,10 @@ async def list_comments(
                     username=comment.user.username
                 ),
                 body=comment.body,
-                created_at=comment.created_at.isoformat() + "Z"
+                created_at=comment.created_at.isoformat() + "Z",
+                up_count=up_count,
+                down_count=down_count,
+                my_reaction=my_reaction
             )
             comment_outputs.append(comment_output)
         
@@ -114,6 +163,7 @@ async def list_comments(
 
 @router.post("/{poll_id}/comments", response_model=CommentOut, status_code=status.HTTP_201_CREATED)
 async def create_comment(
+    request: Request,
     poll_id: UUID,
     comment_in: CommentIn,
     current_user: User = Depends(get_current_active_user),
@@ -187,6 +237,17 @@ async def create_comment(
             extra={"comment_id": str(comment.id), "poll_id": str(poll_id)}
         )
         
+        # Audit the comment creation
+        audit_event(
+            "comment_created",
+            {
+                "comment_id": str(comment.id),
+                "poll_id": str(comment.poll_id),
+                "body": comment.body[:100] + "..." if len(comment.body) > 100 else comment.body,
+            },
+            request
+        )
+        
         return comment_output
         
     except HTTPException:
@@ -205,6 +266,7 @@ async def create_comment(
 
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
+    request: Request,
     comment_id: UUID,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -233,10 +295,26 @@ async def delete_comment(
             )
         
         # Check permissions (author or admin)
+        is_admin_delete = comment.user_id != current_user.id and current_user.is_superuser
+        
         if comment.user_id != current_user.id and not current_user.is_superuser:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only delete your own comments"
+            )
+        
+        # Log admin action if admin is deleting someone else's comment
+        if is_admin_delete:
+            log_admin_action(
+                action="delete_comment",
+                target_resource="comment",
+                target_id=str(comment_id),
+                details={
+                    "comment_author_id": str(comment.user_id),
+                    "comment_author_username": comment.user.username,
+                    "poll_id": str(comment.poll_id)
+                },
+                user=current_user
             )
         
         # Soft delete
@@ -246,6 +324,17 @@ async def delete_comment(
         logger.info(
             "Comment deleted successfully",
             extra={"comment_id": str(comment_id)}
+        )
+        
+        # Audit the comment deletion
+        audit_event(
+            "comment_deleted",
+            {
+                "comment_id": str(comment_id),
+                "poll_id": str(comment.poll_id),
+                "is_admin_delete": is_admin_delete,
+            },
+            request
         )
         
     except HTTPException:

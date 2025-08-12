@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Send, Trash2 } from 'lucide-react';
-import { listComments, createComment, deleteComment } from '../lib/api';
+import { MessageCircle, Send, Trash2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { listComments, createComment, deleteComment, setCommentReaction } from '../lib/api';
 import type { Comment } from '../types';
 import Button from './ui/Button';
 import Empty from './ui/Empty';
@@ -25,6 +25,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
       setComments(data.comments);
     } catch (err: unknown) {
       const error = err as { message: string };
+      console.error('Failed to load comments:', error.message);
       showError('Failed to load comments');
     } finally {
       setLoading(false);
@@ -47,6 +48,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
       success('Comment posted successfully');
     } catch (err: unknown) {
       const error = err as { message: string };
+      console.error('Failed to post comment:', error.message);
       showError('Failed to post comment');
     } finally {
       setPosting(false);
@@ -60,7 +62,71 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
       success('Comment deleted successfully');
     } catch (err: unknown) {
       const error = err as { message: string };
+      console.error('Failed to delete comment:', error.message);
       showError('Failed to delete comment');
+    }
+  };
+
+  const handleReaction = async (commentId: string, type: 'up' | 'down') => {
+    try {
+      // Optimistic update
+      setComments(prev => prev.map(comment => {
+        if (comment.id === commentId) {
+          const currentReaction = comment.my_reaction;
+          let newUpCount = comment.up_count;
+          let newDownCount = comment.down_count;
+          let newMyReaction: 'up' | 'down' | null = null;
+
+          if (currentReaction === type) {
+            // Toggle off
+            if (type === 'up') newUpCount--;
+            else newDownCount--;
+          } else {
+            // Set new reaction
+            if (currentReaction === 'up') newUpCount--;
+            else if (currentReaction === 'down') newDownCount--;
+            
+            if (type === 'up') newUpCount++;
+            else newDownCount++;
+            newMyReaction = type;
+          }
+
+          return {
+            ...comment,
+            up_count: newUpCount,
+            down_count: newDownCount,
+            my_reaction: newMyReaction
+          };
+        }
+        return comment;
+      }));
+
+      // API call
+      const response = await setCommentReaction(commentId, type);
+      
+      // Update with server response
+      setComments(prev => prev.map(comment => {
+        if (comment.id === commentId) {
+          return {
+            ...comment,
+            up_count: response.up_count,
+            down_count: response.down_count,
+            my_reaction: response.my_reaction
+          };
+        }
+        return comment;
+      }));
+    } catch (err: unknown) {
+      const error = err as { status: number; message: string };
+      
+      // Revert optimistic update
+      fetchComments();
+      
+      if (error.status === 401) {
+        showError('Login to react to comments');
+      } else {
+        showError('Failed to update reaction');
+      }
     }
   };
 
@@ -163,6 +229,37 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
                       </time>
                     </div>
                     <p className="text-sm text-muted whitespace-pre-wrap">{comment.body}</p>
+                    
+                    {/* Reaction Bar */}
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        onClick={() => handleReaction(comment.id, 'up')}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                          comment.my_reaction === 'up'
+                            ? 'text-primary bg-primary/10'
+                            : 'text-muted hover:text-white hover:bg-surface'
+                        }`}
+                        title="Thumbs up"
+                        aria-pressed={comment.my_reaction === 'up'}
+                      >
+                        <ThumbsUp className="w-3 h-3" />
+                        <span>{comment.up_count}</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => handleReaction(comment.id, 'down')}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                          comment.my_reaction === 'down'
+                            ? 'text-primary bg-primary/10'
+                            : 'text-muted hover:text-white hover:bg-surface'
+                        }`}
+                        title="Thumbs down"
+                        aria-pressed={comment.my_reaction === 'down'}
+                      >
+                        <ThumbsDown className="w-3 h-3" />
+                        <span>{comment.down_count}</span>
+                      </button>
+                    </div>
                   </div>
                   <Button
                     variant="ghost"

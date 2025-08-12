@@ -7,8 +7,16 @@ on:
     branches: [ main ]
 
 jobs:
-  backend-up:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-suite: [backend, full]
+        include:
+          - test-suite: backend
+            run-root-tests: false
+          - test-suite: full
+            run-root-tests: true
     
     services:
       db:
@@ -54,14 +62,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          pip install -r requirements.txt
 
       - name: Install frontend dependencies
         run: npm ci --prefix frontend
@@ -131,6 +139,25 @@ jobs:
           
           # Also run in verbose mode for debugging
           ./scripts/system_check.sh > system-check-logs/health-check-verbose.log 2>&1 || true
+
+      - name: Run tests
+        env:
+          RUN_ROOT_TESTS: ${{ matrix.run-root-tests }}
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/the_commons
+          REDIS_URL: redis://localhost:6379/0
+          TEST_REDIS_URL: redis://localhost:6379/1
+        run: |
+          echo "Running ${{ matrix.test-suite }} test suite"
+          echo "RUN_ROOT_TESTS=${{ matrix.run-root-tests }}"
+          
+          # Run pytest with appropriate configuration
+          if [ "${{ matrix.run-root-tests }}" = "true" ]; then
+            echo "Running full test suite (backend + root tests)"
+            pytest -v
+          else
+            echo "Running backend tests only"
+            pytest backend/tests/ -v
+          fi
 
       - name: Upload system check artifacts
         uses: actions/upload-artifact@v3

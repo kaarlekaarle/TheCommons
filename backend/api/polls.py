@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +12,7 @@ from backend.core.exceptions import (
     ValidationError,
 )
 from backend.core.logging_config import get_logger
+from backend.core.audit_mw import audit_event
 from backend.database import get_db
 from backend.models.poll import Poll
 from backend.models.user import User
@@ -27,6 +28,7 @@ logger = get_logger(__name__)
 
 @router.post("/", response_model=PollSchema)
 async def create_poll(
+    request: Request,
     poll_data: PollCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -72,6 +74,18 @@ async def create_poll(
             "Poll created successfully",
             extra={"poll_id": poll.id, "user_id": current_user.id},
         )
+        
+        # Audit the poll creation
+        audit_event(
+            "poll_created",
+            {
+                "poll_id": str(poll.id),
+                "title": poll.title,
+                "description": poll.description,
+            },
+            request
+        )
+        
         return poll
     except Exception as e:
         await db.rollback()

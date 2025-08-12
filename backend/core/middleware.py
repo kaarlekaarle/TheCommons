@@ -6,12 +6,19 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from backend.core.logging import add_context, get_logger
+from backend.core.logging_json import (
+    get_json_logger,
+    set_request_context,
+    clear_request_context,
+    log_request_start,
+    log_request_end,
+    log_error
+)
 
-logger = get_logger(__name__)
+logger = get_json_logger(__name__)
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
-    """Middleware to add request context to logs."""
+    """Middleware to add request context to logs and handle request IDs."""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Add request context to logs and measure request timing.
@@ -23,23 +30,24 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         Returns:
             The response from the next middleware or route handler.
         """
-        # Generate request ID
-        request_id = str(uuid.uuid4())
+        # Get or generate request ID
+        request_id = request.headers.get("X-Request-ID")
+        if not request_id:
+            request_id = str(uuid.uuid4())
         
-        # Add request context
-        add_context(
+        # Set request context for logging
+        set_request_context(request_id=request_id)
+        
+        # Store request ID in request state for access in handlers
+        request.state.request_id = request_id
+        
+        # Log request start
+        log_request_start(
+            logger=logger,
             request_id=request_id,
             method=request.method,
             path=request.url.path,
             client_host=request.client.host if request.client else None,
-        )
-        
-        # Log request start
-        logger.info(
-            "request_started",
-            request_id=request_id,
-            method=request.method,
-            path=request.url.path,
         )
         
         # Measure request timing
@@ -48,16 +56,15 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
             
-            # Add response context
-            add_context(
-                status_code=response.status_code,
-                response_time=time.time() - start_time,
-            )
+            # Add request ID to response headers
+            response.headers["X-Request-ID"] = request_id
             
             # Log request completion
-            logger.info(
-                "request_completed",
+            log_request_end(
+                logger=logger,
                 request_id=request_id,
+                method=request.method,
+                path=request.url.path,
                 status_code=response.status_code,
                 response_time=time.time() - start_time,
             )
@@ -66,10 +73,14 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             
         except Exception as e:
             # Log request error
-            logger.error(
-                "request_failed",
+            log_error(
+                logger=logger,
+                error=e,
                 request_id=request_id,
-                error=str(e),
-                response_time=time.time() - start_time,
+                method=request.method,
+                path=request.url.path,
             )
-            raise 
+            raise
+        finally:
+            # Clear request context
+            clear_request_context() 

@@ -33,6 +33,7 @@ class Comment(Base):
     # Relationships
     poll = relationship("Poll", back_populates="comments")
     user = relationship("User", back_populates="comments")
+    reactions = relationship("CommentReaction", back_populates="comment", cascade="all, delete-orphan")
     
     # Indexes for performance
     __table_args__ = (

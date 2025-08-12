@@ -1,0 +1,8 @@
+export const features = [
+  { title: "Proposals", description: "Create, edit, and share proposals with your community." },
+  { title: "Voting", description: "Vote directly or delegate your vote to a trusted member." },
+  { title: "Delegations", description: "Build trust networks to make decision-making faster." },
+  { title: "Comments", description: "Discuss proposals in real time with live updates." },
+  { title: "Activity Feed", description: "See what's happening across the community as it happens." },
+  { title: "Real-Time Results", description: "Track votes and discussions instantly." }
+];

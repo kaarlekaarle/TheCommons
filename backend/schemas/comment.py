@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
@@ -38,6 +38,9 @@ class CommentOut(BaseModel):
     user: CommentUser = Field(..., description="User who created the comment")
     body: str = Field(..., description="Comment body")
     created_at: str = Field(..., description="ISO datetime when comment was created")
+    up_count: int = Field(default=0, description="Number of up reactions")
+    down_count: int = Field(default=0, description="Number of down reactions")
+    my_reaction: Optional[Literal['up', 'down']] = Field(default=None, description="Current user's reaction")
     
     class Config:
         from_attributes = True

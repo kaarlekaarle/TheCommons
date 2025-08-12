@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ToasterProvider } from './components/ui/Toaster';
 import Layout from './components/Layout';
 import Auth from './components/Auth';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import ProposalList from './pages/ProposalList';
 import ProposalDetail from './pages/ProposalDetail';
@@ -72,47 +73,68 @@ export default function App() {
     console.log('[AUTH DEBUG] Auth state updated to authenticated');
   };
 
+  // Note: handleLogout is kept for potential future use in Layout component
   const handleLogout = () => {
     console.log('[AUTH DEBUG] Logout initiated - Removing token and updating auth state');
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     console.log('[AUTH DEBUG] Auth state updated to not authenticated');
   };
-
-  if (!isAuthenticated) {
-    return (
-      <ToasterProvider>
-        <div className="min-h-screen bg-bg flex items-center justify-center p-4">
-          <div className="w-full max-w-md">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">The Commons</h1>
-              <p className="text-muted">Join the conversation</p>
-            </div>
-            <div className="card">
-              <div className="card-content">
-                <Auth onSuccess={handleRegistrationSuccess} />
-              </div>
-            </div>
-          </div>
-        </div>
-        <DebugOverlay isVisible={isDebugOverlayVisible} />
-      </ToasterProvider>
-    );
-  }
+  // Suppress unused variable warning
+  void handleLogout;
 
   return (
     <ToasterProvider>
       <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Navigate to="/proposals" replace />} />
-            <Route path="/proposals" element={<ProposalList />} />
-            <Route path="/proposals/:id" element={<ProposalDetail />} />
-            <Route path="/proposals/new" element={<ProposalNew />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/activity" element={<ActivityFeed />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* Authentication route */}
+          <Route 
+            path="/auth" 
+            element={
+              !isAuthenticated ? (
+                <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+                  <div className="w-full max-w-md">
+                    <div className="text-center mb-8">
+                      <h1 className="text-3xl font-bold text-white mb-2">The Commons</h1>
+                      <p className="text-muted">Join the conversation</p>
+                    </div>
+                    <div className="card">
+                      <div className="card-content">
+                        <Auth onSuccess={handleRegistrationSuccess} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/proposals" replace />
+              )
+            } 
+          />
+          
+          {/* Protected routes - redirect to auth if not authenticated */}
+          <Route 
+            path="/*" 
+            element={
+              isAuthenticated ? (
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/proposals" replace />} />
+                    <Route path="/proposals" element={<ProposalList />} />
+                    <Route path="/proposals/:id" element={<ProposalDetail />} />
+                    <Route path="/proposals/new" element={<ProposalNew />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/activity" element={<ActivityFeed />} />
+                  </Routes>
+                </Layout>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            } 
+          />
+        </Routes>
       </Router>
       <DebugOverlay isVisible={isDebugOverlayVisible} />
     </ToasterProvider>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as Sentry from '@sentry/react';
 import api from '../lib/api';
 import Button from './ui/Button';
 
@@ -40,6 +41,16 @@ export default function Auth({ onSuccess }: AuthProps) {
       
       localStorage.setItem('token', token);
       console.log('[AUTH DEBUG] Token saved to localStorage');
+      
+      // Set Sentry user context
+      try {
+        Sentry.setUser({
+          id: formData.username,
+          username: formData.username,
+        });
+      } catch (e) {
+        console.warn('Failed to set Sentry user context:', e);
+      }
       
       setSuccess('Logged in successfully!');
       console.log('[AUTH DEBUG] Auth state updated, calling onSuccess callback');
@@ -93,6 +104,16 @@ export default function Auth({ onSuccess }: AuthProps) {
       
       localStorage.setItem('token', token);
       console.log('[AUTH DEBUG] Token saved to localStorage');
+      
+      // Set Sentry user context
+      try {
+        Sentry.setUser({
+          id: formData.username,
+          username: formData.username,
+        });
+      } catch (e) {
+        console.warn('Failed to set Sentry user context:', e);
+      }
       
       setSuccess('User created and logged in successfully!');
       console.log('[AUTH DEBUG] Auth state updated, calling onSuccess callback');

@@ -39,6 +39,7 @@ export default function ProposalDetail() {
       setResults(resultsData);
     } catch (err: unknown) {
       const error = err as { message: string };
+      console.error('Failed to load proposal:', error.message);
       showError('Failed to load proposal');
     } finally {
       setLoading(false);
@@ -55,6 +56,7 @@ export default function ProposalDetail() {
       success('Vote cast successfully');
     } catch (err: unknown) {
       const error = err as { message: string };
+      console.error('Failed to cast vote:', error.message);
       showError('Failed to cast vote');
     } finally {
       setVoting(null);

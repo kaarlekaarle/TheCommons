@@ -119,6 +119,9 @@ export interface Comment {
   user: CommentUser;
   body: string;
   created_at: string;
+  up_count: number;
+  down_count: number;
+  my_reaction?: 'up' | 'down' | null;
 }
 
 export interface CommentList {
@@ -127,6 +130,18 @@ export interface CommentList {
   limit: number;
   offset: number;
   has_more: boolean;
+}
+
+// Reaction types
+export interface ReactionResponse {
+  up_count: number;
+  down_count: number;
+  my_reaction?: 'up' | 'down' | null;
+}
+
+export interface ReactionSummary {
+  up_count: number;
+  down_count: number;
 }
 
 // Axios error response

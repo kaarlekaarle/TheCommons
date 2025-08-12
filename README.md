@@ -17,6 +17,11 @@ For a deeper exploration of the philosophy behind The Commons, see [VISION.md](V
 - 🐳 Docker support for easy deployment
 - 📝 API documentation with Swagger and ReDoc
 - 📈 Structured logging and audit trails
+- 🔍 Observability with Sentry and structured JSON logs
+- 💾 Automated backup and restore system
+- 🛡️ Enhanced security with rate limiting and admin audit
+- 🧹 Data hygiene with GDPR compliance endpoints
+- 🧪 E2E testing with Playwright
 
 ## Project Structure
 Detailed architecture in [docs/architecture.md](docs/architecture.md).
@@ -64,6 +69,81 @@ Detailed architecture in [docs/architecture.md](docs/architecture.md).
 6. Access the API documentation:
    - Swagger UI: http://localhost:8000/docs
    - ReDoc: http://localhost:8000/redoc
+
+## Observability
+
+The Commons includes comprehensive observability features for monitoring and debugging:
+
+### Sentry Integration
+
+Sentry is automatically initialized if a DSN is provided:
+
+```bash
+# Backend
+export SENTRY_DSN="https://your-sentry-dsn@sentry.io/project-id"
+export ENVIRONMENT="production"
+export SENTRY_TRACES_SAMPLE_RATE="0.1"
+
+# Frontend
+export VITE_SENTRY_DSN="https://your-sentry-dsn@sentry.io/project-id"
+export VITE_ENVIRONMENT="production"
+```
+
+### Structured JSON Logging
+
+All logs are structured JSON with request context:
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "level": "info",
+  "message": "Request completed",
+  "request_id": "uuid-here",
+  "method": "POST",
+  "path": "/api/token",
+  "status_code": 200,
+  "response_time_ms": 45.2,
+  "user_id": "user-uuid",
+  "service": "the-commons-api"
+}
+```
+
+### Request ID Tracking
+
+Every request gets a unique ID that's included in:
+- Response headers (`X-Request-ID`)
+- All log entries
+- Error reports
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SENTRY_DSN` | Sentry DSN for error tracking | None |
+| `ENVIRONMENT` | Environment name | `dev` |
+| `LOG_LEVEL` | Logging level | `INFO` |
+| `SENTRY_TRACES_SAMPLE_RATE` | Sentry trace sampling rate | `0.1` |
+
+### Verifying Observability
+
+1. **Check logs are structured**:
+   ```bash
+   curl http://localhost:8000/health
+   # Check logs show JSON format with request_id
+   ```
+
+2. **Test Sentry integration**:
+   ```bash
+   # Trigger an error (if Sentry is configured)
+   curl http://localhost:8000/nonexistent
+   # Check Sentry dashboard for error
+   ```
+
+3. **Verify request ID tracking**:
+   ```bash
+   curl -H "X-Request-ID: test-123" http://localhost:8000/health
+   # Response should include X-Request-ID header
+   ```
 
 ## Docker Setup
 
@@ -139,12 +219,113 @@ docker-compose down -v
    ```
 
 ## Testing
-- Run the test suite using pytest:
-  ```bash
-  pytest
-  ```
-- The test suite includes unit tests, integration tests, and end-to-end tests.
-- Ensure all tests pass before submitting a pull request.
+
+### Backend Tests
+
+Run the test suite:
+```bash
+pytest
+```
+
+### E2E Tests
+
+Install and run Playwright tests:
+```bash
+cd frontend
+npm install
+npx playwright install --with-deps
+npx playwright test
+```
+
+Run smoke tests only:
+```bash
+npx playwright test -g @smoke
+```
+
+The test suite includes unit tests, integration tests, and end-to-end tests.
+Ensure all tests pass before submitting a pull request.
+
+## Data Management
+
+### Backup & Restore
+
+Create a backup:
+```bash
+chmod +x scripts/backup_db.sh
+./scripts/backup_db.sh
+```
+
+Restore from backup:
+```bash
+chmod +x scripts/restore_db.sh
+./scripts/restore_db.sh backups/2024-01-15
+```
+
+### Data Hygiene
+
+Run soft-delete sweep:
+```bash
+chmod +x scripts/sweep_soft_deletes.py
+python scripts/sweep_soft_deletes.py --dry-run  # See what would be deleted
+python scripts/sweep_soft_deletes.py            # Actually delete
+```
+
+### GDPR Compliance
+
+Export user data:
+```bash
+curl -H "Authorization: Bearer <token>" http://localhost:8000/api/users/me/export
+```
+
+Delete user account (Right to be Forgotten):
+```bash
+curl -X DELETE -H "Authorization: Bearer <token>" http://localhost:8000/api/users/me
+```
+
+## Operations
+
+For comprehensive operational procedures, see [docs/RUNBOOK.md](docs/RUNBOOK.md).
+
+Key operational tasks:
+- [Backup & Restore Guide](docs/BACKUP_RESTORE.md)
+- [Operations Runbook](docs/RUNBOOK.md)
+- [Architecture Documentation](docs/architecture.md)
+
+## Rate Limiting
+
+The application includes configurable rate limiting with automatic fallback:
+
+### Configuration
+
+- `RATE_LIMIT_ENABLED=true|false` (default: `true`) - Enable/disable rate limiting
+- `REDIS_URL` - Redis connection URL (required for rate limiting)
+
+### Behavior
+
+- **With Redis**: Rate limiting is enforced (5 requests/minute on `/api/token`)
+- **Without Redis**: Automatic fallback to no-op mode (no rate limiting)
+- **Disabled**: Set `RATE_LIMIT_ENABLED=false` to disable completely
+
+### Health Check
+
+Check rate limiter status (admin only):
+```bash
+curl -H "Authorization: Bearer <admin_token>" http://localhost:8000/api/limiter/health
+```
+
+Response:
+```json
+{
+  "enabled": true,
+  "backend": "redis"
+}
+```
+
+### Fallback Scenarios
+
+1. **Redis unavailable**: Rate limiting gracefully falls back to no-op
+2. **Dependencies missing**: Application continues without rate limiting
+3. **Configuration error**: Logs warning and continues operation
 
 ## API Documentation
 - Access the API documentation at:

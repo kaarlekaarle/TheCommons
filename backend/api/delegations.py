@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status, Request
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +13,7 @@ from backend.core.exceptions import (
     ValidationError,
 )
 from backend.core.logging_config import get_logger
+from backend.core.audit_mw import audit_event
 from backend.database import get_db
 from backend.models.delegation import Delegation
 from backend.models.user import User
@@ -28,6 +29,7 @@ router = APIRouter(tags=["delegations"])
 
 @router.post("/", response_model=DelegationResponse, status_code=status.HTTP_201_CREATED)
 async def create_delegation(
+    request: Request,
     delegation_in: DelegationCreate,
     token: str = Depends(oauth2_scheme),
     current_user: User = Security(get_current_active_user),
@@ -69,6 +71,17 @@ async def create_delegation(
         logger.info(
             "Delegation created successfully",
             extra={"delegation_id": delegation.id, "user_id": current_user.id},
+        )
+        
+        # Audit the delegation creation
+        audit_event(
+            "delegation_created",
+            {
+                "delegation_id": str(delegation.id),
+                "delegator_id": str(delegation.delegator_id),
+                "delegate_id": str(delegation.delegate_id),
+            },
+            request
         )
         
         # Broadcast delegation update
@@ -246,6 +259,7 @@ async def create_delegation_direct(
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_delegation(
+    request: Request,
     token: str = Depends(oauth2_scheme),
     current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -288,6 +302,17 @@ async def remove_delegation(
         logger.info(
             "Delegation removed successfully",
             extra={"delegation_id": delegation.id, "user_id": current_user.id},
+        )
+        
+        # Audit the delegation removal
+        audit_event(
+            "delegation_removed",
+            {
+                "delegation_id": str(delegation.id),
+                "delegator_id": str(delegation.delegator_id),
+                "delegate_id": str(delegation.delegate_id),
+            },
+            request
         )
         
     except Exception as e:

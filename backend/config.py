@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = None
     REDIS_DB: int = 0
     RATE_LIMIT_PER_MINUTE: int = 60
+    
+    # Rate limiting
+    RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
 
     # Server settings
     HOST: str = "0.0.0.0"
@@ -55,6 +58,14 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"  # or "console"
     LOG_FILE: Optional[str] = None
+
+    # Observability
+    SENTRY_DSN: Optional[str] = None
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "dev")
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+
+    # Security
+    ADMIN_USERNAMES: str = os.getenv("ADMIN_USERNAMES", "")
 
     model_config = SettingsConfigDict(
         env_file=".env",

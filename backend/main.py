@@ -1,4 +1,5 @@
 import os
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -17,31 +18,45 @@ from fastapi.responses import JSONResponse
 import time
 import structlog
 
-from backend.api import auth, delegations, options, polls, users, votes, health, activity, comments, websocket
+# Initialize Sentry if DSN is provided
+if os.getenv("SENTRY_DSN"):
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+    
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        environment=os.getenv("ENVIRONMENT", "dev"),
+        traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        integrations=[
+            FastApiIntegration(),
+            RedisIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        # Capture request data
+        send_default_pii=True,
+    )
+
+from backend.api import auth, delegations, options, polls, users, votes, health, activity, comments, reactions, websocket
 from backend.config import settings
 from backend.core.exception_handlers import configure_exception_handlers
-from backend.core.logging import configure_logging, get_logger
+from backend.core.logging_json import configure_json_logging, get_json_logger
 from backend.core.middleware import RequestContextMiddleware
-from backend.core.audit import audit_log, AuditAction
+# from backend.core.audit import audit_log, AuditAction  # Replaced with middleware-based audit
+from backend.core.audit_mw import AuditMiddleware
 from backend.database import async_session_maker, get_db, init_db
 from backend.core.redis import get_redis_client, close_redis_client
-from backend.core.rate_limiting import (
-    public_rate_limiter,
-    authenticated_rate_limiter,
-    sensitive_rate_limiter,
-    admin_rate_limiter,
-)
+from backend.core.limiter import initialize_limiter, limiter_health
 
-# Configure logging
-configure_logging(
+# Configure JSON logging
+configure_json_logging(
     log_level=settings.LOG_LEVEL if hasattr(settings, "LOG_LEVEL") else "INFO",
-    json_format=not settings.DEBUG,
-    console_output=True,
-    log_file=settings.LOG_FILE,
+    environment=settings.ENVIRONMENT,
 )
 
 # Get logger
-logger = get_logger(__name__)
+logger = get_json_logger(__name__)
 
 # Configure OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
@@ -57,12 +72,19 @@ async def lifespan(app: FastAPI):
     # Initialize Redis
     try:
         redis_client = await get_redis_client()
-        await FastAPILimiter.init(redis_client)
         await FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
         logger.info("redis_initialized")
     except Exception as e:
         logger.error("redis_initialization_failed", error=str(e))
-        logger.warning("Continuing without Redis - rate limiting and caching will be disabled")
+        logger.warning("Continuing without Redis - caching will be disabled")
+    
+    # Initialize rate limiter
+    try:
+        await initialize_limiter(settings.REDIS_URL)
+        logger.info("rate_limiter_initialized")
+    except Exception as e:
+        logger.error("rate_limiter_initialization_failed", error=str(e))
+        logger.warning("Continuing without rate limiting")
     
     # Start WebSocket heartbeat
     try:
@@ -154,17 +176,20 @@ app = FastAPI(
 # Add request context middleware
 app.add_middleware(RequestContextMiddleware)
 
+# Add audit middleware (before CORS)
+app.add_middleware(AuditMiddleware)
+
 # Configure CORS based on environment
 allowed_origins = (
     settings.ALLOWED_ORIGINS if isinstance(settings.ALLOWED_ORIGINS, list)
     else settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS
-    else []
+    else ["http://localhost:5173", "http://localhost:5174"]  # Default to common dev ports
 )
-if settings.DEBUG:
-    allowed_origins.append("http://localhost:3000")  # Add localhost for development
 
-# TEMPORARY: Allow all origins for testing
-allowed_origins = ["*"]
+# Add development origins if in debug mode
+if settings.DEBUG:
+    dev_origins = ["http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174"]
+    allowed_origins.extend(dev_origins)
 
 app.add_middleware(
     CORSMiddleware,
@@ -282,6 +307,12 @@ app.include_router(
     # dependencies=[authenticated_rate_limiter],  # Temporarily disabled for Redis issues
 )
 app.include_router(
+    reactions.router,
+    prefix="/api/comments",
+    tags=["reactions"],
+    # dependencies=[authenticated_rate_limiter],  # Temporarily disabled for Redis issues
+)
+app.include_router(
     websocket.router,
     tags=["websocket"],
 )  # No rate limiting for WebSocket connections
@@ -293,17 +324,29 @@ configure_exception_handlers(app)
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(
-        "Unhandled exception",
-        exc_info=exc,
-        request_id=getattr(request.state, "request_id", None),
+    from backend.core.logging_json import log_error
+    
+    request_id = getattr(request.state, "request_id", None)
+    user_id = None
+    
+    # Try to get user ID from request if available
+    try:
+        if hasattr(request.state, "user"):
+            user_id = str(request.state.user.id)
+    except:
+        pass
+    
+    log_error(
+        logger=logger,
+        error=exc,
+        request_id=request_id,
+        user_id=user_id,
         path=request.url.path,
         method=request.method,
     )
     
     # Generate unified error response
     from backend.core.exception_handlers import get_error_response
-    request_id = getattr(request.state, "request_id", None)
     response = get_error_response(exc, include_details=settings.DEBUG, request_id=request_id)
     
     return JSONResponse(
@@ -381,3 +424,22 @@ async def redis_health(redis_client=Depends(get_redis_client)):
                 },
             },
         )
+
+
+@app.get("/api/limiter/health")
+async def limiter_health_check():
+    """Rate limiter health check endpoint (admin only)."""
+    from backend.core.admin_audit import require_admin
+    from backend.core.admin_audit import log_admin_action
+    
+    # Check if user is admin
+    await require_admin()
+    
+    # Log the admin action
+    log_admin_action(
+        action="limiter_health_check",
+        target_resource="rate_limiter",
+        result="success"
+    )
+    
+    return limiter_health()

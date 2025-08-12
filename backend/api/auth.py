@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import get_current_active_user
 from backend.core.exceptions import AuthenticationError, ServerError
 from backend.core.logging_config import get_logger
+from backend.core.limiter import get_limiter
 from backend.database import get_db
 from backend.models.user import User
 from backend.schemas.token import Token
@@ -16,6 +17,7 @@ logger = get_logger(__name__)
 
 
 @router.post("/token", response_model=Token)
+@get_limiter().limit("5/minute")
 async def login_for_access_token(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),

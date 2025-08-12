@@ -77,3 +77,15 @@ backups/
 *.backup
 *.bak
 *.tmp
+
+# Test artifacts
+test_results/
+test.db
+server.log
+the_commons_backup.sql
+
+# Debug/test files
+debug_frontend.html
+test_auth_flow.js
+test_frontend_connection.html
+test_prod_api.py
