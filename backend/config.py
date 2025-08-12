@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     
     # Feature flags
     LEVEL_A_ENABLED: bool = os.getenv("LEVEL_A_ENABLED", "true").lower() == "true"
+    
+    # Content pipeline settings
+    USE_DEMO_CONTENT: bool = os.getenv("USE_DEMO_CONTENT", "false").lower() == "true"
+    CONTENT_DATA_DIR: str = os.getenv("CONTENT_DATA_DIR", "./data/real_content")
 
     model_config = SettingsConfigDict(
         env_file=".env",

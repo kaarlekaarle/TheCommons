@@ -1,0 +1,72 @@
+[
+  {
+    "id": "p-open-data-transparency",
+    "title": "Open Data & Transparency Policy",
+    "description": "Publish all public datasets, decisions, and rationales openly by default unless specifically exempted by law. Provide clear processes for requesting information.",
+    "tags": ["governance", "transparency"],
+    "source": "https://data.austintexas.gov/"
+  },
+  {
+    "id": "p-vision-zero-safety",
+    "title": "Vision Zero Safety Commitment",
+    "description": "Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.",
+    "tags": ["mobility", "safety"],
+    "source": "https://www.austintexas.gov/department/strategic-mobility-plan"
+  },
+  {
+    "id": "p-climate-equity-action",
+    "title": "Climate Equity Action Plan",
+    "description": "Achieve net-zero community-wide greenhouse gas emissions by 2040 while ensuring climate benefits reach all communities equitably.",
+    "tags": ["environment", "equity"],
+    "source": "https://www.austintexas.gov/climate"
+  },
+  {
+    "id": "p-participatory-budgeting",
+    "title": "Participatory Budgeting Program",
+    "description": "Engage residents directly in allocating a portion of the city budget to community-identified projects and priorities.",
+    "tags": ["engagement", "budget"],
+    "source": "https://www.austintexas.gov/department/city-council"
+  },
+  {
+    "id": "p-zero-waste-goal",
+    "title": "Zero Waste Goal by 2040",
+    "description": "Divert 90% of materials from landfills by 2040 through comprehensive waste reduction, reuse, and recycling programs.",
+    "tags": ["waste", "environment"],
+    "source": "https://www.austintexas.gov/department/austin-resource-recovery"
+  },
+  {
+    "id": "p-affordable-housing-priority",
+    "title": "Affordable Housing Priority",
+    "description": "Ensure all Austin residents have access to safe, affordable housing options regardless of income level or background.",
+    "tags": ["housing", "equity"],
+    "source": "https://www.austintexas.gov/department/housing-planning"
+  },
+  {
+    "id": "p-transit-first-mobility",
+    "title": "Transit-First Mobility Strategy",
+    "description": "Prioritize public transit, walking, and cycling as the preferred modes of transportation for daily trips.",
+    "tags": ["mobility", "environment"],
+    "source": "https://www.austintexas.gov/department/transportation"
+  },
+  {
+    "id": "p-digital-inclusion-access",
+    "title": "Digital Inclusion & Access",
+    "description": "Ensure all residents have access to high-speed internet, digital literacy training, and technology resources.",
+    "tags": ["technology", "equity"],
+    "source": "https://www.austintexas.gov/department/innovation"
+  },
+  {
+    "id": "p-parks-recreation-access",
+    "title": "Parks & Recreation Access",
+    "description": "Provide equitable access to parks, trails, and recreational facilities within a 10-minute walk of all residents.",
+    "tags": ["parks", "health"],
+    "source": "https://www.austintexas.gov/department/parks-recreation"
+  },
+  {
+    "id": "p-community-engagement-standard",
+    "title": "Community Engagement Standard",
+    "description": "Engage residents in decision-making processes that affect their neighborhoods through multiple accessible channels.",
+    "tags": ["engagement", "governance"],
+    "source": "https://www.austintexas.gov/department/city-council"
+  }
+]

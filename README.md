@@ -61,6 +61,8 @@ Detailed architecture in [docs/architecture.md](docs/architecture.md).
    - `ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiration time
    - `ALLOWED_ORIGINS`: Comma-separated list of allowed origins
    - `LEVEL_A_ENABLED`: Enable Level A decisions (default: true)
+   - `USE_DEMO_CONTENT`: Use demo content instead of file-based content (default: false)
+   - `CONTENT_DATA_DIR`: Directory for content files (default: ./data/real_content)
 
 5. Run the application:
    ```bash
@@ -70,6 +72,18 @@ Detailed architecture in [docs/architecture.md](docs/architecture.md).
 6. Access the API documentation:
    - Swagger UI: http://localhost:8000/docs
    - ReDoc: http://localhost:8000/redoc
+
+7. Test the content API:
+   ```bash
+   # Get principles (Level A content)
+   curl http://localhost:8000/api/content/principles
+   
+   # Get actions (Level B content)
+   curl http://localhost:8000/api/content/actions
+   
+   # Get stories (case studies)
+   curl http://localhost:8000/api/content/stories
+   ```
 
 ## Development
 
@@ -89,6 +103,32 @@ To set up the development environment:
    ```bash
    pytest -q
    ```
+
+## Content Pipeline
+
+The Commons includes a flexible content pipeline that allows you to serve real community data instead of demo content. This system is feature-flagged and can be easily switched between demo and real data sources.
+
+### Content Types
+- **Principles** (Level A): Long-term baseline policies and values
+- **Actions** (Level B): Specific proposals and initiatives  
+- **Stories**: Case studies and success stories for the landing page
+
+### Configuration
+```bash
+# Backend
+USE_DEMO_CONTENT=false                    # Default: false (use real data)
+CONTENT_DATA_DIR=./data/real_content     # Default: ./data/real_content
+
+# Frontend
+VITE_USE_DEMO_CONTENT=false              # Default: false (use real data)
+```
+
+### Adding Real Data
+1. Replace the sample files in `data/real_content/` with your municipal data
+2. Follow the JSON schema documented in `docs/content-pipeline.md`
+3. Test the API endpoints to verify your content loads correctly
+
+For detailed documentation, see [Content Pipeline Guide](docs/content-pipeline.md).
 
 ## Two-Level Decision Model
 
@@ -324,8 +364,20 @@ make test-docker
 
 Run the test suite:
 ```bash
-pytest
+python -m pip install -r requirements-dev.txt
+pytest -q
 ```
+
+**Offline Test Suite**
+
+The project includes a comprehensive offline, self-contained test suite that runs without network or real Redis:
+
+- **Rate Limiting Tests** (`tests/test_rate_limit.py`): Tests rate limiting with fake Redis and fallback behavior
+- **WebSocket Manager Tests** (`tests/test_websocket_manager.py`): Tests WebSocket room broadcasting and connection management
+- **Soft Delete Visibility Tests** (`tests/test_soft_delete.py`): Tests that soft deleted records are properly excluded from queries
+- **Delegation Chain Safety Tests** (`tests/test_delegation_chain.py`): Tests delegation chain resolution and cycle detection
+
+All tests use in-memory SQLite and fake Redis for fast, deterministic execution.
 
 ### E2E Tests
 

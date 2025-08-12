@@ -1,0 +1,170 @@
+[
+  {
+    "id": "a-bike-lane-lamar",
+    "title": "Install protected bike lanes on Lamar Blvd",
+    "description": "Add protected bicycle lanes along Lamar Boulevard from downtown to North Austin to improve cyclist safety and encourage active transportation.",
+    "scope": "city",
+    "tags": ["mobility", "safety"],
+    "source": "https://www.austintexas.gov/department/transportation"
+  },
+  {
+    "id": "a-curbside-compost-pilot",
+    "title": "Pilot curbside composting in East Austin",
+    "description": "Launch organic waste collection service in East Austin neighborhoods to reduce landfill waste and create compost for community gardens.",
+    "scope": "district",
+    "tags": ["waste", "environment"],
+    "source": "https://www.austintexas.gov/department/austin-resource-recovery"
+  },
+  {
+    "id": "a-library-hours-extension",
+    "title": "Extend library hours to 9 PM",
+    "description": "Extend public library hours to 9 PM on weekdays for six-month trial to improve access for working families and students.",
+    "scope": "city",
+    "tags": ["education", "accessibility"],
+    "source": "https://www.austintexas.gov/department/library"
+  },
+  {
+    "id": "a-solar-panels-community-centers",
+    "title": "Install solar panels on 5 community centers",
+    "description": "Install solar photovoltaic systems on five city community centers to reduce energy costs and demonstrate renewable energy commitment.",
+    "scope": "city",
+    "tags": ["environment", "technology"],
+    "source": "https://www.austintexas.gov/climate"
+  },
+  {
+    "id": "a-youth-apprenticeship-program",
+    "title": "Start youth apprenticeship program",
+    "description": "Create apprenticeship program in city maintenance and parks departments for youth aged 16-24 to provide job training and career pathways.",
+    "scope": "city",
+    "tags": ["employment", "youth"],
+    "source": "https://www.austintexas.gov/department/economic-development"
+  },
+  {
+    "id": "a-mental-health-crisis-response",
+    "title": "Pilot mobile mental health crisis response",
+    "description": "Launch mobile mental health crisis response unit operating five days per week to provide immediate support and reduce police involvement.",
+    "scope": "city",
+    "tags": ["health", "safety"],
+    "source": "https://www.austintexas.gov/department/health"
+  },
+  {
+    "id": "a-wifi-expansion-parks",
+    "title": "Expand free Wi-Fi in public parks",
+    "description": "Offer free Wi-Fi in all major public parks and recreation centers to improve digital access and reduce the digital divide.",
+    "scope": "city",
+    "tags": ["technology", "equity"],
+    "source": "https://www.austintexas.gov/department/parks-recreation"
+  },
+  {
+    "id": "a-affordable-housing-trust-fund",
+    "title": "Increase affordable housing trust fund",
+    "description": "Increase the city's affordable housing trust fund by $50 million to support construction of 1,000 new affordable housing units.",
+    "scope": "city",
+    "tags": ["housing", "equity"],
+    "source": "https://www.austintexas.gov/department/housing-planning"
+  },
+  {
+    "id": "a-street-tree-planting",
+    "title": "Plant 1,000 street trees",
+    "description": "Plant street trees along major transit corridors and in underserved neighborhoods to improve air quality and provide shade.",
+    "scope": "city",
+    "tags": ["environment", "parks"],
+    "source": "https://www.austintexas.gov/department/parks-recreation"
+  },
+  {
+    "id": "a-water-stations-installation",
+    "title": "Install public water refill stations",
+    "description": "Install 25 public water refill stations in parks, schools, and community centers to reduce plastic waste and promote hydration.",
+    "scope": "city",
+    "tags": ["sustainability", "health"],
+    "source": "https://www.austintexas.gov/department/austin-resource-recovery"
+  },
+  {
+    "id": "a-participatory-budgeting-pilot",
+    "title": "Launch participatory budgeting pilot",
+    "description": "Allocate $2 million of the city budget for residents to vote on community projects in a participatory budgeting pilot program.",
+    "scope": "city",
+    "tags": ["engagement", "budget"],
+    "source": "https://www.austintexas.gov/department/city-council"
+  },
+  {
+    "id": "a-electric-bus-pilot",
+    "title": "Pilot electric buses on Route 1",
+    "description": "Deploy five electric buses on Capital Metro Route 1 to reduce emissions and noise pollution in the city center.",
+    "scope": "city",
+    "tags": ["mobility", "environment"],
+    "source": "https://www.austintexas.gov/department/transportation"
+  },
+  {
+    "id": "a-community-garden-network",
+    "title": "Create community garden network",
+    "description": "Establish 10 new community gardens on city-owned vacant lots to provide fresh food access and educational opportunities.",
+    "scope": "city",
+    "tags": ["parks", "health"],
+    "source": "https://www.austintexas.gov/department/parks-recreation"
+  },
+  {
+    "id": "a-digital-literacy-program",
+    "title": "Launch digital literacy program",
+    "description": "Provide free digital literacy training and computer access at all public libraries to bridge the digital divide.",
+    "scope": "city",
+    "tags": ["technology", "education"],
+    "source": "https://www.austintexas.gov/department/library"
+  },
+  {
+    "id": "a-pedestrian-safety-improvements",
+    "title": "Improve pedestrian safety at 20 intersections",
+    "description": "Install pedestrian countdown signals, improved crosswalks, and better lighting at 20 high-traffic intersections.",
+    "scope": "city",
+    "tags": ["safety", "mobility"],
+    "source": "https://www.austintexas.gov/department/transportation"
+  },
+  {
+    "id": "a-rental-assistance-expansion",
+    "title": "Expand rental assistance program",
+    "description": "Increase rental assistance funding by $10 million to help 500 additional families avoid eviction and maintain stable housing.",
+    "scope": "city",
+    "tags": ["housing", "equity"],
+    "source": "https://www.austintexas.gov/department/housing-planning"
+  },
+  {
+    "id": "a-recycling-education-campaign",
+    "title": "Launch recycling education campaign",
+    "description": "Implement citywide recycling education campaign to increase participation and reduce contamination in recycling streams.",
+    "scope": "city",
+    "tags": ["waste", "education"],
+    "source": "https://www.austintexas.gov/department/austin-resource-recovery"
+  },
+  {
+    "id": "a-park-maintenance-increase",
+    "title": "Increase park maintenance funding",
+    "description": "Increase park maintenance budget by $3 million to improve safety, cleanliness, and accessibility of all public parks.",
+    "scope": "city",
+    "tags": ["parks", "safety"],
+    "source": "https://www.austintexas.gov/department/parks-recreation"
+  },
+  {
+    "id": "a-small-business-support",
+    "title": "Expand small business support program",
+    "description": "Provide technical assistance and micro-loans to 200 small businesses, with priority for minority and women-owned businesses.",
+    "scope": "city",
+    "tags": ["budget", "equity"],
+    "source": "https://www.austintexas.gov/department/economic-development"
+  },
+  {
+    "id": "a-transit-fare-reduction",
+    "title": "Reduce transit fares for low-income riders",
+    "description": "Implement 50% fare reduction for low-income residents to improve access to public transportation and reduce transportation costs.",
+    "scope": "city",
+    "tags": ["mobility", "equity"],
+    "source": "https://www.austintexas.gov/department/transportation"
+  },
+  {
+    "id": "a-emergency-shelter-expansion",
+    "title": "Expand emergency shelter capacity",
+    "description": "Add 100 emergency shelter beds and improve facilities to better serve Austin's homeless population during extreme weather.",
+    "scope": "city",
+    "tags": ["housing", "health"],
+    "source": "https://www.austintexas.gov/department/housing-planning"
+  }
+]

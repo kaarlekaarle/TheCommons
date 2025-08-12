@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
   Vote, 
   MessageCircle, 
@@ -15,9 +16,18 @@ import {
   Lightbulb
 } from 'lucide-react';
 import Button from '../components/ui/Button';
+import StoryCards from '../components/content/StoryCards';
+import { getContentStories } from '../lib/api';
+import { flags } from '../config/flags';
+import type { StoryItem } from '../types/content';
 
 export default function LandingPage() {
-  const communityStories = [
+  const [stories, setStories] = useState<StoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Demo fallback stories
+  const demoStories = [
     {
       icon: <Heart className="w-6 h-6" />,
       title: "Vision Zero Implementation",
@@ -34,6 +44,29 @@ export default function LandingPage() {
       description: "Retrofitted 15 public buildings, cutting energy costs by 30%."
     }
   ];
+
+  useEffect(() => {
+    const loadStories = async () => {
+      if (flags.useDemoContent) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const contentStories = await getContentStories();
+        setStories(contentStories);
+      } catch (err) {
+        console.error('Failed to load stories:', err);
+        setError('Failed to load stories');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStories();
+  }, []);
 
   const waysToConnect = [
     {
@@ -136,23 +169,31 @@ export default function LandingPage() {
               How communities have turned discussion into real change
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {communityStories.map((story, index) => (
-              <motion.div
-                key={story.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2 }}
-                className="gov-card gov-card-hover text-center"
-              >
-                <div className="text-gov-secondary mb-4 flex justify-center">
-                  {story.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gov-text mb-3">{story.title}</h3>
-                <p className="text-gov-text-muted">{story.description}</p>
-              </motion.div>
-            ))}
-          </div>
+          {flags.useDemoContent ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {demoStories.map((story, index) => (
+                <motion.div
+                  key={story.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.2 }}
+                  className="gov-card gov-card-hover text-center"
+                >
+                  <div className="text-gov-secondary mb-4 flex justify-center">
+                    {story.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold text-gov-text mb-3">{story.title}</h3>
+                  <p className="text-gov-text-muted">{story.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <StoryCards
+              stories={stories}
+              loading={loading}
+              error={error}
+            />
+          )}
         </div>
       </section>
 

@@ -38,7 +38,7 @@ if os.getenv("SENTRY_DSN"):
         send_default_pii=True,
     )
 
-from backend.api import auth, delegations, options, polls, users, votes, health, activity, comments, reactions, websocket
+from backend.api import auth, delegations, options, polls, users, votes, health, activity, comments, reactions, websocket, content
 from backend.config import settings
 from backend.core.exception_handlers import configure_exception_handlers
 from backend.core.logging_json import configure_json_logging, get_json_logger
@@ -327,6 +327,11 @@ app.include_router(
     websocket.router,
     tags=["websocket"],
 )  # No rate limiting for WebSocket connections
+app.include_router(
+    content.router,
+    prefix="/api",
+    tags=["content"],
+)  # No rate limiting for content endpoints
 logger.info("Routers registered successfully")
 
 # Add exception handlers

@@ -10,6 +10,8 @@ export const flags = {
       .split(',')
       .map((s: string) => s.trim())
       .filter(Boolean),
+
+  useDemoContent: import.meta.env.VITE_USE_DEMO_CONTENT === 'true',
 };
 
 // Legacy export for backward compatibility

@@ -17,20 +17,32 @@ import {
   Handshake,
   Lightbulb
 } from 'lucide-react';
-import { listPolls } from '../lib/api';
+import { listPolls, getContentPrinciples, getContentActions } from '../lib/api';
 import type { Poll } from '../types';
+import type { PrincipleItem, ActionItem } from '../types/content';
 import Button from '../components/ui/Button';
 import { useToast } from '../components/ui/useToast';
 import ProposalCard from '../components/ProposalCard';
 import LevelSection from '../components/LevelSection';
+import ContentList from '../components/content/ContentList';
+import { flags } from '../config/flags';
 
 export default function Dashboard() {
   const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
+  const [principles, setPrinciples] = useState<PrincipleItem[]>([]);
+  const [actions, setActions] = useState<ActionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contentLoading, setContentLoading] = useState(true);
+  const [contentError, setContentError] = useState<string | null>(null);
   const { error: showError } = useToast();
 
   useEffect(() => {
     fetchRecentPolls();
+    if (!flags.useDemoContent) {
+      fetchContent();
+    } else {
+      setContentLoading(false);
+    }
   }, []);
 
   const fetchRecentPolls = async () => {
@@ -46,6 +58,24 @@ export default function Dashboard() {
       showError('Failed to load recent proposals');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchContent = async () => {
+    try {
+      setContentLoading(true);
+      setContentError(null);
+      const [principlesData, actionsData] = await Promise.all([
+        getContentPrinciples(),
+        getContentActions()
+      ]);
+      setPrinciples(principlesData);
+      setActions(actionsData);
+    } catch (err) {
+      console.error('Failed to load content:', err);
+      setContentError('Failed to load content');
+    } finally {
+      setContentLoading(false);
     }
   };
 
@@ -222,9 +252,35 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right Column - Recent Community Activity */}
-        <div>
-          <h2 className="text-2xl font-semibold text-gov-primary mb-6">Recent Community Activity</h2>
+        {/* Right Column - Content & Recent Activity */}
+        <div className="space-y-8">
+          {/* Content Sections (when not using demo content) */}
+          {!flags.useDemoContent && (
+            <>
+              <ContentList
+                title="Community Principles"
+                items={principles}
+                loading={contentLoading}
+                error={contentError}
+                compact={true}
+                emptyMessage="Add your first principle"
+                className="mb-6"
+              />
+              <ContentList
+                title="Community Actions"
+                items={actions}
+                loading={contentLoading}
+                error={contentError}
+                compact={true}
+                emptyMessage="Add your first action"
+                className="mb-6"
+              />
+            </>
+          )}
+
+          {/* Recent Community Activity */}
+          <div>
+            <h2 className="text-2xl font-semibold text-gov-primary mb-6">Recent Community Activity</h2>
           {loading ? (
             <div className="space-y-4">
               {[...Array(6)].map((_, i) => (
@@ -292,6 +348,7 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

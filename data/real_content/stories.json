@@ -1,0 +1,72 @@
+[
+  {
+    "id": "s-vision-zero-success",
+    "title": "Vision Zero Implementation Success",
+    "summary": "Reduced traffic fatalities by 40% through street redesign, improved crosswalks, and enhanced pedestrian safety measures across the city.",
+    "impact": "40% reduction in traffic fatalities, 25% increase in pedestrian safety ratings",
+    "link": "https://www.austintexas.gov/department/strategic-mobility-plan"
+  },
+  {
+    "id": "s-open-data-initiative",
+    "title": "Open Data Portal Launch",
+    "summary": "Published 200+ datasets online, leading to better-informed community decisions and increased government transparency.",
+    "impact": "200+ datasets published, 50,000+ monthly portal visits",
+    "link": "https://data.austintexas.gov/"
+  },
+  {
+    "id": "s-green-building-program",
+    "title": "Green Building Program",
+    "summary": "Retrofitted 15 public buildings with energy-efficient systems, cutting energy costs by 30% and reducing carbon emissions.",
+    "impact": "30% reduction in energy costs, 25% decrease in carbon emissions",
+    "link": "https://www.austintexas.gov/climate"
+  },
+  {
+    "id": "s-community-garden-success",
+    "title": "Community Garden Network",
+    "summary": "Residents converted vacant lots into community gardens, creating food access and educational opportunities in underserved neighborhoods.",
+    "impact": "Fresh food access for 500+ families, 15 new community gardens established",
+    "link": "https://www.austintexas.gov/department/parks-recreation"
+  },
+  {
+    "id": "s-digital-inclusion-program",
+    "title": "Digital Inclusion Initiative",
+    "summary": "Free Wi-Fi expansion and digital literacy programs helped bridge the digital divide, improving access to online services.",
+    "impact": "Increased internet access for 2,000+ households, 85% program completion rate",
+    "link": "https://www.austintexas.gov/department/innovation"
+  },
+  {
+    "id": "s-youth-employment-success",
+    "title": "Youth Employment Program",
+    "summary": "The city's apprenticeship program provided job training and career pathways for young residents, reducing unemployment.",
+    "impact": "85% employment rate for program graduates, 200+ youth employed",
+    "link": "https://www.austintexas.gov/department/economic-development"
+  },
+  {
+    "id": "s-participatory-budgeting",
+    "title": "Participatory Budgeting Success",
+    "summary": "Residents directly allocated $2 million to community projects, leading to higher satisfaction and increased civic engagement.",
+    "impact": "5,000+ residents participated, 15 community projects funded",
+    "link": "https://www.austintexas.gov/department/city-council"
+  },
+  {
+    "id": "s-zero-waste-progress",
+    "title": "Zero Waste Program Progress",
+    "summary": "Comprehensive recycling and composting programs helped Austin achieve 65% waste diversion rate, moving toward 90% goal.",
+    "impact": "65% waste diversion rate, 50% reduction in landfill waste",
+    "link": "https://www.austintexas.gov/department/austin-resource-recovery"
+  },
+  {
+    "id": "s-affordable-housing-success",
+    "title": "Affordable Housing Initiative",
+    "summary": "City's affordable housing trust fund helped create 1,500 new affordable units, providing stable housing for low-income families.",
+    "impact": "1,500 new affordable units created, 3,000+ families housed",
+    "link": "https://www.austintexas.gov/department/housing-planning"
+  },
+  {
+    "id": "s-transit-improvement-success",
+    "title": "Transit System Improvements",
+    "summary": "Enhanced bus service and new routes increased ridership by 25% while reducing wait times and improving reliability.",
+    "impact": "25% increase in ridership, 30% reduction in wait times",
+    "link": "https://www.austintexas.gov/department/transportation"
+  }
+]
