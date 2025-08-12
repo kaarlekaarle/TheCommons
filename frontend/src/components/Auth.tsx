@@ -52,13 +52,13 @@ export default function Auth({ onSuccess }: AuthProps) {
         console.warn('Failed to set Sentry user context:', e);
       }
       
-      setSuccess('Logged in successfully!');
+      setSuccess('Welcome back!');
       console.log('[AUTH DEBUG] Auth state updated, calling onSuccess callback');
       onSuccess?.(token);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } }; message?: string };
       console.error('[AUTH DEBUG] Login failed:', error.response?.data?.detail || error.message);
-      setError(error.response?.data?.detail || error.message || 'Failed to login');
+      setError(error.response?.data?.detail || error.message || 'Could not sign in');
     } finally {
       setLoading(false);
     }
@@ -115,13 +115,13 @@ export default function Auth({ onSuccess }: AuthProps) {
         console.warn('Failed to set Sentry user context:', e);
       }
       
-      setSuccess('User created and logged in successfully!');
+      setSuccess('Account created — you\'re in!');
       console.log('[AUTH DEBUG] Auth state updated, calling onSuccess callback');
       onSuccess?.(token);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } }; message?: string };
       console.error('[AUTH DEBUG] Registration failed:', error.response?.data?.detail || error.message);
-      setError(error.response?.data?.detail || error.message || 'Failed to create user');
+      setError(error.response?.data?.detail || error.message || 'Could not create account');
     } finally {
       setLoading(false);
     }
@@ -144,7 +144,15 @@ export default function Auth({ onSuccess }: AuthProps) {
   return (
     <div className="card">
       <div className="card-header">
-        <h1 className="card-title">{isLogin ? 'Login' : 'Create Account'}</h1>
+        <h1 className="card-title">
+          {isLogin ? 'Welcome Back' : 'Join Your Community'}
+        </h1>
+        <p className="text-muted mt-2">
+          {isLogin 
+            ? 'Sign in to take part in decisions that shape our shared life.' 
+            : 'Create your account and have your say in the choices we make together.'
+          }
+        </p>
       </div>
       <div className="card-content">
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -175,7 +183,7 @@ export default function Auth({ onSuccess }: AuthProps) {
               value={formData.username}
               onChange={(e) => setFormData({...formData, username: e.target.value})}
               className="w-full px-3 py-2 bg-bg border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
-              placeholder="Enter your username"
+              placeholder="Pick a username"
               required
             />
           </div>
@@ -229,7 +237,7 @@ export default function Auth({ onSuccess }: AuthProps) {
             loading={loading}
             className="w-full"
           >
-            {isLogin ? 'Login' : 'Create Account'}
+            {isLogin ? 'Sign In' : 'Join'}
           </Button>
 
           <div className="text-center">
@@ -238,7 +246,7 @@ export default function Auth({ onSuccess }: AuthProps) {
               onClick={toggleMode}
               className="text-sm text-muted hover:text-white transition-colors"
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
+              {isLogin ? "New here? Create an account" : "Already here? Sign in"}
             </button>
           </div>
         </form>

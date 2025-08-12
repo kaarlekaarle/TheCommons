@@ -1,29 +1,29 @@
 {
-  "generatedAt": "2025-08-12T15:23:41.469Z",
+  "generatedAt": "2025-08-12T17:51:43.266Z",
   "items": [
     {
       "title": "Proposals",
-      "description": "Create, edit, and share proposals with your community."
+      "description": "Suggest and share ideas."
     },
     {
       "title": "Voting",
-      "description": "Vote directly or delegate your vote to a trusted member."
+      "description": "Vote directly or delegate."
     },
     {
       "title": "Delegations",
-      "description": "Build trust networks to make decision-making faster."
+      "description": "Let trusted members vote for you."
     },
     {
       "title": "Comments",
-      "description": "Discuss proposals in real time with live updates."
+      "description": "Discuss ideas in real time."
     },
     {
       "title": "Activity Feed",
-      "description": "See what's happening across the community as it happens."
+      "description": "See all actions as they happen."
     },
     {
       "title": "Real-Time Results",
-      "description": "Track votes and discussions instantly."
+      "description": "Watch outcomes update instantly."
     }
   ]
 }

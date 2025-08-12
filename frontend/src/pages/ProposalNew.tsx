@@ -4,8 +4,8 @@ import { createProposal } from "../lib/api";
 import { useNavigate } from "react-router-dom";
 
 const LEVEL_A_CHOICES = [
-  "Environmental issues: Fuck nature",
-  "Environmental issues: Let's take care of nature",
+  "Environmental: Nature is for exploitation",
+  "Environmental: Nature is to be cared for",
 ];
 
 // Feature flag for Level A decisions
@@ -29,7 +29,7 @@ export default function ProposalNew() {
     if (!title.trim()) return setError("Title is required.");
     if (!description.trim()) return setError("Description is required.");
     if (decisionType === "level_a" && !directionChoice) {
-      return setError("Please choose one of the Level‑A directions.");
+      return setError("Please pick a Level-A direction.");
     }
 
     try {
@@ -43,7 +43,7 @@ export default function ProposalNew() {
       const created = await createProposal(payload);
       navigate(`/proposals/${created.id}`);
     } catch (err: any) {
-      setError(err?.message || err?.response?.data?.message || "Failed to create proposal.");
+      setError(err?.message || err?.response?.data?.message || "Could not create proposal.");
     } finally {
       setSubmitting(false);
     }
@@ -53,7 +53,12 @@ export default function ProposalNew() {
     <div className="container mx-auto px-4 py-8">
       <div className="card">
         <div className="card-content space-y-6">
-          <h1 className="text-2xl md:text-3xl font-semibold">Create Proposal</h1>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold">Start a Proposal</h1>
+            <p className="text-muted mt-2">
+              Choose what type of decision this is, then describe it clearly.
+            </p>
+          </div>
 
           {error && (
             <div className="border border-red-500/40 bg-red-500/10 text-red-300 rounded-lg p-3">
@@ -63,7 +68,7 @@ export default function ProposalNew() {
 
           {/* Decision Type Selector */}
           <div className="space-y-2">
-            <label className="block text-sm text-muted">Decision type</label>
+            <label className="block text-sm text-muted">What type of decision is this?</label>
             <div className={`grid gap-3 ${LEVEL_A_ENABLED ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
               {LEVEL_A_ENABLED && (
                 <button
@@ -75,9 +80,9 @@ export default function ProposalNew() {
                       : "border-border hover:border-primary/40"
                   }`}
                 >
-                  <div className="font-semibold">Baseline Policy (Level A)</div>
+                  <div className="font-semibold">Principle (Level A)</div>
                   <div className="text-sm text-muted">
-                    High‑level, slow‑changing principle. Rarely updated.
+                    A long-term value or policy. Rarely changes.
                   </div>
                 </button>
               )}
@@ -91,9 +96,9 @@ export default function ProposalNew() {
                     : "border-border hover:border-primary/40"
                 }`}
               >
-                <div className="font-semibold">Poll (Level B)</div>
+                <div className="font-semibold">Action (Level B)</div>
                 <div className="text-sm text-muted">
-                  Quick action on a specific issue. Yes / No / Abstain.
+                  A concrete decision for now. Yes / No / Abstain.
                 </div>
               </button>
             </div>
@@ -103,7 +108,7 @@ export default function ProposalNew() {
           {decisionType === "level_a" && (
             <div className="space-y-3">
               <div className="text-sm text-muted">
-                Choose the baseline direction to make the concept clear.
+                Choose the direction that best represents your community's values.
               </div>
               <div className="space-y-2">
                 {LEVEL_A_CHOICES.map((c) => (
@@ -131,7 +136,7 @@ export default function ProposalNew() {
                 className="w-full rounded-lg bg-surface border border-border p-3 text-white outline-none focus:border-primary"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Short, clear title"
+                placeholder="Give it a clear, short name"
               />
             </div>
             <div>
@@ -140,13 +145,13 @@ export default function ProposalNew() {
                 className="w-full rounded-lg bg-surface border border-border p-3 text-white outline-none focus:border-primary min-h-[120px]"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Explain the context and intent"
+                placeholder="Explain why it matters and what it will change"
               />
             </div>
 
             <div className="pt-2">
               <Button type="submit" variant="primary" size="lg" disabled={submitting}>
-                {submitting ? "Creating…" : "Create Proposal"}
+                {submitting ? "Sharing…" : "Share"}
               </Button>
             </div>
           </form>

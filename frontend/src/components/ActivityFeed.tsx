@@ -46,7 +46,7 @@ export default function ActivityFeed() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Activity className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold text-white">Activity</h1>
+            <h1 className="text-2xl font-bold text-white">Community Activity</h1>
           </div>
           <Button variant="ghost" disabled>
             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -65,7 +65,7 @@ export default function ActivityFeed() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Activity className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold text-white">Activity</h1>
+            <h1 className="text-2xl font-bold text-white">Community Activity</h1>
           </div>
           <Button onClick={fetchActivities} variant="ghost">
             <RefreshCw className="w-4 h-4" />
@@ -75,9 +75,9 @@ export default function ActivityFeed() {
           <div className="text-center py-12">
             <div className="text-muted text-6xl mb-4">📋</div>
             <h3 className="text-lg font-medium mb-2">Activity Feed Unavailable</h3>
-            <p className="text-muted mb-4">The activity feed is currently being updated. Please check back later.</p>
+            <p className="text-muted mb-4">Try again later.</p>
             <Button onClick={fetchActivities} variant="ghost">
-              Try Again
+              Retry
             </Button>
           </div>
         </div>
@@ -90,7 +90,7 @@ export default function ActivityFeed() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Activity className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold text-white">Activity</h1>
+          <h1 className="text-2xl font-bold text-white">Community Activity</h1>
         </div>
         <Button onClick={fetchActivities} variant="ghost">
           <RefreshCw className="w-4 h-4" />
@@ -101,7 +101,7 @@ export default function ActivityFeed() {
         <Empty
           icon={<Activity className="w-8 h-8" />}
           title="Nothing yet"
-          subtitle="Activity will appear here as people propose, vote, and delegate."
+          subtitle="When proposals, votes, or delegations happen, they'll appear here."
         />
       ) : (
         <div className="space-y-4">

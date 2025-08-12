@@ -27,10 +27,10 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navigation = [
-    { name: 'Activity', href: '/activity', icon: Activity },
+    { name: 'Community Activity', href: '/activity', icon: Activity },
     { name: 'Proposals', href: '/proposals', icon: ListChecks },
-    { name: 'New Proposal', href: '/proposals/new', icon: FilePlus2 },
-    { name: 'Dashboard', href: '/dashboard', icon: User },
+    { name: 'Start a Proposal', href: '/proposals/new', icon: FilePlus2 },
+    { name: 'Home', href: '/dashboard', icon: User },
   ];
 
   const isActive = (href: string) => {
@@ -98,7 +98,7 @@ export default function Layout({ children }: LayoutProps) {
                 className="flex items-center space-x-2"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Logout</span>
+                <span>Log out</span>
               </Button>
             </div>
 
@@ -151,7 +151,7 @@ export default function Layout({ children }: LayoutProps) {
                 className="w-full justify-start"
               >
                 <LogOut className="w-5 h-5 mr-2" />
-                <span>Logout</span>
+                <span>Log out</span>
               </Button>
             </div>
           </div>
@@ -175,7 +175,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex items-center space-x-4 text-sm">
               <Link to="/why" className="text-muted hover:text-white transition-colors">
-                Why two levels?
+                Why Two Levels?
               </Link>
             </div>
           </div>

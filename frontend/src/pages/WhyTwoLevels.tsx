@@ -188,7 +188,7 @@ export default function WhyTwoLevels() {
       </main>
 
       <footer className="px-6 py-10 text-center text-sm text-muted border-t border-border">
-        © {new Date().getFullYear()} The Commons — Two‑Level Decision Thinking
+        © {new Date().getFullYear()} The Commons — Two Levels Model
       </footer>
     </div>
   );

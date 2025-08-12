@@ -148,7 +148,7 @@ export default function ProposalList() {
         <Link to="/proposals/new">
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            New Proposal
+            Start a Proposal
           </Button>
         </Link>
       </div>
@@ -157,12 +157,12 @@ export default function ProposalList() {
         <Empty
           icon={<FileText className="w-8 h-8" />}
           title="No proposals yet"
-          subtitle="Create the first one to get started."
+          subtitle="Be the first to suggest something."
           action={
             <Link to="/proposals/new">
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                New Proposal
+                Start One
               </Button>
             </Link>
           }
@@ -189,7 +189,7 @@ export default function ProposalList() {
                       ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
                       : 'bg-green-500/20 text-green-300 border border-green-500/30'
                   }`}>
-                    {poll.decision_type === 'level_a' ? 'Level A' : 'Level B'}
+                    {poll.decision_type === 'level_a' ? 'Principle (Level A)' : 'Action (Level B)'}
                   </span>
                 </div>
                 <p className="text-sm text-muted line-clamp-3 mb-4">
@@ -197,12 +197,12 @@ export default function ProposalList() {
                 </p>
                 {poll.decision_type === 'level_a' && poll.direction_choice && (
                   <div className="mb-4 p-2 bg-blue-500/10 border border-blue-500/20 rounded text-xs">
-                    <span className="text-blue-300 font-medium">Direction:</span>
+                    <span className="text-blue-300 font-medium">Value:</span>
                     <span className="text-white ml-1">{poll.direction_choice}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-xs text-muted">
-                  <span>Created {new Date(poll.created_at).toLocaleDateString()}</span>
+                  <span>Shared {new Date(poll.created_at).toLocaleDateString()}</span>
                 </div>
               </Link>
             </motion.div>
