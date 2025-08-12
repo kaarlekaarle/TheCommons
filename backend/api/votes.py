@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from sqlalchemy import func, select
@@ -62,11 +63,31 @@ async def create_new_vote(
     )
     try:
         vote = await create_vote(db, vote_in.model_dump(), current_user)
+        
+        # Broadcast vote update
+        try:
+            from backend.core.websocket import manager
+            await manager.broadcast_vote_update(str(vote.poll_id), {
+                "id": str(vote.id),
+                "poll_id": str(vote.poll_id),
+                "option_id": str(vote.option_id),
+                "user_id": str(vote.user_id),
+                "created_at": vote.created_at.isoformat()
+            })
+        except Exception as e:
+            logger.warning(f"Failed to broadcast vote creation", extra={"error": str(e)})
+        
         logger.info(
             "Vote created successfully",
             extra={"vote_id": vote.id, "user_id": current_user.id},
         )
         return vote
+    except ValueError as e:
+        logger.warning(
+            "Vote creation failed - validation error",
+            extra={"user_id": current_user.id, "error": str(e)},
+        )
+        raise ValidationError(str(e))
     except Exception as e:
         logger.error(
             "Failed to create vote",
@@ -106,9 +127,41 @@ async def list_votes(
     return result.scalars().all()
 
 
+@router.get("/poll/{poll_id}/my-vote", response_model=VoteSchema)
+async def get_my_vote_for_poll(
+    poll_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Vote:
+    """Get the current user's vote for a specific poll.
+
+    Args:
+        poll_id: ID of the poll
+        db: Database session
+        current_user: Currently authenticated user
+
+    Returns:
+        Vote: User's vote for the poll
+
+    Raises:
+        ResourceNotFoundError: If vote not found
+    """
+    result = await db.execute(
+        select(Vote).where(
+            Vote.poll_id == poll_id,
+            Vote.user_id == current_user.id,
+            Vote.is_deleted == False
+        )
+    )
+    vote = result.scalar_one_or_none()
+    if not vote:
+        raise HTTPException(status_code=404, detail="Vote not found")
+    return vote
+
+
 @router.get("/{vote_id}", response_model=VoteSchema)
 async def get_vote(
-    vote_id: int,
+    vote_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Vote:
@@ -141,7 +194,7 @@ async def get_vote(
 @router.put("/{vote_id}", response_model=VoteSchema)
 @router.patch("/{vote_id}", response_model=VoteSchema)
 async def update_existing_vote(
-    vote_id: int,
+    vote_id: UUID,
     vote_in: VoteUpdate,
     token: str = Depends(oauth2_scheme),
     current_user: User = Security(get_current_active_user),
@@ -211,7 +264,7 @@ async def update_existing_vote(
 
 @router.delete("/{vote_id}", response_model=VoteSchema)
 async def delete_existing_vote(
-    vote_id: int,
+    vote_id: UUID,
     token: str = Depends(oauth2_scheme),
     current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -256,7 +309,7 @@ async def delete_existing_vote(
 
 @router.post("/{vote_id}/cast", response_model=VoteSchema)
 async def cast_new_vote(
-    vote_id: int,
+    vote_id: UUID,
     token: str = Depends(oauth2_scheme),
     current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),

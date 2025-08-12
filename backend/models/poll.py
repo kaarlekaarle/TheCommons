@@ -61,24 +61,21 @@ class Poll(SQLAlchemyBase):
     votes = relationship(
         "Vote", back_populates="poll", cascade="all, delete-orphan"
     )  # type: Any
-    delegations = relationship(
-        "Delegation", back_populates="poll", cascade="all, delete-orphan"
+    comments = relationship(
+        "Comment", back_populates="poll", cascade="all, delete-orphan"
     )  # type: Any
 
     async def soft_delete(self, db_session: Session) -> None:
         """Soft delete the poll and all related data.
 
         This method performs a soft delete of the poll and all its related data,
-        including options, votes, delegations, and activity logs.
+        including options, votes, and activity logs.
 
         Args:
             db_session: The database session to use for the operation.
         """
         from backend.models.activity_log import (
             ActivityLog,  # Import here to avoid circular dependency
-        )
-        from backend.models.delegation import (
-            Delegation,  # Import here to avoid circular dependency
         )
         from backend.models.option import (
             Option,  # Import here to avoid circular dependency
@@ -101,15 +98,6 @@ class Poll(SQLAlchemyBase):
         votes = result.scalars().all()
         for vote in votes:
             await vote.soft_delete(db_session)
-        # Soft delete related delegations
-        result = await db_session.execute(
-            select(Delegation).where(
-                Delegation.poll_id == self.id, Delegation.is_deleted == False
-            )
-        )
-        delegations = result.scalars().all()
-        for delegation in delegations:
-            await delegation.soft_delete(db_session)
         # Soft delete related activity logs
         result = await db_session.execute(
             select(ActivityLog).where(

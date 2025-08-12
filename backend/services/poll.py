@@ -8,7 +8,6 @@ from backend.models.option import Option
 from backend.models.vote import Vote
 from backend.models.delegation import Delegation
 from backend.schemas.poll import PollResult
-from backend.services.delegation import DelegationService
 from backend.core.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -63,14 +62,11 @@ async def get_poll_results(poll_id: UUID, db: AsyncSession) -> List[PollResult]:
     )
     direct_votes = votes_result.scalars().all()
     
-    # Get all active delegations for this poll
-    delegation_service = DelegationService(db)
+    # Get all active delegations (global delegations, not poll-specific)
     delegations_result = await db.execute(
         select(Delegation).where(
             and_(
-                Delegation.poll_id == poll_id,
-                Delegation.is_deleted == False,
-                Delegation.end_date.is_(None)  # Active delegations only
+                Delegation.is_deleted == False
             )
         )
     )
@@ -93,32 +89,41 @@ async def get_poll_results(poll_id: UUID, db: AsyncSession) -> List[PollResult]:
         option_votes[vote.option_id]["direct_votes"] += weight
         option_votes[vote.option_id]["total_votes"] += weight
     
-    # Process delegations and add delegated votes to final delegatees
+    # Process delegations and add delegated votes
     for delegation in delegations:
         try:
-            # Resolve the delegation chain to find the final delegatee
-            final_delegatee_id, _ = await delegation_service.resolve_delegation_chain(
-                delegation.delegator_id, poll_id
-            )
-            
-            # Find the vote of the final delegatee
-            final_vote_result = await db.execute(
+            # Check if delegator has voted directly
+            delegator_vote_result = await db.execute(
                 select(Vote).where(
                     and_(
-                        Vote.user_id == final_delegatee_id,
+                        Vote.user_id == delegation.delegator_id,
                         Vote.poll_id == poll_id,
                         Vote.is_deleted == False
                     )
                 )
             )
-            final_vote = final_vote_result.scalar_one_or_none()
+            delegator_vote = delegator_vote_result.scalar_one_or_none()
             
-            if final_vote:
-                # Add the delegation weight to the final delegatee's chosen option
-                delegation_weight = 1  # Default weight for delegation
-                option_votes[final_vote.option_id]["delegated_votes"] += delegation_weight
-                option_votes[final_vote.option_id]["total_votes"] += delegation_weight
+            # If delegator hasn't voted directly, check their delegate's vote
+            if not delegator_vote:
+                # Find the delegate's vote
+                delegate_vote_result = await db.execute(
+                    select(Vote).where(
+                        and_(
+                            Vote.user_id == delegation.delegate_id,
+                            Vote.poll_id == poll_id,
+                            Vote.is_deleted == False
+                        )
+                    )
+                )
+                delegate_vote = delegate_vote_result.scalar_one_or_none()
                 
+                if delegate_vote:
+                    # Add the delegation weight to the delegate's chosen option
+                    delegation_weight = 1  # Default weight for delegation
+                    option_votes[delegate_vote.option_id]["delegated_votes"] += delegation_weight
+                    option_votes[delegate_vote.option_id]["total_votes"] += delegation_weight
+                    
         except Exception as e:
             logger.warning(
                 "Failed to process delegation for vote counting",

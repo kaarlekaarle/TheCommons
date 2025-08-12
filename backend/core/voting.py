@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
 from backend.models.user import User
 from backend.models.vote import Vote
@@ -12,12 +13,21 @@ async def create_vote(db: AsyncSession, vote_data: dict, user: User) -> Vote:
     vote_data.pop("user_id", None)
     vote = Vote(**vote_data, user_id=user.id)
     db.add(vote)
-    await db.commit()
-    await db.refresh(vote)
+    
+    try:
+        await db.commit()
+        await db.refresh(vote)
+    except IntegrityError as e:
+        await db.rollback()
+        if "uq_votes_user_poll" in str(e).lower():
+            raise ValueError("You have already voted on this poll")
+        elif "foreign key constraint" in str(e).lower():
+            raise ValueError("Referenced option or poll does not exist")
+        raise
     return vote
 
 
-async def get_vote(db: AsyncSession, vote_id: int) -> Vote:
+async def get_vote(db: AsyncSession, vote_id: UUID) -> Vote:
     """Get a vote by ID."""
     result = await db.execute(select(Vote).where(Vote.id == vote_id))
     vote = result.scalar_one_or_none()
@@ -27,7 +37,7 @@ async def get_vote(db: AsyncSession, vote_id: int) -> Vote:
 
 
 async def update_vote(
-    db: AsyncSession, vote_id: int, vote_data: dict, user: User
+    db: AsyncSession, vote_id: UUID, vote_data: dict, user: User
 ) -> Vote:
     """Update a vote."""
     vote = await get_vote(db, vote_id)
@@ -48,7 +58,7 @@ async def update_vote(
     return vote
 
 
-async def delete_vote(db: AsyncSession, vote_id: int, user: User) -> Vote:
+async def delete_vote(db: AsyncSession, vote_id: UUID, user: User) -> Vote:
     """Delete a vote."""
     vote = await get_vote(db, vote_id)
     if vote.user_id != user.id:
@@ -59,7 +69,7 @@ async def delete_vote(db: AsyncSession, vote_id: int, user: User) -> Vote:
     return vote
 
 
-async def cast_vote(db: AsyncSession, vote_id: int, user: User) -> Vote:
+async def cast_vote(db: AsyncSession, vote_id: UUID, user: User) -> Vote:
     """Cast a vote."""
     vote = await get_vote(db, vote_id)
     if vote.user_id != user.id:

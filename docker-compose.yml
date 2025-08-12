@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   web:
     build: .
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/commons_db
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/the_commons
       - REDIS_URL=redis://redis:6379/0
       - TEST_REDIS_URL=redis://redis:6379/1
       - SECRET_KEY=${SECRET_KEY}
@@ -15,7 +13,7 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=False
-      - ALLOWED_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+      - ALLOWED_ORIGINS=["http://localhost:5173","http://127.0.0.1:5173"]
     depends_on:
       db:
         condition: service_healthy
@@ -30,13 +28,13 @@ services:
       retries: 3
 
   db:
-    image: postgres:13
+    image: postgres:16-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=commons_db
+      - POSTGRES_DB=the_commons
     ports:
       - "5432:5432"
     healthcheck:
@@ -66,7 +64,7 @@ services:
     depends_on:
       - web
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/commons_db
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/the_commons
       - REDIS_URL=redis://redis:6379/0
       - TEST_REDIS_URL=redis://redis:6379/1
       - SECRET_KEY=${SECRET_KEY}
@@ -75,7 +73,7 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=False
-      - ALLOWED_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+      - ALLOWED_ORIGINS=["http://localhost:5173","http://127.0.0.1:5173"]
 
 volumes:
   postgres_data:

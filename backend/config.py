@@ -48,7 +48,8 @@ class Settings(BaseSettings):
 
     # Environment
     ENV: str = os.getenv("ENV", "development")
-    DEBUG: bool = False
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
     # Logging
     LOG_LEVEL: str = "INFO"

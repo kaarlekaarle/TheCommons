@@ -1,0 +1,8 @@
+{
+  "title": "Test Proposal via File",
+  "description": "This is a test proposal created using the upgraded test_api.sh script with file upload.",
+  "end_date": "2025-12-31T23:59:59Z",
+  "allow_delegation": true,
+  "require_authentication": true,
+  "max_votes_per_user": 1
+}

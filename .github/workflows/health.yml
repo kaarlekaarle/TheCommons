@@ -1,0 +1,183 @@
+name: Health Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-up:
+    runs-on: ubuntu-latest
+    
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: the_commons
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Create .env file for backend
+        run: |
+          cat > backend/.env << EOF
+          DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/the_commons
+          REDIS_URL=redis://localhost:6379/0
+          TEST_REDIS_URL=redis://localhost:6379/1
+          SECRET_KEY=test-secret-key-for-ci
+          DEBUG=true
+          ENVIRONMENT=test
+          ALLOWED_ORIGINS=["http://localhost:5174","http://127.0.0.1:5174"]
+          EOF
+
+      - name: Create .env.local file for frontend
+        run: |
+          cat > frontend/.env.local << EOF
+          VITE_API_BASE_URL=http://localhost:8000
+          VITE_DEBUG_OVERLAY=false
+          VITE_DEBUG_RAW=false
+          VITE_USE_HARDCODED_DATA=false
+          EOF
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl netcat-openbsd lsof
+
+      - name: Start backend
+        run: |
+          cd backend
+          python -m uvicorn main:app --host 0.0.0.0 --port 8000 &
+          echo $! > backend.pid
+          sleep 10  # Wait for backend to start
+
+      - name: Start frontend
+        run: |
+          cd frontend
+          npm run dev &
+          echo $! > frontend.pid
+          sleep 15  # Wait for frontend to start
+
+      - name: Run system health check
+        env:
+          BACKEND: http://localhost:8000
+          FRONTEND: http://localhost:5174
+          WS_URL: ws://localhost:8000/ws
+          SMOKE_USER: ${{ secrets.SMOKE_USER }}
+          SMOKE_PASS: ${{ secrets.SMOKE_PASS }}
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_DB: the_commons
+          POSTGRES_PASSWORD: postgres
+        run: |
+          # Create logs directory
+          mkdir -p system-check-logs
+          
+          # Run system check and capture output
+          ./scripts/system_check.sh --json > system-check-logs/health-check.json 2> system-check-logs/health-check.log || {
+            echo "System check failed. Logs:"
+            cat system-check-logs/health-check.log
+            exit 1
+          }
+          
+          # Also run in verbose mode for debugging
+          ./scripts/system_check.sh > system-check-logs/health-check-verbose.log 2>&1 || true
+
+      - name: Upload system check artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: system-check-logs
+          path: |
+            system-check-logs/*.json
+            system-check-logs/*.log
+            /tmp/commons_system_check_*/health.json
+            /tmp/commons_system_check_*/polls.json
+            /tmp/commons_system_check_*/poll_detail.json
+
+      - name: Show backend logs on failure
+        if: failure()
+        run: |
+          if [ -f backend/backend.pid ]; then
+            echo "=== Backend Logs (last 200 lines) ==="
+            # Try to get logs from the process
+            ps aux | grep uvicorn || echo "No uvicorn process found"
+          fi
+          
+          echo "=== System Check Logs ==="
+          if [ -f system-check-logs/health-check.log ]; then
+            tail -n 200 system-check-logs/health-check.log
+          fi
+          
+          echo "=== Verbose System Check Logs ==="
+          if [ -f system-check-logs/health-check-verbose.log ]; then
+            tail -n 200 system-check-logs/health-check-verbose.log
+          fi
+
+      - name: Cleanup processes
+        if: always()
+        run: |
+          # Kill backend
+          if [ -f backend/backend.pid ]; then
+            kill $(cat backend/backend.pid) 2>/dev/null || true
+            rm -f backend/backend.pid
+          fi
+          
+          # Kill frontend
+          if [ -f frontend/frontend.pid ]; then
+            kill $(cat frontend/frontend.pid) 2>/dev/null || true
+            rm -f frontend/frontend.pid
+          fi
+          
+          # Kill any remaining processes
+          pkill -f uvicorn || true
+          pkill -f vite || true

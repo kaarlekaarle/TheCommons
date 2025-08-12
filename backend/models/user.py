@@ -37,6 +37,15 @@ class User(SQLAlchemyBase):
     polls = relationship(
         "Poll", back_populates="user", cascade="all, delete-orphan"
     )  # type: Any
+    delegations_as_delegator = relationship(
+        "Delegation", foreign_keys="Delegation.delegator_id", back_populates="delegator", cascade="all, delete-orphan"
+    )
+    delegations_as_delegate = relationship(
+        "Delegation", foreign_keys="Delegation.delegate_id", back_populates="delegate", cascade="all, delete-orphan"
+    )
+    comments = relationship(
+        "Comment", back_populates="user", cascade="all, delete-orphan"
+    )  # type: Any
 
     async def soft_delete(self, db_session: Session) -> None:
         """Soft delete the user and all related polls and votes.

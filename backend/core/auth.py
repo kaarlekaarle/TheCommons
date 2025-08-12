@@ -136,3 +136,43 @@ async def get_current_active_user(
             },
         )
     return current_user
+
+
+async def get_current_user_from_token(token: str, db: AsyncSession) -> User:
+    """Get current user from JWT token without FastAPI dependencies."""
+    from backend.schemas.error import ErrorCodes
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={
+            "detail": "Could not validate credentials",
+            "code": ErrorCodes.INVALID_CREDENTIALS,
+            "status_code": 401,
+            "error_type": "AuthenticationError",
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    if not token:
+        raise credentials_exception
+        
+    try:
+        # First try to decode the token
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+            
+        # Then try to get the user
+        try:
+            user = await db.get(User, UUID(user_id))
+            if user is None:
+                raise credentials_exception
+            return user
+        except ValueError:  # Invalid UUID format
+            raise credentials_exception
+            
+    except JWTError:  # Invalid token format or signature
+        raise credentials_exception

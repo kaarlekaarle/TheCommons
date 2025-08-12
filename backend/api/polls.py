@@ -55,6 +55,19 @@ async def create_poll(
         await db.commit()
         await db.refresh(poll)
 
+        # Broadcast new proposal to activity feed
+        try:
+            from backend.core.websocket import manager
+            await manager.broadcast_proposal_created({
+                "id": str(poll.id),
+                "title": poll.title,
+                "description": poll.description,
+                "created_by": str(poll.created_by),
+                "created_at": poll.created_at.isoformat()
+            })
+        except Exception as e:
+            logger.warning(f"Failed to broadcast proposal creation", extra={"error": str(e)})
+
         logger.info(
             "Poll created successfully",
             extra={"poll_id": poll.id, "user_id": current_user.id},
@@ -125,75 +138,126 @@ async def get_poll(
     Raises:
         ResourceNotFoundError: If poll not found
     """
-    # Get poll
-    result = await db.execute(select(Poll).where(Poll.id == poll_id))
-    poll = result.scalar_one_or_none()
-    if not poll:
-        logger.warning("Poll not found", extra={"poll_id": poll_id})
-        raise ResourceNotFoundError("Poll not found")
-
-    # Check for direct vote
-    vote_result = await db.execute(
-        select(Vote).where(
-            and_(
-                Vote.user_id == current_user.id,
-                (
-                    Vote.poll_id == poll_id
-                    if poll_id is not None
-                    else Vote.poll_id.is_(None)
-                ),
-            )
-        )
-    )
-    vote = vote_result.scalar_one_or_none()
-
-    # Initialize vote status
-    vote_status = VoteStatus(
-        status="none",
-        resolved_vote_path=[current_user.id],
-        final_delegatee_id=current_user.id,
-    )
-
-    if vote:
-        vote_status.status = "voted"
-    else:
-        # Check delegation chain
-        delegation_service = DelegationService(db)
-        try:
-            final_delegatee = await delegation_service.resolve_delegation_chain(
-                current_user.id, poll_id
-            )
-            if final_delegatee != current_user.id:
-                vote_status.status = "delegated"
-                vote_status.final_delegatee_id = final_delegatee
-                # TODO: Implement full chain path resolution
-                vote_status.resolved_vote_path.append(final_delegatee)
-        except ValueError as e:
-            if "Delegation loop" in str(e):
-                vote_status.status = "error"
-                logger.warning(
-                    "Delegation loop detected",
-                    extra={"poll_id": poll_id, "user_id": current_user.id},
-                )
-            elif "exceeds maximum depth" in str(e):
-                vote_status.status = "error"
-                logger.warning(
-                    "Delegation chain too long",
-                    extra={"poll_id": poll_id, "user_id": current_user.id},
-                )
-
-    # Add vote status to poll
-    poll.your_vote_status = vote_status
-
+    from backend.config import settings
+    import traceback
+    
     logger.info(
-        "Retrieved poll with vote status",
+        "Starting poll detail request",
         extra={
-            "poll_id": poll_id,
-            "user_id": current_user.id,
-            "vote_status": vote_status.status,
+            "poll_id": str(poll_id),
+            "user_id": str(current_user.id),
+            "debug": settings.DEBUG,
         },
     )
-    return poll
+    
+    try:
+        # Get poll
+        logger.debug("Executing poll query", extra={"poll_id": str(poll_id)})
+        result = await db.execute(select(Poll).where(Poll.id == poll_id))
+        poll = result.scalar_one_or_none()
+        
+        if not poll:
+            logger.warning("Poll not found", extra={"poll_id": str(poll_id)})
+            raise ResourceNotFoundError("Poll not found")
+        
+        logger.debug("Poll found", extra={"poll_id": str(poll_id), "poll_title": poll.title})
+
+        # Check for direct vote
+        logger.debug("Checking for direct vote", extra={"poll_id": str(poll_id), "user_id": str(current_user.id)})
+        vote_result = await db.execute(
+            select(Vote).where(
+                and_(
+                    Vote.user_id == current_user.id,
+                    Vote.poll_id == poll_id,
+                )
+            )
+        )
+        vote = vote_result.scalar_one_or_none()
+        
+        logger.debug("Vote check result", extra={
+            "poll_id": str(poll_id),
+            "user_id": str(current_user.id),
+            "has_vote": vote is not None,
+        })
+
+        # Initialize vote status
+        vote_status = VoteStatus(
+            status="none",
+            resolved_vote_path=[current_user.id],
+            final_delegatee_id=current_user.id,
+        )
+
+        if vote:
+            vote_status.status = "voted"
+            logger.debug("User has direct vote", extra={"poll_id": str(poll_id), "user_id": str(current_user.id)})
+        else:
+            # Check delegation chain
+            logger.debug("Checking delegation chain", extra={"poll_id": str(poll_id), "user_id": str(current_user.id)})
+            delegation_service = DelegationService(db)
+            try:
+                final_delegatee = await delegation_service.resolve_delegation_chain(
+                    current_user.id, poll_id
+                )
+                logger.debug("Delegation chain resolved", extra={
+                    "poll_id": str(poll_id),
+                    "user_id": str(current_user.id),
+                    "final_delegatee": str(final_delegatee),
+                })
+                
+                if final_delegatee != current_user.id:
+                    vote_status.status = "delegated"
+                    vote_status.final_delegatee_id = final_delegatee
+                    # TODO: Implement full chain path resolution
+                    vote_status.resolved_vote_path.append(final_delegatee)
+                    logger.debug("User has delegation", extra={
+                        "poll_id": str(poll_id),
+                        "user_id": str(current_user.id),
+                        "delegated_to": str(final_delegatee),
+                    })
+            except Exception as e:
+                logger.error(
+                    "Error in delegation chain resolution",
+                    extra={
+                        "poll_id": str(poll_id),
+                        "user_id": str(current_user.id),
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                        "traceback": traceback.format_exc() if settings.DEBUG else None,
+                    },
+                    exc_info=settings.DEBUG,
+                )
+                # Don't fail the request, just set status to error
+                vote_status.status = "error"
+
+        # Add vote status to poll
+        poll.your_vote_status = vote_status
+
+        logger.info(
+            "Successfully retrieved poll with vote status",
+            extra={
+                "poll_id": str(poll_id),
+                "user_id": str(current_user.id),
+                "vote_status": vote_status.status,
+            },
+        )
+        return poll
+        
+    except ResourceNotFoundError:
+        # Re-raise known errors
+        raise
+    except Exception as e:
+        logger.error(
+            "Unexpected error in get_poll",
+            extra={
+                "poll_id": str(poll_id),
+                "user_id": str(current_user.id),
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "traceback": traceback.format_exc() if settings.DEBUG else None,
+            },
+            exc_info=settings.DEBUG,
+        )
+        raise
 
 
 @router.put("/{poll_id}", response_model=PollSchema)

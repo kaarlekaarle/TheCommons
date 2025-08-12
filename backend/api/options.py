@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -110,7 +111,7 @@ async def get_option(
 
 @router.get("/poll/{poll_id}", response_model=List[OptionSchema])
 async def get_poll_options(
-    poll_id: int,
+    poll_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> List[Option]:

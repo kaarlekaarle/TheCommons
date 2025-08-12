@@ -1,300 +1,370 @@
-from datetime import datetime
-from typing import List, Optional
+from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import get_current_active_user, get_current_user
-from backend.core.decorators import handle_errors
-from backend.core.exceptions import ResourceNotFoundError
-from backend.core.exceptions.delegation import (
-    CircularDelegationError,
-    DelegationAlreadyExistsError,
-    DelegationChainError,
-    DelegationLimitExceededError,
-    DelegationStatsError,
-    InvalidDelegationPeriodError,
-    SelfDelegationError,
+from backend.core.auth import get_current_active_user, oauth2_scheme
+from backend.core.exceptions import (
+    AuthorizationError,
+    ResourceNotFoundError,
+    ServerError,
+    ValidationError,
 )
-from backend.core.exceptions import DelegationAuthorizationError
 from backend.core.logging_config import get_logger
-from backend.core.background_tasks import StatsCalculationTask
 from backend.database import get_db
 from backend.models.delegation import Delegation
 from backend.models.user import User
 from backend.schemas.delegation import (
-    Delegation,
-    DelegationChainResponse,
     DelegationCreate,
-    DelegationListResponse,
-    DelegationStatsResponse,
-    DelegationTransparencyResponse,
+    DelegationInfo,
+    DelegationResponse,
 )
-from backend.services.delegation import DelegationService
 
-router = APIRouter(prefix="/delegations", tags=["delegations"])
 logger = get_logger(__name__)
+router = APIRouter(tags=["delegations"])
 
 
-@router.post("", response_model=Delegation)
-@handle_errors
+@router.post("/", response_model=DelegationResponse, status_code=status.HTTP_201_CREATED)
 async def create_delegation(
-    delegation: DelegationCreate,
-    current_user: User = Depends(get_current_active_user),
+    delegation_in: DelegationCreate,
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> Delegation:
-    """Create a new delegation."""
-    service = DelegationService(db)
-    try:
-        created_delegation = await service.create_delegation(
-            delegator_id=current_user.id,
-            delegatee_id=delegation.delegatee_id,
-            start_date=delegation.start_date or datetime.utcnow(),
-            end_date=delegation.end_date,
-            poll_id=delegation.poll_id,
-        )
-        return Delegation.from_orm(created_delegation)
-    except (
-        SelfDelegationError,
-        CircularDelegationError,
-        InvalidDelegationPeriodError,
-        DelegationAlreadyExistsError,
-        DelegationLimitExceededError,
-    ) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@router.get("/{delegation_id}", response_model=Delegation)
-@handle_errors
-async def get_delegation(
-    delegation_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
-) -> Delegation:
-    """Get a delegation by ID."""
-    service = DelegationService(db)
-    try:
-        delegation = await service.get_delegation(delegation_id)
-        return Delegation.from_orm(delegation)
-    except ResourceNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-
-
-@router.get("", response_model=DelegationListResponse)
-@handle_errors
-async def list_delegations(
-    poll_id: Optional[UUID] = None,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
-) -> DelegationListResponse:
-    """List delegations for the current user."""
-    service = DelegationService(db)
-    delegations = await service.get_active_delegations(current_user.id, poll_id)
-    return DelegationListResponse(
-        delegations=[Delegation.from_orm(d) for d in delegations]
-    )
-
-
-@router.delete("/{delegation_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def revoke_delegation(
-    delegation_id: UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
-) -> None:
-    """Revoke a delegation."""
-    service = DelegationService(db)
-    try:
-        await service.revoke_delegation(delegation_id, current_user.id)
-    except (ResourceNotFoundError, DelegationAuthorizationError) as e:
-        raise HTTPException(
-            status_code=(
-                status.HTTP_404_NOT_FOUND
-                if isinstance(e, ResourceNotFoundError)
-                else status.HTTP_403_FORBIDDEN
-            ),
-            detail=str(e),
-        )
-
-
-@router.get("/resolve/{poll_id}", response_model=DelegationChainResponse)
-@handle_errors(
-    {
-        DelegationChainError: (400, "Invalid delegation chain"),
-    }
-)
-async def resolve_delegation_chain(
-    poll_id: UUID,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> DelegationChainResponse:
-    """Resolve the delegation chain for a specific poll.
+    """Create a new delegation.
 
     Args:
-        poll_id: ID of the poll
+        delegation_in: Delegation creation data
+        token: OAuth2 token
         current_user: Currently authenticated user
         db: Database session
 
     Returns:
-        DelegationChainResponse: Resolved delegation chain
-    """
-    service = DelegationService(db)
-    try:
-        final_delegatee_id = await service.resolve_delegation_chain(
-            current_user.id, poll_id
-        )
-        return DelegationChainResponse(
-            final_delegatee_id=final_delegatee_id,
-            chain_length=1,  # TODO: Implement chain length tracking
-            is_circular=False,
-            exceeds_max_depth=False,
-        )
-    except DelegationChainError as e:
-        if "exceeds maximum depth" in str(e):
-            return DelegationChainResponse(
-                final_delegatee_id=current_user.id,
-                chain_length=5,
-                is_circular=False,
-                exceeds_max_depth=True,
-            )
-        elif "Circular delegation" in str(e):
-            return DelegationChainResponse(
-                final_delegatee_id=current_user.id,
-                chain_length=0,
-                is_circular=True,
-                exceeds_max_depth=False,
-            )
-        raise
-
-
-@router.get("/transparency/{poll_id}", response_model=DelegationTransparencyResponse)
-async def get_delegation_transparency(
-    poll_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> DelegationTransparencyResponse:
-    """Get transparency information about delegations for a poll.
-
-    Args:
-        poll_id: ID of the poll
-        db: Database session
-        current_user: Currently authenticated user
-
-    Returns:
-        DelegationTransparencyResponse: Transparency information about delegations
+        Delegation: Created delegation
 
     Raises:
-        ResourceNotFoundError: If poll not found
+        ValidationError: If delegation data is invalid
+        ServerError: If an unexpected error occurs
     """
-    delegation_service = DelegationService(db)
-
-    # Get all delegations for this poll
-    delegations = await delegation_service.get_poll_delegations(poll_id)
-
-    # Build delegation chains
-    chains = []
-    for delegation in delegations:
-        try:
-            chain = await delegation_service.resolve_delegation_chain(
-                delegation.delegator_id, poll_id, include_path=True
-            )
-            chains.append(chain)
-        except ValueError as e:
-            logger.warning(
-                "Failed to resolve delegation chain",
-                extra={
-                    "poll_id": poll_id,
-                    "delegator_id": delegation.delegator_id,
-                    "error": str(e),
-                },
-            )
-
-    # Get statistics
-    total_delegations = len(delegations)
-    active_delegations = len([d for d in delegations if d.is_active])
-    total_delegators = len(set(d.delegator_id for d in delegations))
-    total_delegatees = len(set(d.delegatee_id for d in delegations))
-
-    response = DelegationTransparencyResponse(
-        poll_id=poll_id,
-        total_delegations=total_delegations,
-        active_delegations=active_delegations,
-        total_delegators=total_delegators,
-        total_delegatees=total_delegatees,
-        delegation_chains=chains,
-    )
-
     logger.info(
-        "Retrieved delegation transparency",
-        extra={
-            "poll_id": poll_id,
-            "total_delegations": total_delegations,
-            "active_delegations": active_delegations,
-        },
+        "Creating new delegation",
+        extra={"delegation_data": delegation_in.model_dump(), "user_id": current_user.id},
     )
-    return response
-
-
-@router.get("/stats", response_model=DelegationStatsResponse)
-@handle_errors
-async def get_delegation_stats(
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
-) -> DelegationStatsResponse:
-    """Get delegation statistics for the current user."""
-    service = DelegationService(db)
+    
     try:
-        stats = await service.get_delegation_stats(current_user.id)
-        return DelegationStatsResponse(**stats)
-    except DelegationStatsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        # Check if user is trying to delegate to themselves
+        if delegation_in.delegate_id == current_user.id:
+            raise ValidationError("Cannot delegate to yourself")
+        
+        # Create the delegation directly without complex validation
+        delegation = Delegation(
+            delegator_id=current_user.id,
+            delegate_id=delegation_in.delegate_id
         )
+        db.add(delegation)
+        await db.commit()
+        
+        logger.info(
+            "Delegation created successfully",
+            extra={"delegation_id": delegation.id, "user_id": current_user.id},
+        )
+        
+        # Broadcast delegation update
+        try:
+            from backend.core.websocket import manager
+            await manager.broadcast_delegation_update({
+                "id": str(delegation.id),
+                "delegator_id": str(delegation.delegator_id),
+                "delegate_id": str(delegation.delegate_id),
+                "created_at": delegation.created_at.isoformat() if delegation.created_at else None
+            })
+        except Exception as e:
+            logger.warning(f"Failed to broadcast delegation creation", extra={"error": str(e)})
+        
+        # Return a simple response
+        return {
+            "id": str(delegation.id),
+            "delegator_id": str(delegation.delegator_id),
+            "delegate_id": str(delegation.delegate_id),
+            "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
+            "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None
+        }
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(
+            "Failed to create delegation",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        if isinstance(e, (ValidationError, AuthorizationError)):
+            raise
+        raise ServerError("Failed to create delegation")
 
 
-@router.post("/stats/invalidate")
-async def invalidate_stats_cache(
-    poll_id: Optional[UUID] = Query(
-        None, description="Optional poll ID to invalidate stats for a specific poll"
-    ),
+@router.post("/simple", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def create_delegation_simple(
+    delegation_in: DelegationCreate,
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
 ) -> dict:
-    """Invalidate cached delegation statistics.
+    """Create a new delegation using a simpler approach."""
+    logger.info(
+        "Creating new delegation (simple)",
+        extra={"delegation_data": delegation_in.model_dump(), "user_id": current_user.id},
+    )
+    
+    try:
+        # Check if user is trying to delegate to themselves
+        if delegation_in.delegate_id == current_user.id:
+            raise ValidationError("Cannot delegate to yourself")
+        
+        # Remove any existing delegation first
+        await db.execute(
+            "UPDATE delegations SET is_deleted = true WHERE delegator_id = :delegator_id",
+            {"delegator_id": str(current_user.id)}
+        )
+        
+        # Insert new delegation using raw SQL
+        result = await db.execute(
+            """
+            INSERT INTO delegations (id, delegator_id, delegate_id, created_at, updated_at, is_deleted)
+            VALUES (gen_random_uuid(), :delegator_id, :delegate_id, now(), now(), false)
+            RETURNING id, delegator_id, delegate_id, created_at, updated_at
+            """,
+            {
+                "delegator_id": str(current_user.id),
+                "delegate_id": str(delegation_in.delegate_id)
+            }
+        )
+        
+        await db.commit()
+        
+        row = result.fetchone()
+        if row:
+            logger.info(
+                "Delegation created successfully (simple)",
+                extra={"delegation_id": row[0], "user_id": current_user.id},
+            )
+            
+            return {
+                "id": str(row[0]),
+                "delegator_id": str(row[1]),
+                "delegate_id": str(row[2]),
+                "created_at": row[3].isoformat() if row[3] else None,
+                "updated_at": row[4].isoformat() if row[4] else None
+            }
+        else:
+            raise ServerError("Failed to create delegation")
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(
+            "Failed to create delegation (simple)",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        if isinstance(e, (ValidationError, AuthorizationError)):
+            raise
+        raise ServerError("Failed to create delegation")
+
+
+@router.post("/direct", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def create_delegation_direct(
+    delegation_in: DelegationCreate,
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Security(get_current_active_user),
+) -> dict:
+    """Create a new delegation using direct database connection."""
+    logger.info(
+        "Creating new delegation (direct)",
+        extra={"delegation_data": delegation_in.model_dump(), "user_id": current_user.id},
+    )
+    
+    try:
+        # Check if user is trying to delegate to themselves
+        if delegation_in.delegate_id == current_user.id:
+            raise ValidationError("Cannot delegate to yourself")
+        
+        # Use a direct database connection
+        from backend.database import engine
+        from sqlalchemy import text
+        import uuid
+        from datetime import datetime
+        
+        async with engine.begin() as conn:
+            # Delete any existing delegation first
+            await conn.execute(
+                text("DELETE FROM delegations WHERE delegator_id = :delegator_id"),
+                {"delegator_id": str(current_user.id)}
+            )
+            
+            # Insert new delegation
+            delegation_id = str(uuid.uuid4())
+            now = datetime.utcnow()
+            
+            await conn.execute(
+                text("""
+                INSERT INTO delegations (id, delegator_id, delegate_id, created_at, updated_at, is_deleted)
+                VALUES (:id, :delegator_id, :delegate_id, :created_at, :updated_at, false)
+                """),
+                {
+                    "id": delegation_id,
+                    "delegator_id": str(current_user.id),
+                    "delegate_id": str(delegation_in.delegate_id),
+                    "created_at": now,
+                    "updated_at": now
+                }
+            )
+        
+        logger.info(
+            "Delegation created successfully (direct)",
+            extra={"delegation_id": delegation_id, "user_id": current_user.id},
+        )
+        
+        return {
+            "id": delegation_id,
+            "delegator_id": str(current_user.id),
+            "delegate_id": str(delegation_in.delegate_id),
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(
+            "Failed to create delegation (direct)",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        if isinstance(e, (ValidationError, AuthorizationError)):
+            raise
+        raise ServerError("Failed to create delegation")
+
+
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_delegation(
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Remove the current user's delegation.
 
     Args:
-        poll_id: Optional poll ID to invalidate stats for a specific poll
-        db: Database session
+        token: OAuth2 token
         current_user: Currently authenticated user
+        db: Database session
 
-    Returns:
-        dict: Success message
+    Raises:
+        ResourceNotFoundError: If no delegation exists
+        ServerError: If an unexpected error occurs
     """
-    delegation_service = DelegationService(db)
-    await delegation_service.invalidate_stats_cache(poll_id)
+    logger.info(
+        "Removing delegation",
+        extra={"user_id": current_user.id},
+    )
+    
+    try:
+        # Find the user's delegation
+        delegation_result = await db.execute(
+            select(Delegation).where(
+                and_(
+                    Delegation.delegator_id == current_user.id,
+                    Delegation.is_deleted == False
+                )
+            )
+        )
+        delegation = delegation_result.scalar_one_or_none()
+        
+        if not delegation:
+            raise ResourceNotFoundError("No delegation found")
+        
+        # Soft delete the delegation
+        await delegation.soft_delete(db)
+        await db.commit()
+        
+        logger.info(
+            "Delegation removed successfully",
+            extra={"delegation_id": delegation.id, "user_id": current_user.id},
+        )
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(
+            "Failed to remove delegation",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        if isinstance(e, (ValidationError, AuthorizationError, ResourceNotFoundError)):
+            raise
+        raise ServerError("Failed to remove delegation")
 
-    logger.info("Invalidated delegation statistics cache", extra={"poll_id": poll_id})
-    return {"status": "success", "message": "Cache invalidated successfully"}
 
-
-@router.post("/stats/cleanup")
-async def cleanup_stats_cache(
-    background_tasks: BackgroundTasks,
+@router.get("/me", response_model=DelegationInfo)
+async def get_my_delegation(
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> dict:
-    """Trigger cleanup of old delegation statistics.
+) -> DelegationInfo:
+    """Get the current user's delegation information.
 
     Args:
-        background_tasks: FastAPI background tasks
-        db: Database session
+        token: OAuth2 token
         current_user: Currently authenticated user
+        db: Database session
 
     Returns:
-        dict: Success message
+        DelegationInfo: User's delegation information
     """
-    stats_task = StatsCalculationTask(db)
-    background_tasks.add_task(stats_task.cleanup_old_stats)
-
-    logger.info("Triggered background cleanup of old delegation stats")
-    return {"status": "success", "message": "Cleanup task scheduled"}
+    logger.info(
+        "Getting user delegation",
+        extra={"user_id": current_user.id},
+    )
+    
+    try:
+        # Find the user's delegation
+        delegation_result = await db.execute(
+            select(Delegation).where(
+                and_(
+                    Delegation.delegator_id == current_user.id,
+                    Delegation.is_deleted == False
+                )
+            )
+        )
+        delegation = delegation_result.scalar_one_or_none()
+        
+        if not delegation:
+            return DelegationInfo(has_delegate=False)
+        
+        # Fetch delegate info
+        delegate_result = await db.execute(
+            select(User).where(
+                and_(
+                    User.id == delegation.delegate_id,
+                    User.is_deleted == False
+                )
+            )
+        )
+        delegate = delegate_result.scalar_one_or_none()
+        
+        if not delegate:
+            # Delegate was deleted, return no delegation
+            return DelegationInfo(has_delegate=False)
+        
+        return DelegationInfo(
+            has_delegate=True,
+            delegate_id=delegate.id,
+            delegate_username=delegate.username,
+            delegate_email=delegate.email,
+            created_at=delegation.created_at
+        )
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get user delegation",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to get delegation information")

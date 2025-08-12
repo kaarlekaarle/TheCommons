@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Debug Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Authentication Test</h3>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. API Calls Test</h3>
+        <button onclick="testAPI()">Test API Calls</button>
+        <div id="api-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. LocalStorage Test</h3>
+        <button onclick="checkLocalStorage()">Check LocalStorage</button>
+        <button onclick="clearLocalStorage()">Clear LocalStorage</button>
+        <div id="storage-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Frontend App Test</h3>
+        <p>Open the main application at: <a href="http://localhost:5174" target="_blank">http://localhost:5174</a></p>
+        <p>Then open the browser console (F12) to see debug logs.</p>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        let authToken = null;
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.innerHTML = '<p class="info">Testing authentication...</p>';
+            
+            try {
+                log('Testing authentication...');
+                const response = await fetch('http://localhost:8000/api/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=alice_community&password=password123'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Auth failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                authToken = data.access_token;
+                localStorage.setItem('token', authToken);
+                
+                resultDiv.innerHTML = '<p class="success">✅ Authentication successful!</p>';
+                log('Authentication successful', 'success');
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Authentication failed: ${error.message}</p>`;
+                log(`Authentication failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p class="info">Testing API calls...</p>';
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<p class="error">❌ Please authenticate first!</p>';
+                return;
+            }
+            
+            try {
+                log('Testing polls endpoint...');
+                const response = await fetch('http://localhost:8000/api/polls/', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<p class="success">✅ API successful! Found ${data.length} polls</p>`;
+                log(`API successful: Found ${data.length} polls`, 'success');
+                
+                // Show first few polls
+                data.slice(0, 3).forEach(poll => {
+                    log(`  - ${poll.title}`, 'info');
+                });
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ API failed: ${error.message}</p>`;
+                log(`API failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('storage-result');
+            const token = localStorage.getItem('token');
+            
+            if (token) {
+                resultDiv.innerHTML = '<p class="success">✅ Token found in localStorage</p>';
+                log('Token found in localStorage', 'success');
+            } else {
+                resultDiv.innerHTML = '<p class="error">❌ No token in localStorage</p>';
+                log('No token in localStorage', 'error');
+            }
+        }
+        
+        function clearLocalStorage() {
+            localStorage.removeItem('token');
+            authToken = null;
+            const resultDiv = document.getElementById('storage-result');
+            resultDiv.innerHTML = '<p class="info">🗑️ LocalStorage cleared</p>';
+            log('LocalStorage cleared', 'info');
+        }
+        
+        // Auto-check localStorage on load
+        window.addEventListener('load', checkLocalStorage);
+    </script>
+</body>
+</html>

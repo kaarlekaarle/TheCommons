@@ -34,11 +34,11 @@ from backend.models.user import User
 from backend.models.vote import Vote
 
 
-# Database configuration - Use Docker service name when running in container
+# Database configuration - Use environment variable
 import os
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "postgresql+asyncpg://postgres:postgres@db:5432/the_commons"
+    "sqlite+aiosqlite:///test.db"
 )
 
 # Create async engine and session maker
@@ -127,10 +127,7 @@ async def create_delegation(session: AsyncSession, delegator: User, delegatee: U
     """Create a delegation from delegator to delegatee for a specific poll."""
     delegation = Delegation(
         delegator_id=delegator.id,
-        delegatee_id=delegatee.id,
-        poll_id=poll.id,
-        start_date=datetime.utcnow(),
-        end_date=None  # Active delegation
+        delegate_id=delegatee.id
     )
     session.add(delegation)
     await session.commit()
@@ -222,7 +219,7 @@ async def seed_small_poll():
         
         # Count delegations
         delegations_result = await session.execute(
-            select(Delegation).where(Delegation.poll_id == poll.id)
+            select(Delegation)
         )
         delegations = delegations_result.scalars().all()
         print(f"   Delegations: {len(delegations)}")
@@ -238,8 +235,8 @@ async def measure_poll_results_performance(poll_id: UUID, creator_username: str)
     """Measure the performance of the poll results endpoint."""
     print(f"\n⏱️  Measuring performance for poll {poll_id}...")
     
-    # Create test client - Use Docker service name when running in container
-    api_base_url = os.getenv("API_BASE_URL", "http://web:8000")
+    # Create test client - Use localhost when running locally
+    api_base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
     async with httpx.AsyncClient(base_url=api_base_url) as client:
         # First, get a token for authentication
         print(f"   🔐 Attempting authentication for user: {creator_username}")

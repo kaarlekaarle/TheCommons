@@ -12,8 +12,8 @@ class UserBase(BaseModel):
 
     email: EmailStr
     username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$")
-    is_active: bool = True
-    is_superuser: bool = False
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
 
 
 
@@ -46,6 +46,10 @@ class User(UserBase):
     id: UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
+    is_deleted: Optional[bool] = None
+    deleted_at: Optional[datetime] = None
+    email_verified: Optional[bool] = None
+    last_login: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
