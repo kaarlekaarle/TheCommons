@@ -32,6 +32,8 @@ if DATABASE_URL.startswith("sqlite"):
         future=True,
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
+        pool_pre_ping=True,  # Enable connection health checks
+        pool_recycle=3600,  # Recycle connections every hour
     )
 else:
     engine = create_async_engine(
@@ -39,8 +41,18 @@ else:
         echo=DB_ECHO_LOG,
         future=True,
         pool_pre_ping=True,  # Enable connection health checks
-        pool_size=5,  # Set reasonable pool size
-        max_overflow=10,  # Allow some overflow connections
+        pool_size=10,  # Increased pool size for better performance
+        max_overflow=20,  # Allow more overflow connections
+        pool_recycle=3600,  # Recycle connections every hour
+        pool_timeout=30,  # Connection timeout
+        connect_args={
+            "server_settings": {
+                "application_name": "the_commons_api",
+                "tcp_keepalives_idle": "600",
+                "tcp_keepalives_interval": "30",
+                "tcp_keepalives_count": "3",
+            }
+        } if not DATABASE_URL.startswith("sqlite") else {},
     )
 
 # Create async session factory
@@ -101,3 +113,29 @@ async def get_db() -> AsyncSession:
             raise
         finally:
             await session.close()
+
+
+async def check_db_health() -> bool:
+    """
+    Check if the database is healthy and accessible.
+    
+    Returns:
+        bool: True if database is healthy, False otherwise
+    """
+    try:
+        async with async_session_maker() as session:
+            await session.execute("SELECT 1")
+            await session.commit()
+        return True
+    except Exception as e:
+        logger.error("Database health check failed", extra={"error": str(e)})
+        return False
+
+
+async def close_db_connections() -> None:
+    """Close all database connections."""
+    try:
+        await engine.dispose()
+        logger.info("Database connections closed successfully")
+    except Exception as e:
+        logger.error("Error closing database connections", extra={"error": str(e)})

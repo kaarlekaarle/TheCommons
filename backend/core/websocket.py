@@ -200,6 +200,8 @@ class ConnectionManager:
     
     async def start_heartbeat(self):
         """Start heartbeat to keep connections alive."""
+        logger.info("Starting WebSocket heartbeat")
+        
         while True:
             try:
                 # Send ping to all connections
@@ -210,22 +212,47 @@ class ConnectionManager:
                 
                 disconnected_connections = []
                 
-                for connection_id, websocket in self.active_connections.items():
+                for connection_id, websocket in list(self.active_connections.items()):
                     try:
                         await websocket.send_text(json.dumps(ping_message))
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f"Connection lost during heartbeat", extra={
+                            "connection_id": connection_id,
+                            "error": str(e)
+                        })
                         disconnected_connections.append(connection_id)
                 
                 # Clean up disconnected connections
                 for connection_id in disconnected_connections:
                     self.disconnect(connection_id)
                 
+                # Log heartbeat stats
+                if self.active_connections:
+                    logger.debug(f"Heartbeat sent to {len(self.active_connections)} connections")
+                
                 # Wait 30 seconds before next heartbeat
                 await asyncio.sleep(30)
                 
+            except asyncio.CancelledError:
+                logger.info("WebSocket heartbeat cancelled")
+                break
             except Exception as e:
                 logger.error(f"Heartbeat error", extra={"error": str(e)})
-                await asyncio.sleep(30)
+                # Wait a bit longer on error to avoid spam
+                await asyncio.sleep(60)
+    
+    def is_healthy(self) -> bool:
+        """Check if the WebSocket manager is healthy."""
+        try:
+            # Check if heartbeat task is running
+            if not self.heartbeat_task or self.heartbeat_task.done():
+                return False
+            
+            # Check for any obvious issues
+            return True
+        except Exception as e:
+            logger.error(f"Health check failed", extra={"error": str(e)})
+            return False
     
     def get_connection_stats(self) -> Dict[str, Any]:
         """Get connection statistics."""

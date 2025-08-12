@@ -104,6 +104,8 @@ async def lifespan(app: FastAPI):
     logger.info("available_routes", routes=routes)
     yield
     # Shutdown logic
+    logger.info("shutting_down_application")
+    
     try:
         # Stop WebSocket heartbeat
         from backend.core.websocket import manager
@@ -119,9 +121,18 @@ async def lifespan(app: FastAPI):
     
     try:
         await close_redis_client()
-        logger.info("shutting_down_application")
+        logger.info("redis_client_closed")
     except Exception as e:
         logger.error("Error closing Redis client", error=str(e))
+    
+    try:
+        from backend.database import close_db_connections
+        await close_db_connections()
+        logger.info("database_connections_closed")
+    except Exception as e:
+        logger.error("Error closing database connections", error=str(e))
+    
+    logger.info("application_shutdown_complete")
 
 
 # Create FastAPI app
@@ -336,6 +347,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     except:
         pass
     
+    # Log the error with additional context
     log_error(
         logger=logger,
         error=exc,
@@ -344,6 +356,14 @@ async def global_exception_handler(request: Request, exc: Exception):
         path=request.url.path,
         method=request.method,
     )
+    
+    # Check for specific error types that might indicate server instability
+    error_type = type(exc).__name__
+    if error_type in ["ConnectionError", "TimeoutError", "DatabaseError", "OperationalError"]:
+        logger.error("critical_error_detected", 
+                    error_type=error_type, 
+                    error=str(exc),
+                    request_path=request.url.path)
     
     # Generate unified error response
     from backend.core.exception_handlers import get_error_response
@@ -365,14 +385,18 @@ async def health_check_db():
     """Check database health."""
     try:
         logger.debug("checking_database_health")
-        async with async_session_maker() as session:
-            await session.execute(text("SELECT 1"))
-            await session.commit()
-        return {
-            "status": "healthy",
-            "message": "Database connection is healthy",
-            "connection": "connected",
-        }
+        from backend.database import check_db_health
+        
+        is_healthy = await check_db_health()
+        if is_healthy:
+            return {
+                "status": "healthy",
+                "message": "Database connection is healthy",
+                "connection": "connected",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        else:
+            raise Exception("Database health check failed")
     except Exception as e:
         logger.error("database_health_check_failed", error=str(e))
         from backend.schemas.error import ErrorCodes
@@ -402,6 +426,7 @@ async def redis_health(redis_client=Depends(get_redis_client)):
             "status": "healthy",
             "message": "Redis connection is healthy",
             "connection": "connected",
+            "timestamp": datetime.utcnow().isoformat(),
         }
     except Exception as e:
         error_msg = str(e)
@@ -424,6 +449,92 @@ async def redis_health(redis_client=Depends(get_redis_client)):
                 },
             },
         )
+
+
+@app.get("/health/comprehensive")
+async def comprehensive_health_check():
+    """Comprehensive health check for all services."""
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "services": {},
+        "overall_status": "healthy"
+    }
+    
+    # Check database
+    try:
+        from backend.database import check_db_health
+        db_healthy = await check_db_health()
+        health_status["services"]["database"] = {
+            "status": "healthy" if db_healthy else "unhealthy",
+            "message": "Database connection is healthy" if db_healthy else "Database connection failed"
+        }
+        if not db_healthy:
+            health_status["overall_status"] = "unhealthy"
+    except Exception as e:
+        health_status["services"]["database"] = {
+            "status": "unhealthy",
+            "message": f"Database error: {str(e)}"
+        }
+        health_status["overall_status"] = "unhealthy"
+    
+    # Check Redis
+    try:
+        redis_client = await get_redis_client()
+        await redis_client.ping()
+        health_status["services"]["redis"] = {
+            "status": "healthy",
+            "message": "Redis connection is healthy"
+        }
+    except Exception as e:
+        health_status["services"]["redis"] = {
+            "status": "unhealthy",
+            "message": f"Redis error: {str(e)}"
+        }
+        health_status["overall_status"] = "unhealthy"
+    
+    # Check rate limiter
+    try:
+        from backend.core.limiter import limiter_health
+        limiter_status = limiter_health()
+        health_status["services"]["rate_limiter"] = {
+            "status": "healthy" if limiter_status.get("status") == "healthy" else "unhealthy",
+            "message": limiter_status.get("message", "Rate limiter status unknown")
+        }
+        if limiter_status.get("status") != "healthy":
+            health_status["overall_status"] = "unhealthy"
+    except Exception as e:
+        health_status["services"]["rate_limiter"] = {
+            "status": "unhealthy",
+            "message": f"Rate limiter error: {str(e)}"
+        }
+        health_status["overall_status"] = "unhealthy"
+    
+    # Check WebSocket manager
+    try:
+        from backend.core.websocket import manager
+        ws_healthy = manager.is_healthy()
+        health_status["services"]["websocket"] = {
+            "status": "healthy" if ws_healthy else "unhealthy",
+            "message": "WebSocket manager is healthy" if ws_healthy else "WebSocket manager is unhealthy",
+            "stats": manager.get_connection_stats()
+        }
+        if not ws_healthy:
+            health_status["overall_status"] = "unhealthy"
+    except Exception as e:
+        health_status["services"]["websocket"] = {
+            "status": "unhealthy",
+            "message": f"WebSocket error: {str(e)}"
+        }
+        health_status["overall_status"] = "unhealthy"
+    
+    # Return appropriate status code
+    status_code = 200 if health_status["overall_status"] == "healthy" else 503
+    
+    return JSONResponse(
+        status_code=status_code,
+        content=health_status
+    )
 
 
 @app.get("/api/limiter/health")

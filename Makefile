@@ -49,11 +49,23 @@ clean:  ## Clean up build artifacts
 setup-db:  ## Set up the database
 	alembic upgrade head
 
-run-dev:  ## Run development server
-	uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+run-dev:  ## Run development server with monitoring
+	./scripts/start_server.sh
 
 run-prod:  ## Run production server
-	uvicorn backend.main:app --host 0.0.0.0 --port 8000
+	./scripts/start_server.sh
+
+stop-server:  ## Stop the server gracefully
+	./scripts/stop_server.sh
+
+monitor:  ## Start server with automatic monitoring and restart
+	./scripts/server_monitor.sh
+
+health-check:  ## Check server health
+	curl -s http://localhost:8000/health/comprehensive | jq .
+
+server-logs:  ## View server logs
+	tail -f logs/server.log
 
 docker-build:  ## Build Docker image
 	docker-compose build
