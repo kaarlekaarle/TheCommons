@@ -90,6 +90,9 @@ migrate:  ## Create and run database migrations
 seed-db:  ## Seed the database with test data
 	$(PYTHON) scripts/seed_database.py
 
+backfill-decisions:  ## Backfill decision_type and direction_choice fields
+	cd backend && $(PYTHON) scripts/backfill_decision_type.py
+
 check-security:  ## Run security checks
 	bandit -r backend/
 	safety check

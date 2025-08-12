@@ -85,6 +85,13 @@ class AuthenticationError(BaseError):
         super().__init__(message, status_code=401, details=details)
 
 
+class UnavailableFeatureError(BaseError):
+    """Raised when a feature is disabled or unavailable."""
+
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(message, status_code=403, details=details)
+
+
 
 
 class UserAlreadyExistsError(ConflictError):

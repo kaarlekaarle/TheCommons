@@ -10,6 +10,7 @@ from backend.core.exceptions import (
     AuthorizationError,
     ResourceNotFoundError,
     ValidationError,
+    UnavailableFeatureError,
 )
 from backend.core.logging_config import get_logger
 from backend.core.audit_mw import audit_event
@@ -21,6 +22,7 @@ from backend.schemas.poll import Poll as PollSchema
 from backend.schemas.poll import PollCreate, PollUpdate, VoteStatus, PollResult
 from backend.services.delegation import DelegationService
 from backend.services.poll import get_poll_results
+from backend.config import settings
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -48,10 +50,16 @@ async def create_poll(
         ServerError: If an unexpected error occurs
     """
     try:
+        # Check if Level A is enabled when trying to create Level A proposals
+        if poll_data.decision_type == "level_a" and not settings.LEVEL_A_ENABLED:
+            raise UnavailableFeatureError("Level A decisions are currently disabled")
+        
         poll = Poll(
             title=poll_data.title,
             description=poll_data.description,
             created_by=current_user.id,
+            decision_type=poll_data.decision_type,
+            direction_choice=poll_data.direction_choice,
         )
         db.add(poll)
         await db.commit()
@@ -65,7 +73,9 @@ async def create_poll(
                 "title": poll.title,
                 "description": poll.description,
                 "created_by": str(poll.created_by),
-                "created_at": poll.created_at.isoformat()
+                "created_at": poll.created_at.isoformat(),
+                "decision_type": poll.decision_type,
+                "direction_choice": poll.direction_choice
             })
         except Exception as e:
             logger.warning(f"Failed to broadcast proposal creation", extra={"error": str(e)})

@@ -37,19 +37,31 @@ async def get_activity_feed(
     # logger.info("Fetching activity feed", extra={"limit": limit})
     
     try:
-        # Return a simple test response
-        activity_items = [
-            {
+        # Get recent polls with user information
+        query = select(Poll, User).join(User, Poll.created_by == User.id).order_by(Poll.created_at.desc()).limit(limit)
+        result = await db.execute(query)
+        polls_with_users = result.fetchall()
+        
+        activity_items = []
+        for poll, user in polls_with_users:
+            # Create activity message based on decision type
+            if poll.decision_type == "level_a" and poll.direction_choice:
+                details = f"created a baseline policy: {poll.title} (direction: {poll.direction_choice})"
+            else:
+                details = f"created a proposal: {poll.title}"
+            
+            activity_items.append({
                 "type": "proposal",
-                "id": "test-id",
+                "id": str(poll.id),
                 "user": {
-                    "id": "test-user-id",
-                    "username": "admin"
+                    "id": str(user.id),
+                    "username": user.username
                 },
-                "timestamp": "2025-08-11T19:46:57.836969Z",
-                "details": "created a proposal: Test Proposal"
-            }
-        ]
+                "timestamp": poll.created_at.isoformat(),
+                "details": details,
+                "decision_type": poll.decision_type,
+                "direction_choice": poll.direction_choice
+            })
         
         # logger.info(
         #     "Activity feed retrieved successfully",

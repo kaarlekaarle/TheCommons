@@ -129,8 +129,23 @@ export default function ProposalDetail() {
           <ArrowLeft className="w-4 h-4" />
           Back to Proposals
         </Link>
-        <h1 className="text-3xl font-bold text-white mb-4">{poll.title}</h1>
-        <p className="text-muted leading-relaxed">{poll.description}</p>
+        <div className="flex items-center gap-3 mb-4">
+          <h1 className="text-3xl font-bold text-white">{poll.title}</h1>
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+            poll.decision_type === 'level_a' 
+              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+              : 'bg-green-500/20 text-green-300 border border-green-500/30'
+          }`}>
+            {poll.decision_type === 'level_a' ? 'Level A' : 'Level B'}
+          </span>
+        </div>
+        <p className="text-muted leading-relaxed mb-4">{poll.description}</p>
+        {poll.decision_type === 'level_a' && poll.direction_choice && (
+          <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md">
+            <p className="text-sm text-blue-300 font-medium">Direction Choice:</p>
+            <p className="text-white">{poll.direction_choice}</p>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -155,6 +170,22 @@ export default function ProposalDetail() {
               </div>
             </div>
           </section>
+
+          {/* Direction Section - Only show for Level A proposals */}
+          {poll.decision_type === 'level_a' && poll.direction_choice && (
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <FileText className="w-5 h-5 text-blue-400" />
+                <h2 className="text-xl font-semibold text-white">Direction</h2>
+              </div>
+              <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-white font-medium">{poll.direction_choice}</p>
+                <p className="text-sm text-blue-300 mt-2">
+                  This baseline policy establishes the direction for future decisions in this area.
+                </p>
+              </div>
+            </section>
+          )}
 
           {/* Results Section - Only show if there are voting options */}
           {options.length > 0 && (

@@ -30,6 +30,7 @@ export default function ProposalList() {
       updated_at: '2025-01-10T10:00:00Z',
       is_active: true,
       end_date: '2025-02-15T00:00:00Z',
+      decision_type: 'level_b',
       your_vote_status: {
         status: 'none',
         resolved_vote_path: []
@@ -44,6 +45,7 @@ export default function ProposalList() {
       updated_at: '2025-01-20T14:30:00Z',
       is_active: false,
       end_date: '2025-03-01T00:00:00Z',
+      decision_type: 'level_b',
       your_vote_status: {
         status: 'voted',
         resolved_vote_path: ['hardcoded-user-2']
@@ -51,13 +53,15 @@ export default function ProposalList() {
     },
     {
       id: 'hardcoded-3',
-      title: 'Local Business Support Initiative',
-      description: 'Create a program to support local businesses through community partnerships and events.',
+      title: 'Environmental Policy Direction',
+      description: 'Choose the direction for our environmental policy approach.',
       created_by: 'hardcoded-user-3',
       created_at: '2025-01-05T09:15:00Z',
       updated_at: '2025-01-05T09:15:00Z',
       is_active: true,
       end_date: '2025-01-31T00:00:00Z',
+      decision_type: 'level_a',
+      direction_choice: 'Environmental issues: Let\'s take care of nature',
       your_vote_status: {
         status: 'delegated',
         resolved_vote_path: ['hardcoded-user-3', 'delegate-user-1'],
@@ -176,12 +180,27 @@ export default function ProposalList() {
                 to={`/proposals/${poll.id}`}
                 className="block p-6 bg-surface border border-border rounded-lg hover:border-primary/50 transition-colors"
               >
-                <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
-                  {poll.title}
-                </h3>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-white line-clamp-2 flex-1">
+                    {poll.title}
+                  </h3>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ml-2 flex-shrink-0 ${
+                    poll.decision_type === 'level_a' 
+                      ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                      : 'bg-green-500/20 text-green-300 border border-green-500/30'
+                  }`}>
+                    {poll.decision_type === 'level_a' ? 'Level A' : 'Level B'}
+                  </span>
+                </div>
                 <p className="text-sm text-muted line-clamp-3 mb-4">
                   {poll.description}
                 </p>
+                {poll.decision_type === 'level_a' && poll.direction_choice && (
+                  <div className="mb-4 p-2 bg-blue-500/10 border border-blue-500/20 rounded text-xs">
+                    <span className="text-blue-300 font-medium">Direction:</span>
+                    <span className="text-white ml-1">{poll.direction_choice}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-xs text-muted">
                   <span>Created {new Date(poll.created_at).toLocaleDateString()}</span>
                 </div>

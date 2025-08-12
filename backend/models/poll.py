@@ -33,6 +33,13 @@ class PollVisibility(str, Enum):
 
 
 
+class DecisionType(str, Enum):
+    LEVEL_A = "level_a"
+    LEVEL_B = "level_b"
+
+
+
+
 class Poll(SQLAlchemyBase):
     """Poll model."""
 
@@ -52,6 +59,10 @@ class Poll(SQLAlchemyBase):
     allow_delegation = Column(Boolean, default=True)  # type: Any
     require_authentication = Column(Boolean, default=True)  # type: Any
     max_votes_per_user = Column(Integer, default=1)  # type: Any
+    decision_type = Column(
+        SQLEnum(DecisionType), default=DecisionType.LEVEL_B, nullable=False
+    )  # type: Any
+    direction_choice = Column(String, nullable=True)  # type: Any
 
     # Relationships
     user = relationship("User", back_populates="polls")  # type: Any

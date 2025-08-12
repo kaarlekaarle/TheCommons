@@ -8,6 +8,9 @@ export interface User {
   updated_at: string;
 }
 
+// Decision types
+export type DecisionType = "level_a" | "level_b";
+
 // Poll/Proposal types
 export interface VoteStatus {
   status: string; // 'delegated', 'voted', or 'none'
@@ -25,6 +28,8 @@ export interface Poll {
   is_active: boolean;
   end_date?: string;
   your_vote_status?: VoteStatus;
+  decision_type: DecisionType;
+  direction_choice?: string | null;
 }
 
 export interface PollOption {

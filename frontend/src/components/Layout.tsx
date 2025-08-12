@@ -162,6 +162,25 @@ export default function Layout({ children }: LayoutProps) {
       <main className="flex-1">
         {children}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-6">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xs">C</span>
+              </div>
+              <span className="text-sm text-muted">The Commons</span>
+            </div>
+            <div className="flex items-center space-x-4 text-sm">
+              <Link to="/why" className="text-muted hover:text-white transition-colors">
+                Why two levels?
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

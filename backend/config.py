@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Union, List
 import json
 
 from pydantic import ConfigDict, AnyHttpUrl, PostgresDsn, field_validator
@@ -66,6 +66,9 @@ class Settings(BaseSettings):
 
     # Security
     ADMIN_USERNAMES: str = os.getenv("ADMIN_USERNAMES", "")
+    
+    # Feature flags
+    LEVEL_A_ENABLED: bool = os.getenv("LEVEL_A_ENABLED", "true").lower() == "true"
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -74,7 +77,7 @@ class Settings(BaseSettings):
     )
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
-    def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str):
             if v.startswith("["):
                 return json.loads(v)

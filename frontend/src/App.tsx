@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { ToasterProvider } from './components/ui/Toaster';
 import Layout from './components/Layout';
 import Auth from './components/Auth';
@@ -10,6 +10,9 @@ import ProposalDetail from './pages/ProposalDetail';
 import ProposalNew from './pages/ProposalNew';
 import ActivityFeed from './components/ActivityFeed';
 import DebugOverlay from './components/DebugOverlay';
+
+// Lazy load the WhyTwoLevels page
+const WhyTwoLevels = React.lazy(() => import('./pages/WhyTwoLevels'));
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -89,6 +92,11 @@ export default function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LandingPage />} />
+          <Route path="/why" element={
+            <Suspense fallback={<div className="min-h-screen bg-bg flex items-center justify-center"><div className="p-8 text-muted">Loading…</div></div>}>
+              <WhyTwoLevels />
+            </Suspense>
+          } />
           
           {/* Authentication route */}
           <Route 
@@ -105,6 +113,11 @@ export default function App() {
                       <div className="card-content">
                         <Auth onSuccess={handleRegistrationSuccess} />
                       </div>
+                    </div>
+                    <div className="text-center mt-6">
+                      <Link to="/why" className="text-sm text-muted hover:text-white underline">
+                        What's "two levels"? Read the 2‑min explainer
+                      </Link>
                     </div>
                   </div>
                 </div>

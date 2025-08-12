@@ -60,6 +60,7 @@ Detailed architecture in [docs/architecture.md](docs/architecture.md).
    - `ALGORITHM`: JWT algorithm (default: HS256)
    - `ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiration time
    - `ALLOWED_ORIGINS`: Comma-separated list of allowed origins
+   - `LEVEL_A_ENABLED`: Enable Level A decisions (default: true)
 
 5. Run the application:
    ```bash
@@ -69,6 +70,57 @@ Detailed architecture in [docs/architecture.md](docs/architecture.md).
 6. Access the API documentation:
    - Swagger UI: http://localhost:8000/docs
    - ReDoc: http://localhost:8000/redoc
+
+## Two-Level Decision Model
+
+The Commons implements a two-level decision model for proposals:
+
+### Level A (Baseline Policy)
+- **Purpose**: High-level, slow-changing principles that are rarely updated
+- **Example**: "Environmental issues: Let's take care of nature"
+- **Voting**: Establishes direction for future Level B decisions
+- **Feature Flag**: Controlled by `LEVEL_A_ENABLED` environment variable
+
+### Level B (Poll)
+- **Purpose**: Quick action on specific issues
+- **Voting**: Yes/No/Abstain on concrete proposals
+- **Example**: "Should we install solar panels on the community center?"
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LEVEL_A_ENABLED` | Enable Level A decisions | `true` |
+| `VITE_LEVEL_A_ENABLED` | Frontend Level A feature flag | `true` |
+
+### Data Backfill
+
+After deploying the two-level model, run the backfill script to ensure data consistency:
+
+```bash
+# Backend
+make backfill-decisions
+
+# Or manually
+cd backend && python scripts/backfill_decision_type.py
+```
+
+This script:
+- Sets `decision_type="level_b"` where NULL
+- Sets `direction_choice=NULL` for Level B polls
+- Logs any corrections made
+
+### Migration Safety
+
+**Upgrade**: The migration adds new columns with defaults, so it's safe to run on existing data.
+
+**Rollback**: To rollback the migration:
+```bash
+# Downgrade the migration
+alembic downgrade -1
+
+# The backfill script can be run again after re-upgrading
+```
 
 ## Observability
 
