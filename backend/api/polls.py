@@ -54,12 +54,15 @@ async def create_poll(
         if poll_data.decision_type == "level_a" and not settings.LEVEL_A_ENABLED:
             raise UnavailableFeatureError("Level A decisions are currently disabled")
         
+        # For Level B polls, ignore direction_choice
+        direction_choice = None if poll_data.decision_type == "level_b" else poll_data.direction_choice
+        
         poll = Poll(
             title=poll_data.title,
             description=poll_data.description,
             created_by=current_user.id,
             decision_type=poll_data.decision_type,
-            direction_choice=poll_data.direction_choice,
+            direction_choice=direction_choice,
         )
         db.add(poll)
         await db.commit()
@@ -97,6 +100,9 @@ async def create_poll(
         )
         
         return poll
+    except UnavailableFeatureError:
+        await db.rollback()
+        raise
     except Exception as e:
         await db.rollback()
         import traceback

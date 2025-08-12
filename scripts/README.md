@@ -85,3 +85,60 @@ Both scripts measure the response time of the `/api/polls/{poll_id}/results` end
 - The poll creator can authenticate to test the results endpoint
 - Delegations are simple 1:1 chains (each delegator delegates to one direct voter)
 - All votes are cast for Option A to create a clear performance test scenario
+
+## Riverbend Demo Seeding
+
+### `seed_demo_city.py`
+A comprehensive demo seeding script that creates a realistic small-city community called "Riverbend" with:
+
+**Users (12):**
+- mayor, cityplanner, teacher, shop_owner, student, nurse, cyclist, driver, parent, librarian, waste_manager, developer
+- All users: password123
+
+**Level A (Baseline Policy) Proposals (3):**
+- [DEMO] Environmental Stewardship Charter
+- [DEMO] Open Data & Transparency Charter  
+- [DEMO] Mobility Vision 2030
+
+**Level B (Poll) Proposals (4):**
+- [DEMO] Install protected bike lanes on Main St
+- [DEMO] Pilot curbside composting for 1 year
+- [DEMO] Extend library weekend hours
+- [DEMO] Replace diesel buses with electric on Route 4
+
+**Content:**
+- 20+ comments with PRO:/CON: prefixes
+- 40+ votes across Level B proposals
+- 3 delegations (student→cityplanner, shop_owner→cityplanner, driver→mayor)
+
+**Safety:**
+- All demo content is tagged with "[DEMO] " prefix for easy cleanup
+- Script is idempotent and safe to re-run
+
+**Usage:**
+```bash
+# Docker environment (recommended)
+docker compose exec web python scripts/seed_demo_city.py --reset
+
+# Local environment
+export DATABASE_URL="sqlite+aiosqlite:///test.db"
+python scripts/seed_demo_city.py --reset
+
+# Options
+--reset      Delete existing demo content and re-seed (default)
+--no-reset   Skip deletion, only add missing demo content  
+--users-only Only create demo users, skip proposals/votes/comments
+```
+
+**Re-seeding:**
+```bash
+# Clean slate
+python scripts/seed_demo_city.py --reset
+
+# Add missing content only
+python scripts/seed_demo_city.py --no-reset
+```
+
+**Demo Credentials:**
+- Username: any of the demo usernames (mayor, cityplanner, etc.)
+- Password: password123

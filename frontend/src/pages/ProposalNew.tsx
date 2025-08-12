@@ -43,7 +43,7 @@ export default function ProposalNew() {
       const created = await createProposal(payload);
       navigate(`/proposals/${created.id}`);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to create proposal.");
+      setError(err?.message || err?.response?.data?.message || "Failed to create proposal.");
     } finally {
       setSubmitting(false);
     }
@@ -145,7 +145,7 @@ export default function ProposalNew() {
             </div>
 
             <div className="pt-2">
-              <Button variant="primary" size="lg" disabled={submitting}>
+              <Button type="submit" variant="primary" size="lg" disabled={submitting}>
                 {submitting ? "Creating…" : "Create Proposal"}
               </Button>
             </div>

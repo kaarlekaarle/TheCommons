@@ -8,6 +8,7 @@ from backend.core.exceptions.base import (
     DatabaseError,
     ResourceNotFoundError,
     ServerError,
+    UnavailableFeatureError,
     UserAlreadyExistsError,
     ValidationError,
 )
@@ -35,6 +36,7 @@ __all__ = [
     "ConflictError",
     "AuthorizationError",
     "AuthenticationError",
+    "UnavailableFeatureError",
     "UserAlreadyExistsError",
     "DatabaseError",
     "DelegationError",

@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+
+# Custom UUID field that serializes to string
+UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
 
 
 
@@ -20,7 +23,7 @@ class OptionBase(BaseModel):
 class OptionCreate(OptionBase):
     """Schema for creating a new option."""
 
-    poll_id: UUID
+    poll_id: UUIDString
 
 
 
@@ -36,8 +39,8 @@ class OptionUpdate(OptionBase):
 class Option(OptionBase):
     """Schema for option data as returned by the API."""
 
-    id: UUID
-    poll_id: UUID
+    id: UUIDString
+    poll_id: UUIDString
     created_at: datetime
     updated_at: Optional[datetime] = None
 

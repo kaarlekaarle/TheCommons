@@ -90,6 +90,9 @@ migrate:  ## Create and run database migrations
 seed-db:  ## Seed the database with test data
 	$(PYTHON) scripts/seed_database.py
 
+seed-demo:  ## Seed the database with Riverbend demo city data
+	docker compose exec web python scripts/seed_demo_city.py --reset
+
 backfill-decisions:  ## Backfill decision_type and direction_choice fields
 	cd backend && $(PYTHON) scripts/backfill_decision_type.py
 

@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, PlainSerializer
+
+# Custom UUID field that serializes to string
+UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
 
 
 
@@ -43,7 +46,7 @@ class UserUpdate(BaseModel):
 class User(UserBase):
     """Schema for user data as returned by the API."""
 
-    id: UUID
+    id: UUIDString
     created_at: datetime
     updated_at: Optional[datetime] = None
     is_deleted: Optional[bool] = None

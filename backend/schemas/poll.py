@@ -1,9 +1,16 @@
 from datetime import datetime
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, PlainSerializer
 from backend.models.option import Option
+from backend.models.poll import DecisionType
+
+# Custom UUID field that serializes to string
+UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
+
+# Custom DecisionType field that serializes to string
+DecisionTypeString = Annotated[DecisionType, PlainSerializer(lambda x: x.value, return_type=str)]
 
 
 
@@ -59,12 +66,14 @@ class VoteStatus(BaseModel):
     status: str = Field(
         ..., description="Current vote status: 'delegated', 'voted', or 'none'"
     )
-    resolved_vote_path: List[UUID] = Field(
+    resolved_vote_path: List[UUIDString] = Field(
         default_factory=list, description="Path of delegation chain"
     )
-    final_delegatee_id: Optional[UUID] = Field(
+    final_delegatee_id: Optional[UUIDString] = Field(
         None, description="ID of the final delegatee in the chain"
     )
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 
@@ -72,7 +81,7 @@ class VoteStatus(BaseModel):
 class PollResult(BaseModel):
     """Schema for poll result data."""
 
-    option_id: UUID = Field(..., description="ID of the option")
+    option_id: UUIDString = Field(..., description="ID of the option")
     text: str = Field(..., description="Text of the option")
     direct_votes: int = Field(..., description="Number of direct votes")
     delegated_votes: int = Field(..., description="Number of delegated votes")
@@ -86,10 +95,11 @@ class PollResult(BaseModel):
 class Poll(PollBase):
     """Schema for poll data as returned by the API."""
 
-    id: UUID
-    created_by: UUID
+    id: UUIDString
+    created_by: UUIDString
     created_at: datetime
     updated_at: Optional[datetime] = None
+    decision_type: DecisionTypeString
     your_vote_status: Optional[VoteStatus] = Field(
         None, description="Vote status for the current user"
     )

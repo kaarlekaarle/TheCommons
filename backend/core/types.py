@@ -34,7 +34,7 @@ class GUID(TypeDecorator):
         if value is None:
             return value
         if isinstance(value, uuid.UUID):
-            return value
+            return str(value)
         if isinstance(value, asyncpg.pgproto.pgproto.UUID):  # asyncpg raw UUID
-            return uuid.UUID(str(value))
-        return uuid.UUID(str(value))
+            return str(uuid.UUID(str(value)))
+        return str(uuid.UUID(str(value)))

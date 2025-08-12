@@ -1,11 +1,15 @@
 """Tests for the two-level decision model."""
 
 import pytest
+from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.main import app
 from backend.models.poll import Poll, DecisionType
 from backend.config import settings
+
+client = TestClient(app)
 
 
 @pytest.mark.asyncio
@@ -100,7 +104,7 @@ async def test_level_a_blocked_when_feature_disabled(client: AsyncClient, auth_h
     
     response = await client.post("/api/polls/", json=poll_data, headers=auth_headers)
     assert response.status_code == 403
-    assert "Level A decisions are currently disabled" in response.json()["detail"]
+    assert "Level A decisions are currently disabled" in response.json()["detail"]["message"]
 
 
 @pytest.mark.asyncio

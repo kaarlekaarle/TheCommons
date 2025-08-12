@@ -76,7 +76,7 @@ async def db_session(event_loop):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(db_session: AsyncSession):
+async def client(db_session: AsyncSession, app: FastAPI):
     async def override_get_db():
         try:
             yield db_session
@@ -125,7 +125,7 @@ async def inactive_user(db_session: AsyncSession) -> User:
 async def auth_headers(test_user: User) -> Dict[str, str]:
     """Create authentication headers for the test user."""
     access_token = create_access_token(
-        data={"sub": test_user.email},
+        data={"sub": test_user.id},
         expires_delta=timedelta(minutes=30),
     )
     return {"Authorization": f"Bearer {access_token}"}

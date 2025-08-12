@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+
+# Custom UUID field that serializes to string
+UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
 
 
 
@@ -10,8 +13,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class VoteBase(BaseModel):
     """Base schema for vote data."""
 
-    poll_id: UUID
-    option_id: UUID
+    poll_id: UUIDString
+    option_id: UUIDString
 
 
 
@@ -27,7 +30,7 @@ class VoteCreate(VoteBase):
 class VoteUpdate(BaseModel):
     """Schema for updating an existing vote."""
 
-    option_id: Optional[UUID] = None
+    option_id: Optional[UUIDString] = None
 
 
 
@@ -35,8 +38,8 @@ class VoteUpdate(BaseModel):
 class Vote(VoteBase):
     """Schema for vote data as returned by the API."""
 
-    id: UUID
-    user_id: UUID
+    id: UUIDString
+    user_id: UUIDString
     created_at: datetime
     updated_at: Optional[datetime] = None
 

@@ -1,9 +1,12 @@
 """Comment reaction schemas for The Commons."""
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal, Optional, Annotated
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PlainSerializer
+
+# Custom UUID field that serializes to string
+UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
 
 
 class ReactionIn(BaseModel):
@@ -13,9 +16,9 @@ class ReactionIn(BaseModel):
 
 class ReactionOut(BaseModel):
     """Output schema for a reaction."""
-    id: UUID
-    comment_id: UUID
-    user_id: UUID
+    id: UUIDString
+    comment_id: UUIDString
+    user_id: UUIDString
     type: Literal['up', 'down']
     created_at: datetime
 
