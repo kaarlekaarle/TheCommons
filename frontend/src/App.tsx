@@ -88,7 +88,7 @@ export default function App() {
       <Router>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LandingPage />} />
           
           {/* Authentication route */}
           <Route 
@@ -109,7 +109,7 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                <Navigate to="/proposals" replace />
+                <Navigate to="/dashboard" replace />
               )
             } 
           />
@@ -121,7 +121,7 @@ export default function App() {
               isAuthenticated ? (
                 <Layout>
                   <Routes>
-                    <Route path="/" element={<Navigate to="/proposals" replace />} />
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/proposals" element={<ProposalList />} />
                     <Route path="/proposals/:id" element={<ProposalDetail />} />
                     <Route path="/proposals/new" element={<ProposalNew />} />

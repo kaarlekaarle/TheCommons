@@ -1,217 +1,243 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, User, Users } from 'lucide-react';
-import { getMyDelegate, setDelegate, removeDelegate, searchUserByUsername } from '../lib/api';
-import { useToast } from '../components/ui/useToast';
-import type { DelegationInfo } from '../types';
+import { motion } from 'framer-motion';
+import { 
+  Users, 
+  Vote, 
+  MessageCircle, 
+  TrendingUp, 
+  Shield, 
+  Globe,
+  ArrowRight,
+  Calendar,
+  User,
+  BarChart3
+} from 'lucide-react';
+import { listPolls } from '../lib/api';
+import type { Poll } from '../types';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
-import DebugRawData from '../components/ui/DebugRawData';
-
+import { useToast } from '../components/ui/useToast';
 
 export default function Dashboard() {
-  const [delegationInfo, setDelegationInfo] = useState<DelegationInfo | null>(null);
-  const [searchUsername, setSearchUsername] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [settingDelegate, setSettingDelegate] = useState(false);
-  const [removingDelegate, setRemovingDelegate] = useState(false);
-  const [rawData, setRawData] = useState<any>(null);
-  const { success, error: showError } = useToast();
+  const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { error: showError } = useToast();
 
   useEffect(() => {
-    fetchDelegationInfo();
+    fetchRecentPolls();
   }, []);
 
-  const fetchDelegationInfo = async () => {
+  const fetchRecentPolls = async () => {
     try {
-      const data = await getMyDelegate();
-      setDelegationInfo(data);
-      setRawData(data);
-    } catch (err: unknown) {
-      showError('Failed to load delegation info');
-    }
-  };
-
-  const handleSearch = async () => {
-    if (!searchUsername.trim()) return;
-    
-    try {
-      setSearching(true);
-      const results = await searchUserByUsername(searchUsername);
-      const searchData = Array.isArray(results) ? results : [results];
-      setSearchResults(searchData);
-      setRawData({ delegationInfo, searchResults: searchData });
-    } catch (err: unknown) {
-      showError('Failed to search users');
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const handleSetDelegate = async (userId: string) => {
-    try {
-      setSettingDelegate(true);
-      await setDelegate(userId);
-      await fetchDelegationInfo();
-      success('Delegate set successfully');
-      setSearchUsername('');
-      setSearchResults([]);
+      setLoading(true);
+      const polls = await listPolls();
+      // Get the 6 most recent polls
+      const recent = polls.slice(0, 6);
+      setRecentPolls(recent);
     } catch (err: unknown) {
       const error = err as { message: string };
-      showError(error.message || 'Failed to set delegate');
+      console.error('Failed to load recent polls:', error.message);
+      showError('Failed to load recent proposals');
     } finally {
-      setSettingDelegate(false);
+      setLoading(false);
     }
   };
 
-  const handleRemoveDelegate = async () => {
-    try {
-      setRemovingDelegate(true);
-      await removeDelegate();
-      await fetchDelegationInfo();
-      success('Delegate removed successfully');
-    } catch (err: unknown) {
-      const error = err as { message: string };
-      showError(error.message || 'Failed to remove delegate');
-    } finally {
-      setRemovingDelegate(false);
+  const features = [
+    {
+      icon: <Vote className="w-6 h-6" />,
+      title: "Democratic Voting",
+      description: "Participate in community decisions with transparent voting mechanisms"
+    },
+    {
+      icon: <MessageCircle className="w-6 h-6" />,
+      title: "Community Discussion",
+      description: "Engage in meaningful conversations with reaction-based comments"
+    },
+    {
+      icon: <Users className="w-6 h-6" />,
+      title: "Delegation System",
+      description: "Delegate your vote to trusted community members"
+    },
+    {
+      icon: <TrendingUp className="w-6 h-6" />,
+      title: "Real-time Results",
+      description: "See live voting results and community engagement metrics"
+    },
+    {
+      icon: <Shield className="w-6 h-6" />,
+      title: "Secure & Transparent",
+      description: "Built with security and transparency as core principles"
+    },
+    {
+      icon: <Globe className="w-6 h-6" />,
+      title: "Community Focused",
+      description: "Designed to strengthen local communities and democratic participation"
     }
-  };
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Link to="/proposals/new">
-          <Button>
-            <Plus className="w-4 h-4" />
-            New Proposal
-          </Button>
-        </Link>
+      {/* Hero Section */}
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-white mb-4">
+          Welcome to The Commons
+        </h1>
+        <p className="text-xl text-muted max-w-3xl mx-auto leading-relaxed">
+          A democratic platform for community decision-making, designed to empower local communities 
+          through transparent voting, meaningful discussions, and collective action.
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        {/* Quick Actions */}
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="space-y-4">
-            <Link to="/proposals/new">
-              <Button className="w-full justify-start" variant="ghost">
-                <Plus className="w-4 h-4 mr-3" />
-                Create New Proposal
-              </Button>
-            </Link>
-            <Link to="/proposals">
-              <Button className="w-full justify-start" variant="ghost">
-                <Users className="w-4 h-4 mr-3" />
-                View All Proposals
-              </Button>
-            </Link>
-            <Link to="/activity">
-              <Button className="w-full justify-start" variant="ghost">
-                <Users className="w-4 h-4 mr-3" />
-                View Activity Feed
-              </Button>
-            </Link>
-          </div>
-        </div>
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Left Column - About & Features */}
+        <div className="space-y-8">
+          {/* About Section */}
+          <section className="p-6 bg-surface border border-border rounded-lg">
+            <h2 className="text-2xl font-semibold text-white mb-4">About The Commons</h2>
+            <div className="space-y-4 text-muted">
+              <p>
+                The Commons is a digital platform that reimagines how communities make decisions together. 
+                We believe that strong communities are built on active participation, transparent processes, 
+                and inclusive dialogue.
+              </p>
+              <p>
+                Our platform combines modern democratic principles with intuitive technology, making it easy 
+                for community members to propose ideas, discuss options, and vote on important decisions 
+                that affect their shared future.
+              </p>
+              <p>
+                Whether you're part of a neighborhood association, a local organization, or any community 
+                group, The Commons provides the tools you need to make collective decisions more effectively 
+                and inclusively.
+              </p>
+            </div>
+          </section>
 
-        {/* My Delegate */}
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">My Delegate</h2>
-          <div className="space-y-4">
-            {delegationInfo?.has_delegate ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted">Current delegate:</span>
-                  <Badge variant="success">{delegationInfo.delegate_username}</Badge>
-                </div>
-                <Button
-                  onClick={handleRemoveDelegate}
-                  loading={removingDelegate}
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
+          {/* Features Grid */}
+          <section>
+            <h2 className="text-2xl font-semibold text-white mb-6">Current Features</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-4 bg-surface border border-border rounded-lg"
                 >
-                  Remove Delegate
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-muted">
-                  You don't have a delegate set. Set a delegate to automatically vote on your behalf when you don't vote on proposals.
-                </p>
-                
-                {/* Search for delegate */}
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={searchUsername}
-                      onChange={(e) => setSearchUsername(e.target.value)}
-                      placeholder="Search for a user..."
-                      className="flex-1 px-3 py-2 bg-bg border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    />
-                    <Button
-                      onClick={handleSearch}
-                      loading={searching}
-                      size="sm"
-                    >
-                      Search
-                    </Button>
-                  </div>
-                  
-                  {searchResults.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted">Search results:</p>
-                      {searchResults.map((user) => (
-                        <div
-                          key={user.id}
-                          className="flex items-center justify-between p-3 bg-bg rounded-md border border-border"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                              <User className="w-4 h-4 text-primary" />
-                            </div>
-                            <div>
-                              <div className="font-medium">{user.username}</div>
-                              <div className="text-xs text-muted">{user.email}</div>
-                            </div>
-                          </div>
-                          <Button
-                            onClick={() => handleSetDelegate(user.id)}
-                            loading={settingDelegate}
-                            size="sm"
-                          >
-                            Set as Delegate
-                          </Button>
-                        </div>
-                      ))}
+                  <div className="flex items-start gap-3">
+                    <div className="text-primary flex-shrink-0 mt-1">
+                      {feature.icon}
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                    <div>
+                      <h3 className="font-semibold text-white mb-1">{feature.title}</h3>
+                      <p className="text-sm text-muted">{feature.description}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
 
-      {/* Welcome Message */}
-      <div className="bg-surface border border-border rounded-lg p-6">
-        <div className="text-center py-8">
-          <div className="text-primary text-6xl mb-4">🏛️</div>
-          <h2 className="text-2xl font-bold mb-2">Welcome to The Commons</h2>
-          <p className="text-muted max-w-2xl mx-auto">
-            The Commons is a democratic decision-making platform where you can create proposals, 
-            vote on important matters, and delegate your voting power to trusted community members.
-          </p>
+          {/* Quick Actions */}
+          <section className="p-6 bg-surface border border-border rounded-lg">
+            <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
+            <div className="space-y-3">
+              <Link to="/proposals/new">
+                <Button className="w-full justify-start" variant="primary">
+                  <Vote className="w-4 h-4 mr-2" />
+                  Create New Proposal
+                </Button>
+              </Link>
+              <Link to="/proposals">
+                <Button className="w-full justify-start" variant="ghost">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  View All Proposals
+                </Button>
+              </Link>
+              <Link to="/activity">
+                <Button className="w-full justify-start" variant="ghost">
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Recent Activity
+                </Button>
+              </Link>
+            </div>
+          </section>
+        </div>
+
+        {/* Right Column - Recent Proposals */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-white">Recent Proposals</h2>
+            <Link to="/proposals">
+              <Button variant="ghost" size="sm">
+                View All
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="p-4 bg-surface border border-border rounded-lg animate-pulse">
+                  <div className="h-4 bg-border rounded mb-2"></div>
+                  <div className="h-3 bg-border rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : recentPolls.length > 0 ? (
+            <div className="space-y-4">
+              {recentPolls.map((poll) => (
+                <motion.div
+                  key={poll.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-4 bg-surface border border-border rounded-lg hover:border-primary/50 transition-colors"
+                >
+                  <Link to={`/proposals/${poll.id}`}>
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="font-semibold text-white hover:text-primary transition-colors">
+                          {poll.title}
+                        </h3>
+                        <ArrowRight className="w-4 h-4 text-muted flex-shrink-0 mt-1" />
+                      </div>
+                      <p className="text-sm text-muted line-clamp-2">
+                        {poll.description}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{new Date(poll.created_at).toLocaleDateString()}</span>
+                        </div>
+                        {poll.your_vote_status && (
+                          <div className="flex items-center gap-1">
+                            <Vote className="w-3 h-3" />
+                            <span>You voted</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 bg-surface border border-border rounded-lg text-center">
+              <Vote className="w-12 h-12 text-muted mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">No proposals yet</h3>
+              <p className="text-muted mb-4">Be the first to create a proposal for your community!</p>
+              <Link to="/proposals/new">
+                <Button variant="primary">
+                  Create First Proposal
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
-      
-      <DebugRawData data={rawData} title="Raw Dashboard Data" />
     </div>
   );
 }

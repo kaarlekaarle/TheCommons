@@ -27,20 +27,46 @@ export default function ProposalDetail() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [pollData, optionsData, voteData, resultsData] = await Promise.all([
+      console.log('[DEBUG] Fetching proposal data for ID:', id);
+      console.log('[DEBUG] Current token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+      
+      // Fetch core data (poll and options) first
+      const [pollData, optionsData] = await Promise.all([
         getPoll(id!),
-        getPollOptions(id!),
-        getMyVoteForPoll(id!),
-        getResults(id!)
+        getPollOptions(id!)
       ]);
       setPoll(pollData);
       setOptions(optionsData);
-      setMyVote(voteData);
-      setResults(resultsData);
+      
+      // Fetch optional data (vote and results) - these can fail without breaking the page
+      try {
+        const voteData = await getMyVoteForPoll(id!);
+        setMyVote(voteData);
+      } catch (voteError) {
+        console.log('[DEBUG] Could not fetch vote data:', voteError);
+        setMyVote(null);
+      }
+      
+      try {
+        const resultsData = await getResults(id!);
+        setResults(resultsData);
+      } catch (resultsError) {
+        console.log('[DEBUG] Could not fetch results data:', resultsError);
+        setResults(null);
+      }
+      
+      console.log('[DEBUG] Proposal data loaded successfully');
     } catch (err: unknown) {
-      const error = err as { message: string };
-      console.error('Failed to load proposal:', error.message);
-      showError('Failed to load proposal');
+      const error = err as { message: string; status?: number };
+      console.error('[DEBUG] Failed to load proposal:', error.message, 'Status:', error.status);
+      
+      // Check if it's an authentication error
+      if (error.status === 401) {
+        showError('Please log in to view this proposal');
+        console.log('[DEBUG] Authentication error - token may be expired');
+      } else {
+        showError('Failed to load proposal');
+      }
     } finally {
       setLoading(false);
     }
@@ -130,41 +156,43 @@ export default function ProposalDetail() {
             </div>
           </section>
 
-          {/* Results Section */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">Results</h2>
-            </div>
-            <div className="p-6 bg-surface border border-border rounded-lg space-y-4">
-              {results && results.total_votes > 0 ? (
-                options.map((option) => {
-                  const percentage = getVotePercentage(option.id);
-                  return (
-                    <div key={option.id} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-white">{option.text}</span>
-                        <span className="text-sm text-muted">{percentage.toFixed(1)}%</span>
+          {/* Results Section - Only show if there are voting options */}
+          {options.length > 0 && (
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-white">Results</h2>
+              </div>
+              <div className="p-6 bg-surface border border-border rounded-lg space-y-4">
+                {results && results.total_votes > 0 ? (
+                  options.map((option) => {
+                    const percentage = getVotePercentage(option.id);
+                    return (
+                      <div key={option.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-white">{option.text}</span>
+                          <span className="text-sm text-muted">{percentage.toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-border rounded-full h-2 overflow-hidden">
+                          <motion.div
+                            className="h-full bg-primary rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentage}%` }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                          />
+                        </div>
+                        <div className="text-xs text-muted">
+                          {results.options.find(o => o.option_id === option.id)?.votes || 0} votes
+                        </div>
                       </div>
-                      <div className="w-full bg-border rounded-full h-2 overflow-hidden">
-                        <motion.div
-                          className="h-full bg-primary rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 0.8, ease: "easeOut" }}
-                        />
-                      </div>
-                      <div className="text-xs text-muted">
-                        {results.options.find(o => o.option_id === option.id)?.votes || 0} votes
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-muted text-center py-4">No votes yet</p>
-              )}
-            </div>
-          </section>
+                    );
+                  })
+                ) : (
+                  <p className="text-muted text-center py-4">No votes yet</p>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* Discussion Section */}
           <section>
@@ -186,7 +214,7 @@ export default function ProposalDetail() {
                   <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
                   <p className="text-sm text-muted">You've voted</p>
                 </div>
-              ) : (
+              ) : options.length > 0 ? (
                 <div className="space-y-3">
                   {options.map((option) => (
                     <Button
@@ -195,14 +223,19 @@ export default function ProposalDetail() {
                       disabled={isClosed || voting === option.id}
                       loading={voting === option.id}
                       className="w-full justify-start"
-                      variant={option.text.toLowerCase().includes('yes') ? 'primary' : 'ghost'}
+                      variant={option.text.toLowerCase().includes('yes') || option.text.toLowerCase().includes('support') ? 'primary' : 'ghost'}
                     >
-                      {option.text.toLowerCase().includes('yes') && <CheckCircle className="w-4 h-4 mr-2" />}
-                      {option.text.toLowerCase().includes('no') && <XCircle className="w-4 h-4 mr-2" />}
-                      {option.text.toLowerCase().includes('abstain') && <Minus className="w-4 h-4 mr-2" />}
+                      {option.text.toLowerCase().includes('yes') || option.text.toLowerCase().includes('support') && <CheckCircle className="w-4 h-4 mr-2" />}
+                      {option.text.toLowerCase().includes('no') || option.text.toLowerCase().includes('reject') && <XCircle className="w-4 h-4 mr-2" />}
+                      {option.text.toLowerCase().includes('abstain') || option.text.toLowerCase().includes('modify') && <Minus className="w-4 h-4 mr-2" />}
                       {option.text}
                     </Button>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted mb-2">No voting options available</p>
+                  <p className="text-xs text-muted">This proposal doesn't have voting options set up yet.</p>
                 </div>
               )}
               {isClosed && (
@@ -216,33 +249,35 @@ export default function ProposalDetail() {
       </div>
 
       {/* Mobile Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur border-t border-border py-3 px-4 sm:hidden" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
-        <div className="flex gap-2">
-          {isVoted ? (
-            <div className="flex-1 text-center py-2">
-              <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-              <p className="text-xs text-muted">You've voted</p>
-            </div>
-          ) : (
-            options.map((option) => (
-              <Button
-                key={option.id}
-                onClick={() => handleVote(option.id)}
-                disabled={isClosed || voting === option.id}
-                loading={voting === option.id}
-                size="sm"
-                className="flex-1"
-                variant={option.text.toLowerCase().includes('yes') ? 'primary' : 'ghost'}
-              >
-                {option.text.toLowerCase().includes('yes') && <CheckCircle className="w-4 h-4 mr-1" />}
-                {option.text.toLowerCase().includes('no') && <XCircle className="w-4 h-4 mr-1" />}
-                {option.text.toLowerCase().includes('abstain') && <Minus className="w-4 h-4 mr-1" />}
-                {option.text}
-              </Button>
-            ))
-          )}
+      {options.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur border-t border-border py-3 px-4 sm:hidden" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+          <div className="flex gap-2">
+            {isVoted ? (
+              <div className="flex-1 text-center py-2">
+                <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
+                <p className="text-xs text-muted">You've voted</p>
+              </div>
+            ) : (
+              options.map((option) => (
+                <Button
+                  key={option.id}
+                  onClick={() => handleVote(option.id)}
+                  disabled={isClosed || voting === option.id}
+                  loading={voting === option.id}
+                  size="sm"
+                  className="flex-1"
+                  variant={option.text.toLowerCase().includes('yes') || option.text.toLowerCase().includes('support') ? 'primary' : 'ghost'}
+                >
+                  {option.text.toLowerCase().includes('yes') || option.text.toLowerCase().includes('support') && <CheckCircle className="w-4 h-4 mr-1" />}
+                  {option.text.toLowerCase().includes('no') || option.text.toLowerCase().includes('reject') && <XCircle className="w-4 h-4 mr-1" />}
+                  {option.text.toLowerCase().includes('abstain') || option.text.toLowerCase().includes('modify') && <Minus className="w-4 h-4 mr-1" />}
+                  {option.text}
+                </Button>
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

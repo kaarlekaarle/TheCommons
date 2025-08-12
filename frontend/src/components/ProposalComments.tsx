@@ -137,10 +137,6 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold text-white">Discussion</h3>
-        </div>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
@@ -150,10 +146,6 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <MessageCircle className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold text-white">Discussion</h3>
-      </div>
 
       {/* Comment Form */}
       <form onSubmit={handleSubmit} className="space-y-3">
