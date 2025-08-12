@@ -71,13 +71,32 @@ Detailed architecture in [docs/architecture.md](docs/architecture.md).
    - Swagger UI: http://localhost:8000/docs
    - ReDoc: http://localhost:8000/redoc
 
+## Development
+
+To set up the development environment:
+
+1. Create a virtual environment and activate it:
+   ```bash
+   python -m venv venv && source venv/bin/activate
+   ```
+
+2. Install development dependencies:
+   ```bash
+   pip install -U pip && pip install -r requirements-dev.txt
+   ```
+
+3. Run tests:
+   ```bash
+   pytest -q
+   ```
+
 ## Two-Level Decision Model
 
 The Commons implements a two-level decision model for proposals:
 
 ### Level A (Baseline Policy)
 - **Purpose**: High-level, slow-changing principles that are rarely updated
-- **Example**: "Environmental issues: Let's take care of nature"
+- **Example**: "Environmental Policy", "Transportation Safety"
 - **Voting**: Establishes direction for future Level B decisions
 - **Feature Flag**: Controlled by `LEVEL_A_ENABLED` environment variable
 
