@@ -83,6 +83,7 @@ test_results/
 test.db
 server.log
 the_commons_backup.sql
+backend/backend.pid
 
 # Debug/test files
 debug_frontend.html

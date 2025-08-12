@@ -100,7 +100,7 @@ echo "$SERVER_PID" > "$PID_FILE"
 # Wait for server to start
 log "Waiting for server to start..."
 for i in {1..30}; do
-    if curl -s "http://localhost:$SERVER_PORT/health" > /dev/null 2>&1; then
+    if curl -s "http://localhost:$SERVER_PORT/api/health" > /dev/null 2>&1; then
         log_success "Server started successfully (PID: $SERVER_PID)"
         log_success "Server is running at http://localhost:$SERVER_PORT"
         log_success "Press Ctrl+C to stop the server"

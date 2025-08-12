@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "sync:features": "tsx ../scripts/sync_features.ts",
-    "sync:features:watch": "chokidar '../src/config/features.ts' -c 'npm run sync:features'",
+    "sync:features:watch": "chokidar 'src/config/features.ts' -c 'npm run sync:features'",
     "check:features": "git diff --exit-code src/config/features.generated.json || (echo '✖ features.generated.json is stale. Run: npm run sync:features' && exit 1)"
   },
   "dependencies": {

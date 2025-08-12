@@ -59,7 +59,7 @@ is_server_running() {
 # Function to check server health
 check_server_health() {
     local response
-    response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$SERVER_PORT/health" 2>/dev/null || echo "000")
+    response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$SERVER_PORT/api/health" 2>/dev/null || echo "000")
     
     if [ "$response" = "200" ]; then
         return 0
