@@ -119,8 +119,8 @@ jobs:
           BACKEND: http://localhost:8000
           FRONTEND: http://localhost:5174
           WS_URL: ws://localhost:8000/ws
-          SMOKE_USER: ${{ secrets.SMOKE_USER }}
-          SMOKE_PASS: ${{ secrets.SMOKE_PASS }}
+          SMOKE_USER: ${{ secrets.SMOKE_USER || 'alice_community' }}
+          SMOKE_PASS: ${{ secrets.SMOKE_PASS || 'password123' }}
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
