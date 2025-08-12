@@ -166,7 +166,7 @@ export default function Auth({ onSuccess }: AuthProps) {
                 id="email"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
+                className="w-full px-3 py-2 bg-surface border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
                 placeholder="Enter your email"
                 required={!isLogin}
               />
@@ -182,7 +182,7 @@ export default function Auth({ onSuccess }: AuthProps) {
               id="username"
               value={formData.username}
               onChange={(e) => setFormData({...formData, username: e.target.value})}
-              className="w-full px-3 py-2 bg-bg border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
+              className="w-full px-3 py-2 bg-surface border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
               placeholder="Pick a username"
               required
             />
@@ -197,7 +197,7 @@ export default function Auth({ onSuccess }: AuthProps) {
               id="password"
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
-              className="w-full px-3 py-2 bg-bg border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
+              className="w-full px-3 py-2 bg-surface border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
               placeholder="Enter your password"
               required
             />
@@ -213,7 +213,7 @@ export default function Auth({ onSuccess }: AuthProps) {
                 id="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
+                className="w-full px-3 py-2 bg-surface border border-border rounded-md text-white placeholder-muted focus:ring-2 focus:ring-primary/50 focus:border-transparent"
                 placeholder="Confirm your password"
                 required={!isLogin}
               />

@@ -15,7 +15,7 @@ async def test_poll_create_level_a_requires_choice(client: AsyncClient, auth_hea
         "title": "Test Level A Poll",
         "description": "Test description",
         "decision_type": "level_a",
-        "direction_choice": "Environmental issues: Let's take care of nature"
+        "direction_choice": "Environmental Policy"
     }
     
     response = await client.post("/api/polls/", json=poll_data, headers=auth_headers)
@@ -23,7 +23,7 @@ async def test_poll_create_level_a_requires_choice(client: AsyncClient, auth_hea
     
     poll = response.json()
     assert poll["decision_type"] == "level_a"
-    assert poll["direction_choice"] == "Environmental issues: Let's take care of nature"
+    assert poll["direction_choice"] == "Environmental Policy"
 
 
 @pytest.mark.asyncio
@@ -66,7 +66,7 @@ async def test_poll_read_includes_new_fields(client: AsyncClient, auth_headers: 
         "title": "Test Poll",
         "description": "Test description",
         "decision_type": "level_a",
-        "direction_choice": "Environmental issues: Let's take care of nature"
+        "direction_choice": "Environmental Policy"
     }
     
     create_response = await client.post("/api/polls/", json=poll_data, headers=auth_headers)
@@ -82,7 +82,7 @@ async def test_poll_read_includes_new_fields(client: AsyncClient, auth_headers: 
     assert "decision_type" in poll
     assert "direction_choice" in poll
     assert poll["decision_type"] == "level_a"
-    assert poll["direction_choice"] == "Environmental issues: Let's take care of nature"
+    assert poll["direction_choice"] == "Environmental Policy"
 
 
 @pytest.mark.asyncio
@@ -95,7 +95,7 @@ async def test_level_a_blocked_when_feature_disabled(client: AsyncClient, auth_h
         "title": "Test Level A Poll",
         "description": "Test description",
         "decision_type": "level_a",
-        "direction_choice": "Environmental issues: Let's take care of nature"
+        "direction_choice": "Environmental Policy"
     }
     
     response = await client.post("/api/polls/", json=poll_data, headers=auth_headers)
@@ -131,7 +131,7 @@ async def test_poll_list_includes_new_fields(client: AsyncClient, auth_headers: 
         "title": "Test Poll",
         "description": "Test description",
         "decision_type": "level_a",
-        "direction_choice": "Environmental issues: Let's take care of nature"
+        "direction_choice": "Environmental Policy"
     }
     
     await client.post("/api/polls/", json=poll_data, headers=auth_headers)

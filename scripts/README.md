@@ -95,16 +95,49 @@ A comprehensive demo seeding script that creates a realistic small-city communit
 - mayor, cityplanner, teacher, shop_owner, student, nurse, cyclist, driver, parent, librarian, waste_manager, developer
 - All users: password123
 
-**Level A (Baseline Policy) Proposals (3):**
-- [DEMO] Environmental Stewardship Charter
-- [DEMO] Open Data & Transparency Charter  
-- [DEMO] Mobility Vision 2030
+**Level A (Baseline Policy) Proposals (10):**
+- Vision Zero Commitment
+- Open Government Policy
+- Green Building Standard
+- Affordable Housing Priority
+- Public Space Access
+- Climate Action Framework
+- Digital Inclusion
+- Local Food Commitment
+- Mobility for All
+- Zero Waste Commitment
 
-**Level B (Poll) Proposals (4):**
-- [DEMO] Install protected bike lanes on Main St
-- [DEMO] Pilot curbside composting for 1 year
-- [DEMO] Extend library weekend hours
-- [DEMO] Replace diesel buses with electric on Route 4
+**Level B (Poll) Proposals (30):**
+- Install protected bike lanes on Oak Street from Central Park to City Hall
+- Launch 12-month curbside compost pickup pilot in three neighborhoods
+- Extend Saturday library hours from 5 PM to 8 PM for six-month trial
+- Plant 500 street trees along major bus routes
+- Install 20 public water refill stations in parks and downtown areas
+- Retrofit lighting in all public schools with energy-efficient LEDs
+- Add wheelchair-accessible seating and pathways in Riverside Park
+- Create weekly "car-free Sunday" on Main Avenue during summer months
+- Launch local food voucher program for low-income households
+- Replace diesel buses on Route 6 with electric buses within 18 months
+- Start youth apprenticeship program in city maintenance departments
+- Create protected pedestrian crossing at 5th and Market
+- Run public art mural program in underutilized spaces downtown
+- Upgrade stormwater drains in flood-prone neighborhoods
+- Pilot mobile mental health support unit operating three days a week
+- Offer free Wi-Fi in all public libraries and recreation centers
+- Expand community policing foot patrols to two additional neighborhoods
+- Begin construction of skate park in Westside Recreation Area
+- Install traffic-calming speed tables on Oak Drive near elementary school
+- Provide grants for storefront energy-efficiency upgrades to 20 small businesses
+- Introduce on-demand evening bus service for shift workers in industrial park
+- Convert vacant lot at 14th and Pine into temporary community garden for two years
+- Offer free weekend transit for youth under 18 for one-year pilot
+- Create citywide tool library where residents can borrow equipment for home projects
+- Add shaded seating areas to three senior housing complexes
+- Implement bilingual signage in all city-owned buildings
+- Start bike-share program with 100 bikes at 10 docking stations
+- Build public charging station hub for electric vehicles in central parking lot
+- Restore historic fountain in Civic Plaza
+- Add two new trash and recycling bins per block in downtown core
 
 **Content:**
 - 20+ comments with PRO:/CON: prefixes
@@ -112,7 +145,6 @@ A comprehensive demo seeding script that creates a realistic small-city communit
 - 3 delegations (student→cityplanner, shop_owner→cityplanner, driver→mayor)
 
 **Safety:**
-- All demo content is tagged with "[DEMO] " prefix for easy cleanup
 - Script is idempotent and safe to re-run
 
 **Usage:**

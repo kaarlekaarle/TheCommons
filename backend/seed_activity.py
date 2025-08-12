@@ -78,22 +78,40 @@ async def create_seed_data():
         # Create proposals with spaced timestamps
         proposals_data = [
             {
-                "title": "Universal Basic Income",
-                "description": "Implement a universal basic income program to reduce poverty and inequality.",
+                "title": "Vision Zero Commitment",
+                "description": "Commit to designing streets so that no one is killed or seriously injured in traffic.",
                 "created_by": created_users["alex"],
                 "hours_ago": 2  # 2 hours ago
             },
             {
-                "title": "Climate Action Plan", 
-                "description": "Comprehensive plan to reduce carbon emissions by 50% by 2030.",
+                "title": "Install protected bike lanes on Oak Street from Central Park to City Hall", 
+                "description": "Add dedicated, protected bicycle lanes along Oak Street to improve cyclist safety and encourage active transportation.",
                 "created_by": created_users["jordan"],
                 "hours_ago": 4  # 4 hours ago
             },
             {
-                "title": "Open Data Initiative",
-                "description": "Make all government data publicly available in machine-readable formats.",
+                "title": "Launch 12-month curbside compost pickup pilot in three neighborhoods",
+                "description": "Begin organic waste collection service in Downtown, Westside, and Riverside neighborhoods to reduce landfill waste.",
                 "created_by": created_users["maria"], 
                 "hours_ago": 6  # 6 hours ago
+            },
+            {
+                "title": "Open Government Policy",
+                "description": "Publish public records and datasets unless there's a clear legal reason not to.",
+                "created_by": created_users["sam"],
+                "hours_ago": 8  # 8 hours ago
+            },
+            {
+                "title": "Extend Saturday library hours from 5 PM to 8 PM for six-month trial",
+                "description": "Extend operating hours at the main library to better serve students and working families.",
+                "created_by": created_users["taylor"],
+                "hours_ago": 10  # 10 hours ago
+            },
+            {
+                "title": "Green Building Standard",
+                "description": "Require all new public buildings to meet the city's highest energy-efficiency code.",
+                "created_by": created_users["casey"],
+                "hours_ago": 12  # 12 hours ago
             }
         ]
         

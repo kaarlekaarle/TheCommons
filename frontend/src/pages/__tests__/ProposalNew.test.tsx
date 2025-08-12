@@ -35,44 +35,44 @@ describe('ProposalNew', () => {
   it('renders the form with Level A and Level B options', () => {
     renderWithRouter(<ProposalNew />);
     
-    expect(screen.getByRole('heading', { name: 'Create Proposal' })).toBeInTheDocument();
-    expect(screen.getByText('Decision type')).toBeInTheDocument();
-    expect(screen.getByText('Baseline Policy (Level A)')).toBeInTheDocument();
-    expect(screen.getByText('Poll (Level B)')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Start a Proposal' })).toBeInTheDocument();
+    expect(screen.getByText('What type of decision are you making?')).toBeInTheDocument();
+    expect(screen.getByText('Long-Term Direction')).toBeInTheDocument();
+    expect(screen.getByText('Immediate Action')).toBeInTheDocument();
   });
 
   it('shows Level A choices when Level A is selected', () => {
     renderWithRouter(<ProposalNew />);
     
-    const levelAButton = screen.getByText('Baseline Policy (Level A)');
+    const levelAButton = screen.getByText('Long-Term Direction');
     fireEvent.click(levelAButton);
     
-    expect(screen.getByText('Choose the baseline direction to make the concept clear.')).toBeInTheDocument();
-    expect(screen.getByText('Environmental issues: Fuck nature')).toBeInTheDocument();
-    expect(screen.getByText('Environmental issues: Let\'s take care of nature')).toBeInTheDocument();
+    expect(screen.getByText('Choose Your Community\'s Direction')).toBeInTheDocument();
+    expect(screen.getByText('Transportation Safety')).toBeInTheDocument();
+    expect(screen.getByText('Government Transparency')).toBeInTheDocument();
   });
 
   it('enforces direction choice for Level A proposals', async () => {
     renderWithRouter(<ProposalNew />);
     
     // Fill in title and description
-    fireEvent.change(screen.getByPlaceholderText('Short, clear title'), {
+    fireEvent.change(screen.getByPlaceholderText('Give it a clear, short name'), {
       target: { value: 'Test Proposal' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Explain the context and intent'), {
+    fireEvent.change(screen.getByPlaceholderText('Explain why it matters and what it will change'), {
       target: { value: 'Test description' },
     });
     
     // Select Level A but don't choose direction
-    const levelAButton = screen.getByText('Baseline Policy (Level A)');
+    const levelAButton = screen.getByText('Long-Term Direction');
     fireEvent.click(levelAButton);
     
     // Try to submit
-    const submitButton = screen.getByRole('button', { name: 'Create Proposal' });
+    const submitButton = screen.getByRole('button', { name: 'Share' });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
-      expect(screen.getByText('Please choose one of the Level‑A directions.')).toBeInTheDocument();
+      expect(screen.getByText('Please pick a Level-A direction.')).toBeInTheDocument();
     });
   });
 
@@ -83,7 +83,7 @@ describe('ProposalNew', () => {
       title: 'Test Proposal',
       description: 'Test description',
       decision_type: 'level_a',
-      direction_choice: 'Environmental issues: Let\'s take care of nature',
+      direction_choice: 'Transportation Safety',
       created_by: 'user-id',
       created_at: '2023-01-01T00:00:00Z',
       updated_at: '2023-01-01T00:00:00Z',
@@ -93,22 +93,22 @@ describe('ProposalNew', () => {
     renderWithRouter(<ProposalNew />);
     
     // Fill in form
-    fireEvent.change(screen.getByPlaceholderText('Short, clear title'), {
+    fireEvent.change(screen.getByPlaceholderText('Give it a clear, short name'), {
       target: { value: 'Test Proposal' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Explain the context and intent'), {
+    fireEvent.change(screen.getByPlaceholderText('Explain why it matters and what it will change'), {
       target: { value: 'Test description' },
     });
     
     // Select Level A and choose direction
-    const levelAButton = screen.getByText('Baseline Policy (Level A)');
+    const levelAButton = screen.getByText('Long-Term Direction');
     fireEvent.click(levelAButton);
     
-    const directionChoice = screen.getByText('Environmental issues: Let\'s take care of nature');
+    const directionChoice = screen.getByText('Transportation Safety');
     fireEvent.click(directionChoice);
     
     // Submit
-    const submitButton = screen.getByRole('button', { name: 'Create Proposal' });
+    const submitButton = screen.getByRole('button', { name: 'Share' });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
@@ -116,7 +116,7 @@ describe('ProposalNew', () => {
         title: 'Test Proposal',
         description: 'Test description',
         decision_type: 'level_a',
-        direction_choice: 'Environmental issues: Let\'s take care of nature',
+        direction_choice: 'Transportation Safety',
       });
     });
     
@@ -140,15 +140,15 @@ describe('ProposalNew', () => {
     renderWithRouter(<ProposalNew />);
     
     // Fill in form
-    fireEvent.change(screen.getByPlaceholderText('Short, clear title'), {
+    fireEvent.change(screen.getByPlaceholderText('Give it a clear, short name'), {
       target: { value: 'Test Proposal' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Explain the context and intent'), {
+    fireEvent.change(screen.getByPlaceholderText('Explain why it matters and what it will change'), {
       target: { value: 'Test description' },
     });
     
     // Level B is selected by default, so just submit
-    const submitButton = screen.getByRole('button', { name: 'Create Proposal' });
+    const submitButton = screen.getByRole('button', { name: 'Share' });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
@@ -179,15 +179,15 @@ describe('ProposalNew', () => {
     renderWithRouter(<ProposalNew />);
     
     // Fill in form
-    fireEvent.change(screen.getByPlaceholderText('Short, clear title'), {
+    fireEvent.change(screen.getByPlaceholderText('Give it a clear, short name'), {
       target: { value: 'Test Proposal' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Explain the context and intent'), {
+    fireEvent.change(screen.getByPlaceholderText('Explain why it matters and what it will change'), {
       target: { value: 'Test description' },
     });
     
     // Submit
-    const submitButton = screen.getByRole('button', { name: 'Create Proposal' });
+    const submitButton = screen.getByRole('button', { name: 'Share' });
     fireEvent.click(submitButton);
     
     await waitFor(() => {

@@ -32,7 +32,7 @@ class PollBase(BaseModel):
     direction_choice: Optional[str] = Field(
         None, 
         max_length=200, 
-        description="Required for Level A decisions. Specifies the baseline direction (e.g., 'Environmental issues: Let's take care of nature')"
+        description="Required for Level A decisions. Specifies the baseline direction (e.g., 'Environmental Policy', 'Transportation Safety')"
     )
 
     @model_validator(mode='after')

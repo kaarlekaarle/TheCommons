@@ -21,8 +21,11 @@ test.describe('Basic User Flow', () => {
     
     // Step 2: Register a new user
     await test.step('Register new user', async () => {
-      // Click on "Don't have an account? Sign up"
-      await page.click('text=Don\'t have an account? Sign up');
+      // Navigate to auth page
+      await page.goto('/auth');
+      
+      // Click on "New here? Create an account"
+      await page.click('text=New here? Create an account');
       
       // Fill in registration form
       await page.fill('input[type="email"]', testUser.email);
@@ -34,7 +37,7 @@ test.describe('Basic User Flow', () => {
       await page.click('button[type="submit"]');
       
       // Wait for successful registration and automatic login
-      await expect(page.locator('text=User created and logged in successfully!')).toBeVisible();
+      await expect(page.locator('text=Account created — you\'re in!')).toBeVisible();
       
       // Wait for redirect to proposals page
       await expect(page).toHaveURL(/\/proposals/);
@@ -132,7 +135,7 @@ test.describe('Basic User Flow', () => {
       password: 'TestPassword123!'
     };
 
-    await page.goto('/');
+    await page.goto('/auth');
     
     // Fill in login form
     await page.fill('input[placeholder*="username"]', existingUser.username);
@@ -148,7 +151,7 @@ test.describe('Basic User Flow', () => {
 
   test('View activity feed', async ({ page }) => {
     // Login first
-    await page.goto('/');
+    await page.goto('/auth');
     await page.fill('input[placeholder*="username"]', 'testuser_existing');
     await page.fill('input[type="password"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
@@ -163,7 +166,7 @@ test.describe('Basic User Flow', () => {
 
   test('Search and filter proposals', async ({ page }) => {
     // Login first
-    await page.goto('/');
+    await page.goto('/auth');
     await page.fill('input[placeholder*="username"]', 'testuser_existing');
     await page.fill('input[type="password"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
@@ -185,7 +188,7 @@ test.describe('Basic User Flow', () => {
 
 test.describe('Error Handling', () => {
   test('Invalid login credentials', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/auth');
     
     // Try to login with invalid credentials
     await page.fill('input[placeholder*="username"]', 'nonexistent_user');
@@ -197,10 +200,10 @@ test.describe('Error Handling', () => {
   });
 
   test('Form validation', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/auth');
     
     // Click register without filling required fields
-    await page.click('text=Don\'t have an account? Sign up');
+    await page.click('text=New here? Create an account');
     await page.click('button[type="submit"]');
     
     // Verify validation errors are displayed
@@ -213,7 +216,7 @@ test.describe('Responsive Design', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
-    await page.goto('/');
+    await page.goto('/auth');
     
     // Verify the page is usable on mobile
     await expect(page.locator('input[placeholder*="username"]')).toBeVisible();

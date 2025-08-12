@@ -187,9 +187,9 @@ export default function WhyTwoLevels() {
         <MarkdownView markdown={markdownContent} />
       </main>
 
-      <footer className="px-6 py-10 text-center text-sm text-muted border-t border-border">
-        © {new Date().getFullYear()} The Commons — Two Levels Model
-      </footer>
+              <footer className="px-6 py-10 text-center text-sm text-muted border-t border-border">
+          © {new Date().getFullYear()} The Commons — Two‑Level Decision Thinking
+        </footer>
     </div>
   );
 }

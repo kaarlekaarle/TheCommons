@@ -14,6 +14,7 @@ from backend.core.exceptions import (
 )
 from backend.core.logging_config import get_logger
 from backend.core.audit_mw import audit_event
+from backend.core.metrics import increment_delegation_metric
 from backend.database import get_db
 from backend.models.delegation import Delegation
 from backend.models.user import User
@@ -72,6 +73,9 @@ async def create_delegation(
             "Delegation created successfully",
             extra={"delegation_id": delegation.id, "user_id": current_user.id},
         )
+        
+        # Track delegation creation metric
+        increment_delegation_metric("delegation_created", str(current_user.id))
         
         # Audit the delegation creation
         audit_event(
@@ -303,6 +307,9 @@ async def remove_delegation(
             "Delegation removed successfully",
             extra={"delegation_id": delegation.id, "user_id": current_user.id},
         )
+        
+        # Track delegation revocation metric
+        increment_delegation_metric("delegation_revoked", str(current_user.id))
         
         # Audit the delegation removal
         audit_event(

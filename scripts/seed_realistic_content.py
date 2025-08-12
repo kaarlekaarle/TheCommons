@@ -46,45 +46,276 @@ async_session_maker = sessionmaker(
 
 # Sample data
 USERS = [
-    {"username": "alice_community", "email": "alice@community.org", "password": "password123"},
-    {"username": "bob_organizer", "email": "bob@organizer.com", "password": "password123"},
-    {"username": "carol_activist", "email": "carol@activist.net", "password": "password123"},
-    {"username": "dave_thinker", "email": "dave@thinker.edu", "password": "password123"},
-    {"username": "eve_leader", "email": "eve@leader.org", "password": "password123"},
-    {"username": "frank_volunteer", "email": "frank@volunteer.com", "password": "password123"},
-    {"username": "grace_advocate", "email": "grace@advocate.net", "password": "password123"},
-    {"username": "henry_planner", "email": "henry@planner.org", "password": "password123"},
-    {"username": "iris_connector", "email": "iris@connector.com", "password": "password123"},
-    {"username": "jack_builder", "email": "jack@builder.net", "password": "password123"},
+    {"username": "alex", "email": "alex@example.com", "password": "password123"},
+    {"username": "jordan", "email": "jordan@example.com", "password": "password123"},
+    {"username": "maria", "email": "maria@example.com", "password": "password123"},
+    {"username": "sam", "email": "sam@example.com", "password": "password123"},
+    {"username": "taylor", "email": "taylor@example.com", "password": "password123"},
+    {"username": "casey", "email": "casey@example.com", "password": "password123"},
+    {"username": "riley", "email": "riley@example.com", "password": "password123"},
+    {"username": "quinn", "email": "quinn@example.com", "password": "password123"},
 ]
 
-PROPOSALS = [
+# Level A Proposals (Principles - long-term direction)
+LEVEL_A_PROPOSALS = [
     {
-        "title": "Community Garden Initiative",
-        "description": "Establish a community garden in the central park to promote local food production and community bonding. This will include raised beds, a composting system, and educational workshops.",
-        "options": ["Support the initiative", "Modify the plan", "Reject the proposal"]
+        "title": "Vision Zero Commitment",
+        "description": "Commit to designing streets so that no one is killed or seriously injured in traffic.",
+        "direction_choice": "Transportation Safety"
     },
     {
-        "title": "Local Business Support Program",
-        "description": "Create a program to support local businesses affected by recent economic changes. This includes grants, mentorship, and marketing assistance.",
-        "options": ["Full support", "Partial support", "No support"]
+        "title": "Open Government Policy",
+        "description": "Publish public records and datasets unless there's a clear legal reason not to.",
+        "direction_choice": "Government Transparency"
     },
     {
-        "title": "Public Transportation Improvements",
-        "description": "Improve public transportation by adding new routes, increasing frequency, and upgrading vehicles. This aims to reduce car dependency and improve accessibility.",
-        "options": ["Implement all improvements", "Implement partial improvements", "Maintain current service"]
+        "title": "Green Building Standard",
+        "description": "Require all new public buildings to meet the city's highest energy-efficiency code.",
+        "direction_choice": "Environmental Policy"
     },
     {
-        "title": "Youth Mentorship Program",
-        "description": "Launch a mentorship program connecting experienced community members with young people to share skills, knowledge, and guidance.",
-        "options": ["Launch the program", "Pilot program first", "Not at this time"]
+        "title": "Affordable Housing Priority",
+        "description": "Prioritize affordable housing in land-use and zoning decisions.",
+        "direction_choice": "Housing & Development"
     },
     {
-        "title": "Renewable Energy Transition",
-        "description": "Begin transitioning community facilities to renewable energy sources, starting with solar panels on public buildings.",
-        "options": ["Full transition", "Gradual transition", "Maintain current energy"]
+        "title": "Public Space Access",
+        "description": "Ensure all residents live within a 10-minute walk of a safe, accessible public space.",
+        "direction_choice": "Parks & Recreation"
+    },
+    {
+        "title": "Climate Action Framework",
+        "description": "Cut greenhouse gas emissions 50% by 2035, across all city operations.",
+        "direction_choice": "Climate & Sustainability"
+    },
+    {
+        "title": "Transparent Budgeting",
+        "description": "Publish budgets in plain language with year-to-year comparisons.",
+        "direction_choice": "Financial Management"
+    },
+    {
+        "title": "Digital Inclusion",
+        "description": "Guarantee all households affordable access to high-speed internet.",
+        "direction_choice": "Technology & Innovation"
+    },
+    {
+        "title": "Cultural Access for All",
+        "description": "Support year-round, low-cost access to arts and culture for all residents.",
+        "direction_choice": "Arts & Culture"
+    },
+    {
+        "title": "Local Food Commitment",
+        "description": "Increase the share of food consumed in the city that is grown or produced locally.",
+        "direction_choice": "Food Security"
+    },
+    {
+        "title": "Mobility for All",
+        "description": "Design transport systems that serve all ages and abilities.",
+        "direction_choice": "Public Transit"
+    },
+    {
+        "title": "Public Health First",
+        "description": "Ensure every resident can reach primary health care within 30 minutes by public transport.",
+        "direction_choice": "Public Health"
+    },
+    {
+        "title": "Water Stewardship",
+        "description": "Manage water resources sustainably, ensuring safe drinking water for all.",
+        "direction_choice": "Water Management"
+    },
+    {
+        "title": "Zero Waste Commitment",
+        "description": "Commit to diverting all recyclable and compostable materials from landfills.",
+        "direction_choice": "Waste Management"
+    },
+    {
+        "title": "Participatory Governance",
+        "description": "Include residents in decisions through open forums, surveys, and digital platforms.",
+        "direction_choice": "Civic Engagement"
+    },
+    {
+        "title": "Fair Work Charter",
+        "description": "Prioritize fair wages, safe working conditions, and worker voice in city contracts.",
+        "direction_choice": "Labor & Employment"
+    },
+    {
+        "title": "Noise Management Policy",
+        "description": "Reduce harmful noise levels in residential areas.",
+        "direction_choice": "Public Safety"
+    },
+    {
+        "title": "Tree Canopy Preservation",
+        "description": "Maintain and expand the urban tree canopy across all neighborhoods.",
+        "direction_choice": "Urban Forestry"
+    },
+    {
+        "title": "Historical Preservation",
+        "description": "Protect and maintain historically significant buildings and sites.",
+        "direction_choice": "Heritage Conservation"
+    },
+    {
+        "title": "Community Safety Framework",
+        "description": "Build community safety through prevention, intervention, and support services.",
+        "direction_choice": "Public Safety"
     }
 ]
+
+# Level B Proposals (Actions - specific, immediate steps)
+LEVEL_B_PROPOSALS = [
+    {
+        "title": "Install protected bike lanes on Oak Street from Central Park to City Hall",
+        "description": "Add dedicated, protected bicycle lanes along Oak Street to improve cyclist safety and encourage active transportation.",
+        "options": ["Approve", "Modify plan", "Reject"]
+    },
+    {
+        "title": "Launch 12-month curbside compost pickup pilot in three neighborhoods",
+        "description": "Begin organic waste collection service in Downtown, Westside, and Riverside neighborhoods to reduce landfill waste.",
+        "options": ["Approve", "Reduce scope", "Reject"]
+    },
+    {
+        "title": "Extend Saturday library hours from 5 PM to 8 PM for six-month trial",
+        "description": "Extend operating hours at the main library to better serve students and working families.",
+        "options": ["Approve", "Modify hours", "Reject"]
+    },
+    {
+        "title": "Plant 500 street trees along major bus routes",
+        "description": "Add urban trees along transit corridors to improve air quality and provide shade for transit users.",
+        "options": ["Approve", "Reduce number", "Reject"]
+    },
+    {
+        "title": "Install 20 public water refill stations in parks and downtown areas",
+        "description": "Add drinking water stations to reduce plastic bottle waste and improve public health.",
+        "options": ["Approve", "Reduce locations", "Reject"]
+    },
+    {
+        "title": "Retrofit lighting in all public schools with energy-efficient LEDs",
+        "description": "Replace existing lighting systems in 12 public school buildings to reduce energy consumption and costs.",
+        "options": ["Approve", "Phase implementation", "Reject"]
+    },
+    {
+        "title": "Add wheelchair-accessible seating and pathways in Riverside Park",
+        "description": "Install accessible benches and improve pathway surfaces to ensure park access for all residents.",
+        "options": ["Approve", "Modify scope", "Reject"]
+    },
+    {
+        "title": "Create weekly 'car-free Sunday' on Main Avenue during summer months",
+        "description": "Close Main Avenue to vehicle traffic every Sunday from June through August for community events and recreation.",
+        "options": ["Approve", "Reduce frequency", "Reject"]
+    },
+    {
+        "title": "Launch local food voucher program for low-income households",
+        "description": "Provide $50 monthly vouchers redeemable at farmers' markets for 200 qualifying households.",
+        "options": ["Approve", "Reduce amount", "Reject"]
+    },
+    {
+        "title": "Replace diesel buses on Route 6 with electric buses within 18 months",
+        "description": "Purchase 8 electric buses to replace aging diesel vehicles on the downtown-to-airport route.",
+        "options": ["Approve", "Extend timeline", "Reject"]
+    },
+    {
+        "title": "Start youth apprenticeship program in city maintenance departments",
+        "description": "Create 15 paid apprenticeship positions for youth aged 16-24 in parks, streets, and facilities maintenance.",
+        "options": ["Approve", "Reduce positions", "Reject"]
+    },
+    {
+        "title": "Create protected pedestrian crossing at 5th and Market",
+        "description": "Install signalized crosswalk with pedestrian refuge island at the busy 5th and Market intersection.",
+        "options": ["Approve", "Modify design", "Reject"]
+    },
+    {
+        "title": "Run public art mural program in underutilized spaces downtown",
+        "description": "Commission 10 murals on blank walls and underpasses to improve visual appeal and support local artists.",
+        "options": ["Approve", "Reduce number", "Reject"]
+    },
+    {
+        "title": "Upgrade stormwater drains in flood-prone neighborhoods",
+        "description": "Replace and expand drainage infrastructure in three neighborhoods that experience regular flooding.",
+        "options": ["Approve", "Prioritize areas", "Reject"]
+    },
+    {
+        "title": "Pilot mobile mental health support unit operating three days a week",
+        "description": "Deploy a mobile crisis intervention team to provide immediate mental health support in high-need areas.",
+        "options": ["Approve", "Reduce days", "Reject"]
+    },
+    {
+        "title": "Offer free Wi-Fi in all public libraries and recreation centers",
+        "description": "Install and maintain wireless internet access in 8 public facilities to improve digital access.",
+        "options": ["Approve", "Limit locations", "Reject"]
+    },
+    {
+        "title": "Expand community policing foot patrols to two additional neighborhoods",
+        "description": "Add walking patrols in Eastside and Southside neighborhoods to improve community-police relations.",
+        "options": ["Approve", "Add one area", "Reject"]
+    },
+    {
+        "title": "Begin construction of skate park in Westside Recreation Area",
+        "description": "Build a 15,000 square foot skate park with beginner and advanced areas for youth recreation.",
+        "options": ["Approve", "Reduce size", "Reject"]
+    },
+    {
+        "title": "Install traffic-calming speed tables on Oak Drive near elementary school",
+        "description": "Add three speed tables on Oak Drive to reduce vehicle speeds and improve pedestrian safety near the school.",
+        "options": ["Approve", "Reduce number", "Reject"]
+    },
+    {
+        "title": "Provide grants for storefront energy-efficiency upgrades to 20 small businesses",
+        "description": "Offer $5,000 grants to small businesses for lighting, HVAC, and insulation improvements.",
+        "options": ["Approve", "Reduce amount", "Reject"]
+    },
+    {
+        "title": "Introduce on-demand evening bus service for shift workers in industrial park",
+        "description": "Launch flexible bus service from 6 PM to 2 AM to serve workers at the industrial park and surrounding areas.",
+        "options": ["Approve", "Reduce hours", "Reject"]
+    },
+    {
+        "title": "Convert vacant lot at 14th and Pine into temporary community garden for two years",
+        "description": "Transform the 0.5-acre vacant lot into a community garden with 30 plots and shared composting area.",
+        "options": ["Approve", "Reduce size", "Reject"]
+    },
+    {
+        "title": "Offer free weekend transit for youth under 18 for one-year pilot",
+        "description": "Provide free bus and train rides on Saturdays and Sundays for all youth to encourage independent mobility.",
+        "options": ["Approve", "Limit days", "Reject"]
+    },
+    {
+        "title": "Create citywide tool library where residents can borrow equipment for home projects",
+        "description": "Establish a lending library with 200 tools and equipment items available for 7-day borrowing periods.",
+        "options": ["Approve", "Reduce inventory", "Reject"]
+    },
+    {
+        "title": "Add shaded seating areas to three senior housing complexes",
+        "description": "Install covered benches and tables with shade structures at senior housing facilities to improve outdoor access.",
+        "options": ["Approve", "Reduce locations", "Reject"]
+    },
+    {
+        "title": "Implement bilingual signage in all city-owned buildings",
+        "description": "Add Spanish-language signs alongside English in all municipal buildings to improve accessibility.",
+        "options": ["Approve", "Phase implementation", "Reject"]
+    },
+    {
+        "title": "Start bike-share program with 100 bikes at 10 docking stations",
+        "description": "Launch a public bicycle sharing system with stations throughout downtown and adjacent neighborhoods.",
+        "options": ["Approve", "Reduce scale", "Reject"]
+    },
+    {
+        "title": "Build public charging station hub for electric vehicles in central parking lot",
+        "description": "Install 12 electric vehicle charging stations in the main downtown parking facility to support EV adoption.",
+        "options": ["Approve", "Reduce stations", "Reject"]
+    },
+    {
+        "title": "Restore historic fountain in Civic Plaza",
+        "description": "Repair and restore the 1920s fountain in Civic Plaza, including plumbing, electrical, and decorative elements.",
+        "options": ["Approve", "Modify scope", "Reject"]
+    },
+    {
+        "title": "Add two new trash and recycling bins per block in downtown core",
+        "description": "Install 40 new waste receptacles with separate recycling compartments throughout the downtown area.",
+        "options": ["Approve", "Reduce number", "Reject"]
+    }
+]
+
+# Combine Level A and Level B proposals for the main PROPOSALS array
+PROPOSALS = LEVEL_A_PROPOSALS + LEVEL_B_PROPOSALS
 
 COMMENTS = [
     "This is exactly what our community needs! I've been hoping for something like this.",

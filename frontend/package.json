@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "test:e2e": "playwright test --config=e2e/playwright.config.ts",
+    "test:e2e:accessibility": "playwright test accessibility.spec.ts --config=e2e/playwright.config.ts",
     "sync:features": "tsx ../scripts/sync_features.ts",
     "sync:features:watch": "chokidar 'src/config/features.ts' -c 'npm run sync:features'",
     "check:features": "git diff --exit-code src/config/features.generated.json || (echo '✖ features.generated.json is stale. Run: npm run sync:features' && exit 1)",
@@ -31,6 +33,7 @@
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@eslint/js": "^9.32.0",
     "@playwright/test": "^1.40.0",
     "@testing-library/jest-dom": "^6.6.4",

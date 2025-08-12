@@ -2,10 +2,28 @@ import React, { useState } from "react";
 import Button from "../components/ui/Button";
 import { createProposal } from "../lib/api";
 import { useNavigate } from "react-router-dom";
+import { Compass, Target } from "lucide-react";
 
 const LEVEL_A_CHOICES = [
-  "Environmental: Nature is for exploitation",
-  "Environmental: Nature is to be cared for",
+  "Transportation Safety",
+  "Government Transparency", 
+  "Environmental Policy",
+  "Housing & Development",
+  "Parks & Recreation",
+  "Climate & Sustainability",
+  "Financial Management",
+  "Technology & Innovation",
+  "Arts & Culture",
+  "Food Security",
+  "Public Transit",
+  "Public Health",
+  "Water Management",
+  "Waste Management",
+  "Civic Engagement",
+  "Labor & Employment",
+  "Public Safety",
+  "Urban Forestry",
+  "Heritage Conservation"
 ];
 
 // Feature flag for Level A decisions
@@ -54,35 +72,52 @@ export default function ProposalNew() {
       <div className="card">
         <div className="card-content space-y-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold">Start a Proposal</h1>
-            <p className="text-muted mt-2">
+            <h1 className="text-2xl md:text-3xl font-semibold text-gov-primary">Start a Proposal</h1>
+            <p className="text-gov-text-muted mt-2 text-base">
               Choose what type of decision this is, then describe it clearly.
             </p>
           </div>
 
           {error && (
-            <div className="border border-red-500/40 bg-red-500/10 text-red-300 rounded-lg p-3">
+            <div className="border border-gov-danger bg-red-50 text-gov-danger rounded-lg p-3">
               {error}
             </div>
           )}
 
           {/* Decision Type Selector */}
-          <div className="space-y-2">
-            <label className="block text-sm text-muted">What type of decision is this?</label>
-            <div className={`grid gap-3 ${LEVEL_A_ENABLED ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gov-primary mb-2">What type of decision are you making?</h3>
+              <p className="text-sm text-gov-text-muted">
+                This helps the community understand the scope and impact of your proposal.
+              </p>
+            </div>
+            
+            <div className={`grid gap-4 ${LEVEL_A_ENABLED ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
               {LEVEL_A_ENABLED && (
                 <button
                   type="button"
                   onClick={() => setDecisionType("level_a")}
-                  className={`rounded-xl border p-4 text-left transition-colors ${
+                  className={`rounded-xl border p-6 text-left transition-all duration-200 ${
                     decisionType === "level_a"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/40"
+                      ? "border-gov-primary bg-blue-50 shadow-gov-md"
+                      : "border-gov-border hover:border-gov-primary/40 hover:bg-blue-50/50"
                   }`}
                 >
-                  <div className="font-semibold">Principle (Level A)</div>
-                  <div className="text-sm text-muted">
-                    A long-term value or policy. Rarely changes.
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      decisionType === "level_a" ? "bg-gov-primary" : "bg-gov-primary/10"
+                    }`}>
+                      <Compass className={`w-4 h-4 ${decisionType === "level_a" ? "text-white" : "text-gov-primary"}`} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gov-primary">Long-Term Direction</div>
+                      <div className="text-xs text-gov-text-muted font-medium">Level A Principle</div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gov-text leading-relaxed">
+                    A foundational value or principle that will guide many future decisions. 
+                    Sets the compass for the community.
                   </div>
                 </button>
               )}
@@ -90,15 +125,26 @@ export default function ProposalNew() {
               <button
                 type="button"
                 onClick={() => setDecisionType("level_b")}
-                className={`rounded-xl border p-4 text-left transition-colors ${
+                className={`rounded-xl border p-6 text-left transition-all duration-200 ${
                   decisionType === "level_b"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/40"
+                    ? "border-gov-secondary bg-yellow-50 shadow-gov-md"
+                    : "border-gov-border hover:border-gov-secondary/40 hover:bg-yellow-50/50"
                 }`}
               >
-                <div className="font-semibold">Action (Level B)</div>
-                <div className="text-sm text-muted">
-                  A concrete decision for now. Yes / No / Abstain.
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    decisionType === "level_b" ? "bg-gov-secondary" : "bg-gov-secondary/10"
+                  }`}>
+                    <Target className={`w-4 h-4 ${decisionType === "level_b" ? "text-gov-primary" : "text-gov-secondary"}`} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gov-primary">Immediate Action</div>
+                    <div className="text-xs text-gov-text-muted">Level B Decision</div>
+                  </div>
+                </div>
+                <div className="text-sm text-gov-text leading-relaxed">
+                  A specific decision about what to do right now. 
+                  Can be adjusted as circumstances change.
                 </div>
               </button>
             </div>
@@ -106,22 +152,26 @@ export default function ProposalNew() {
 
           {/* Level A choices */}
           {decisionType === "level_a" && (
-            <div className="space-y-3">
-              <div className="text-sm text-muted">
-                Choose the direction that best represents your community's values.
+            <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Compass className="w-4 h-4 text-gov-primary" />
+                <span className="text-gov-primary font-medium">Choose Your Community's Direction</span>
               </div>
-              <div className="space-y-2">
+              <p className="text-sm text-gov-text-muted mb-4">
+                Select the value that will guide future decisions in this area.
+              </p>
+              <div className="space-y-3">
                 {LEVEL_A_CHOICES.map((c) => (
-                  <label key={c} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/40 cursor-pointer">
+                  <label key={c} className="flex items-center gap-3 p-4 rounded-lg border border-blue-200 hover:border-blue-300 cursor-pointer bg-white hover:bg-blue-50 transition-colors">
                     <input
                       type="radio"
                       name="direction_choice"
-                      className="accent-primary"
+                      className="accent-gov-primary"
                       value={c}
                       checked={directionChoice === c}
                       onChange={() => setDirectionChoice(c)}
                     />
-                    <span className="text-white">{c}</span>
+                    <span className="text-gov-text">{c}</span>
                   </label>
                 ))}
               </div>
@@ -131,18 +181,18 @@ export default function ProposalNew() {
           {/* Title/Description */}
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-muted mb-1">Title</label>
+              <label className="block text-sm text-gov-text mb-1 font-medium">Title</label>
               <input
-                className="w-full rounded-lg bg-surface border border-border p-3 text-white outline-none focus:border-primary"
+                className="w-full rounded-lg bg-white border border-gov-border p-3 text-gov-text outline-none focus:border-gov-primary focus:ring-2 focus:ring-gov-primary/20"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Give it a clear, short name"
               />
             </div>
             <div>
-              <label className="block text-sm text-muted mb-1">Description</label>
+              <label className="block text-sm text-gov-text mb-1 font-medium">Description</label>
               <textarea
-                className="w-full rounded-lg bg-surface border border-border p-3 text-white outline-none focus:border-primary min-h-[120px]"
+                className="w-full rounded-lg bg-white border border-gov-border p-3 text-gov-text outline-none focus:border-gov-primary focus:ring-2 focus:ring-gov-primary/20 min-h-[120px]"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Explain why it matters and what it will change"

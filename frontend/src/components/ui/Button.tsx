@@ -27,19 +27,19 @@ export default function Button({
   const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus-ring disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white shadow-soft hover:shadow-medium border border-primary-500/20',
-    secondary: 'bg-surface border border-border-600 hover:border-primary-500/50 text-muted-200 hover:text-white shadow-soft hover:shadow-medium',
-    ghost: 'bg-transparent hover:bg-surface/50 text-muted-300 hover:text-white border border-transparent hover:border-border-600',
-    success: 'bg-gradient-to-r from-success-600 to-success-500 hover:from-success-500 hover:to-success-400 text-white shadow-soft hover:shadow-medium border border-success-500/20',
-    warning: 'bg-gradient-to-r from-warning-600 to-warning-500 hover:from-warning-500 hover:to-warning-400 text-white shadow-soft hover:shadow-medium border border-warning-500/20',
-    danger: 'bg-gradient-to-r from-danger-600 to-danger-500 hover:from-danger-500 hover:to-danger-400 text-white shadow-soft hover:shadow-medium border border-danger-500/20',
+    primary: 'bg-gov-secondary hover:bg-yellow-500 text-gov-primary border border-gov-secondary hover:border-yellow-500 shadow-gov hover:shadow-gov-md',
+    secondary: 'bg-transparent border border-gov-primary hover:bg-gov-primary hover:text-white text-gov-primary shadow-gov hover:shadow-gov-md',
+    ghost: 'bg-transparent hover:bg-gov-background text-gov-text hover:text-gov-primary border border-transparent hover:border-gov-border',
+    success: 'bg-gov-success hover:bg-green-600 text-white border border-gov-success hover:border-green-600 shadow-gov hover:shadow-gov-md',
+    warning: 'bg-gov-warning hover:bg-yellow-600 text-gov-text border border-gov-warning hover:border-yellow-600 shadow-gov hover:shadow-gov-md',
+    danger: 'bg-gov-danger hover:bg-red-600 text-white border border-gov-danger hover:border-red-600 shadow-gov hover:shadow-gov-md',
   };
   
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm rounded-lg',
-    md: 'px-4 py-2 text-sm rounded-xl',
-    lg: 'px-6 py-3 text-base rounded-xl',
-    xl: 'px-8 py-4 text-lg rounded-2xl',
+    sm: 'px-3 py-1.5 text-sm rounded-md min-h-[36px]',
+    md: 'px-4 py-2 text-sm rounded-md min-h-[44px]',
+    lg: 'px-6 py-3 text-base rounded-md min-h-[48px]',
+    xl: 'px-8 py-4 text-lg rounded-md min-h-[52px]',
   };
   
   const hoverEffect = 'hover:transform hover:translate-y-[-1px] active:translate-y-0';

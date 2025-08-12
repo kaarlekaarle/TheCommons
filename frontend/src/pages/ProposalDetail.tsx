@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, BarChart3, MessageCircle, CheckCircle, XCircle, Minus } from 'lucide-react';
-import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults } from '../lib/api';
+import { ArrowLeft, FileText, BarChart3, MessageCircle, CheckCircle, XCircle, Minus, Compass, Target, Users } from 'lucide-react';
+import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults, getMyDelegation } from '../lib/api';
 import type { Poll, PollOption, Vote, PollResults } from '../types';
+import type { DelegationInfo } from '../types/delegation';
 import Button from '../components/ui/Button';
 import ProposalComments from '../components/ProposalComments';
 import { useToast } from '../components/ui/useToast';
+import DelegationStatus from '../components/delegation/DelegationStatus';
+import ManageDelegationModal from '../components/delegation/ManageDelegationModal';
+import { delegationCopy } from '../i18n/en/delegation';
+import { canUseDelegation } from '../lib/featureAccess';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 
 export default function ProposalDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +22,10 @@ export default function ProposalDetail() {
   const [results, setResults] = useState<PollResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
+  const [delegationInfo, setDelegationInfo] = useState<DelegationInfo | null>(null);
+  const [delegationModalOpen, setDelegationModalOpen] = useState(false);
   const { success, error: showError } = useToast();
+  const { user } = useCurrentUser();
 
   useEffect(() => {
     if (id) {
@@ -38,7 +47,7 @@ export default function ProposalDetail() {
       setPoll(pollData);
       setOptions(optionsData);
       
-      // Fetch optional data (vote and results) - these can fail without breaking the page
+      // Fetch optional data (vote, results, and delegation) - these can fail without breaking the page
       try {
         const voteData = await getMyVoteForPoll(id!);
         setMyVote(voteData);
@@ -53,6 +62,14 @@ export default function ProposalDetail() {
       } catch (resultsError) {
         console.log('[DEBUG] Could not fetch results data:', resultsError);
         setResults(null);
+      }
+
+      try {
+        const delegationData = await getMyDelegation();
+        setDelegationInfo(delegationData);
+      } catch (delegationError) {
+        console.log('[DEBUG] Could not fetch delegation data:', delegationError);
+        setDelegationInfo(null);
       }
       
       console.log('[DEBUG] Proposal data loaded successfully');
@@ -131,19 +148,65 @@ export default function ProposalDetail() {
         </Link>
         <div className="flex items-center gap-3 mb-4">
           <h1 className="text-3xl font-bold text-white">{poll.title}</h1>
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+          <span className={`px-3 py-1.5 text-xs font-medium rounded-full flex items-center gap-1 ${
             poll.decision_type === 'level_a' 
-              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
-              : 'bg-green-500/20 text-green-300 border border-green-500/30'
+              ? 'badge-level-a' 
+              : 'badge-level-b'
           }`}>
-            {poll.decision_type === 'level_a' ? 'Level A' : 'Level B'}
+            {poll.decision_type === 'level_a' ? (
+              <>
+                <Compass className="w-3 h-3" />
+                Principle (Level A)
+              </>
+            ) : (
+              <>
+                <Target className="w-3 h-3" />
+                Action (Level B)
+              </>
+            )}
           </span>
         </div>
+        
+        {/* Level Context Banner */}
+        <div className={`p-4 rounded-lg mb-6 ${
+          poll.decision_type === 'level_a' 
+            ? 'bg-blue-500/10 border border-blue-500/20' 
+            : 'bg-emerald-500/10 border border-emerald-500/20'
+        }`}>
+          <div className="flex items-start gap-3">
+            {poll.decision_type === 'level_a' ? (
+              <Compass className="w-5 h-5 text-blue-300 mt-0.5 flex-shrink-0" />
+            ) : (
+              <Target className="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" />
+            )}
+            <div>
+              <p className={`font-medium mb-1 ${
+                poll.decision_type === 'level_a' ? 'text-blue-200' : 'text-emerald-200'
+              }`}>
+                {poll.decision_type === 'level_a' ? 'Long-Term Direction' : 'Short-Term Action'}
+              </p>
+              <p className={`text-sm ${
+                poll.decision_type === 'level_a' ? 'text-blue-300/80' : 'text-emerald-300/80'
+              }`}>
+                {poll.decision_type === 'level_a' 
+                  ? 'This principle sets the compass and guides all other decisions.'
+                  : 'This action moves us forward now and can be adjusted as needed.'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+        
         <p className="text-muted leading-relaxed mb-4">{poll.description}</p>
         {poll.decision_type === 'level_a' && poll.direction_choice && (
-          <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-md">
-            <p className="text-sm text-blue-300 font-medium">Direction Choice:</p>
-            <p className="text-white">{poll.direction_choice}</p>
+          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-6">
+            <div className="flex items-start gap-3">
+              <Compass className="w-4 h-4 text-blue-300 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-blue-300 font-medium text-sm mb-1">Direction Choice:</p>
+                <p className="text-white">{poll.direction_choice}</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -240,6 +303,41 @@ export default function ProposalDetail() {
           <div className="sticky top-8">
             <div className="p-6 bg-surface border border-border rounded-lg space-y-4">
               <h3 className="font-semibold text-white">Vote</h3>
+              
+                      {/* Delegation Banner */}
+                      {(() => {
+                        const allowed = canUseDelegation(user?.email);
+                        return allowed && delegationInfo?.poll?.active ? (
+                          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                            <div className="flex items-start gap-2">
+                              <Users className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-sm text-blue-300 font-medium">
+                                  {delegationCopy.poll_banner_title.replace(
+                                    '{name}', 
+                                    delegationInfo.poll.to_user_name || delegationInfo.poll.to_user_id.slice(0, 8)
+                                  )}
+                                </p>
+                                <p className="text-xs text-blue-300/80 mt-1">
+                                  {delegationCopy.poll_banner_subtitle}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+              
+              {(() => {
+                const allowed = canUseDelegation(user?.email);
+                return allowed ? (
+                  <div className="mb-4 p-3 bg-surface/50 border border-border rounded-lg">
+                    <DelegationStatus 
+                      pollId={poll.id} 
+                      onOpenModal={() => setDelegationModalOpen(true)}
+                    />
+                  </div>
+                ) : null;
+              })()}
               {isVoted ? (
                 <div className="text-center py-4">
                   <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
@@ -309,6 +407,19 @@ export default function ProposalDetail() {
           </div>
         </div>
       )}
+
+      {/* Delegation Modal */}
+      {(() => {
+        const allowed = canUseDelegation(user?.email);
+        return allowed ? (
+          <ManageDelegationModal
+            open={delegationModalOpen}
+            onClose={() => setDelegationModalOpen(false)}
+            pollId={poll?.id}
+            onDelegationChange={setDelegationInfo}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }

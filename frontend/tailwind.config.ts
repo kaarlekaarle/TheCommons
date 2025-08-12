@@ -8,144 +8,167 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Warm, inclusive primary palette
+        // Official Government Color Palette
+        gov: {
+          primary: '#002f6c', // Navy blue
+          secondary: '#f1c40f', // Muted gold
+          background: '#f8f9fa', // Light neutral
+          text: '#212529', // Dark gray
+          'text-muted': '#6c757d', // Medium gray
+          'surface': '#ffffff', // White
+          'border': '#dee2e6', // Light gray border
+          'border-dark': '#adb5bd', // Darker border
+          'success': '#28a745', // Government green
+          'warning': '#ffc107', // Government yellow
+          'danger': '#dc3545', // Government red
+          'info': '#17a2b8', // Government blue
+        },
+        
+        // Legacy color support (keeping for compatibility)
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9', // Main primary - warm blue
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#e6f3ff',
+          100: '#cce7ff',
+          200: '#99cfff',
+          300: '#66b7ff',
+          400: '#339fff',
+          500: '#002f6c', // gov-primary
+          600: '#002855',
+          700: '#001c3d',
+          800: '#001025',
+          900: '#00040c',
         },
         'primary-foreground': '#ffffff',
         
-        // Warm, soft background palette
+        // Background colors
         bg: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a', // Main background - warm dark
+          50: '#f8f9fa', // gov-background
+          100: '#e9ecef',
+          200: '#dee2e6',
+          300: '#ced4da',
+          400: '#adb5bd',
+          500: '#6c757d',
+          600: '#495057',
+          700: '#343a40',
+          800: '#212529', // gov-text
+          900: '#1a1d20',
         },
         
-        // Soft, welcoming surface colors
+        // Surface colors
         surface: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          DEFAULT: '#1e293b', // Main surface - warm medium dark
+          50: '#ffffff', // gov-surface
+          100: '#f8f9fa',
+          200: '#e9ecef',
+          300: '#dee2e6',
+          400: '#ced4da',
+          500: '#adb5bd',
+          600: '#6c757d',
+          700: '#495057',
+          800: '#343a40',
+          900: '#212529',
+          DEFAULT: '#ffffff',
         },
         
-        // Gentle border colors
+        // Border colors
         border: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          DEFAULT: '#334155', // Main border - soft gray
+          50: '#f8f9fa',
+          100: '#e9ecef',
+          200: '#dee2e6', // gov-border
+          300: '#ced4da',
+          400: '#adb5bd', // gov-border-dark
+          500: '#6c757d',
+          600: '#495057',
+          700: '#343a40',
+          800: '#212529',
+          900: '#1a1d20',
+          DEFAULT: '#dee2e6',
         },
         
-        // Warm muted colors
+        // Muted colors
         muted: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          DEFAULT: '#64748b', // Main muted - warm gray
+          50: '#f8f9fa',
+          100: '#e9ecef',
+          200: '#dee2e6',
+          300: '#ced4da',
+          400: '#adb5bd',
+          500: '#6c757d', // gov-text-muted
+          600: '#495057',
+          700: '#343a40',
+          800: '#212529',
+          900: '#1a1d20',
+          DEFAULT: '#6c757d',
         },
         
-        // Success - warm green
+        // Success - Government green
         success: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          DEFAULT: '#22c55e',
+          50: '#d4edda',
+          100: '#c3e6cb',
+          200: '#a7d8b8',
+          300: '#8bcaa5',
+          400: '#6fbc92',
+          500: '#28a745', // gov-success
+          600: '#1e7e34',
+          700: '#155724',
+          800: '#0c3014',
+          900: '#030a04',
+          DEFAULT: '#28a745',
         },
         
-        // Warning - warm amber
+        // Warning - Government yellow
         warning: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-          DEFAULT: '#f59e0b',
+          50: '#fff8e1',
+          100: '#ffecb3',
+          200: '#ffe082',
+          300: '#ffd54f',
+          400: '#ffca28',
+          500: '#ffc107', // gov-warning
+          600: '#ffb300',
+          700: '#ffa000',
+          800: '#ff8f00',
+          900: '#ff6f00',
+          DEFAULT: '#ffc107',
         },
         
-        // Danger - warm red
+        // Danger - Government red
         danger: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
-          DEFAULT: '#ef4444',
+          50: '#f8d7da',
+          100: '#f5c6cb',
+          200: '#f1b0b7',
+          300: '#ec9aa3',
+          400: '#e7848f',
+          500: '#dc3545', // gov-danger
+          600: '#c82333',
+          700: '#a71e2a',
+          800: '#861921',
+          900: '#651418',
+          DEFAULT: '#dc3545',
         },
         
-        // Additional warm accent colors
-        accent: {
-          teal: '#14b8a6', // Warm teal for variety
-          purple: '#a855f7', // Soft purple for creativity
-          orange: '#f97316', // Warm orange for energy
-          yellow: '#eab308', // Gentle yellow for optimism
+        // Info - Government blue
+        info: {
+          50: '#d1ecf1',
+          100: '#bee5eb',
+          200: '#abdde4',
+          300: '#98d5dd',
+          400: '#85cdd6',
+          500: '#17a2b8', // gov-info
+          600: '#138496',
+          700: '#0f6674',
+          800: '#0b4852',
+          900: '#072a30',
+          DEFAULT: '#17a2b8',
         },
       },
       borderRadius: {
-        'xs': '4px',
-        'sm': '8px',
-        'md': '12px',
-        'lg': '16px',
-        'xl': '20px',
-        '2xl': '24px',
-        '3xl': '32px',
+        'xs': '2px',
+        'sm': '4px',
+        'md': '6px',
+        'lg': '8px',
+        'xl': '12px',
+        '2xl': '16px',
+        '3xl': '20px',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        sans: ['system-ui', 'ui-sans-serif', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem' }],
@@ -153,7 +176,7 @@ export default {
         'base': ['1rem', { lineHeight: '1.5rem' }],
         'lg': ['1.125rem', { lineHeight: '1.75rem' }],
         'xl': ['1.25rem', { lineHeight: '1.75rem' }],
-        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem' }], // H1 equivalent
         '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
         '5xl': ['3rem', { lineHeight: '1' }],
@@ -174,16 +197,15 @@ export default {
         },
       },
       boxShadow: {
-        'soft': '0 2px 8px rgba(0, 0, 0, 0.08)',
-        'medium': '0 4px 16px rgba(0, 0, 0, 0.12)',
-        'large': '0 8px 32px rgba(0, 0, 0, 0.16)',
-        'glow': '0 0 20px rgba(14, 165, 233, 0.15)',
+        'gov': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        'gov-md': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+        'gov-lg': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+        'gov-xl': '0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'fade-in': 'fadeIn 0.3s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
-        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -197,10 +219,6 @@ export default {
         scaleIn: {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
-        },
-        pulseSoft: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.8' },
         },
       },
     },

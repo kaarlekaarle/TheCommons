@@ -20,18 +20,18 @@ export default function LandingPage() {
   const communityStories = [
     {
       icon: <Heart className="w-6 h-6" />,
-      title: "Park Project",
-      description: "From an empty lot to a meeting place — decided together."
+      title: "Vision Zero Implementation",
+      description: "Reduced traffic fatalities by 40% through street redesign and safety improvements."
     },
     {
       icon: <Handshake className="w-6 h-6" />,
-      title: "Business Alliance",
-      description: "Shops agreed on a shared plan that boosted the street."
+      title: "Open Government Initiative",
+      description: "Published 200+ datasets, leading to better-informed community decisions."
     },
     {
       icon: <Lightbulb className="w-6 h-6" />,
-      title: "Community Garden",
-      description: "Families worked together to grow food for the neighbourhood."
+      title: "Green Building Program",
+      description: "Retrofitted 15 public buildings, cutting energy costs by 30%."
     }
   ];
 
@@ -66,20 +66,20 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">C</span>
+    <div className="min-h-screen bg-gov-background">
+      {/* Government Header */}
+      <header className="gov-header">
+        <div className="gov-container">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gov-secondary rounded-md flex items-center justify-center">
+                <span className="text-gov-primary font-bold text-sm">C</span>
               </div>
               <span className="text-xl font-bold text-white">The Commons</span>
             </div>
             <div className="flex items-center space-x-3">
               <Link to="/auth">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-white hover:text-gov-secondary">
                   Log In
                 </Button>
               </Link>
@@ -93,18 +93,18 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section - Warm and Aspirational */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center max-w-4xl">
+      {/* Hero Section - Government Style */}
+      <section className="gov-section">
+        <div className="gov-container text-center max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-gov-primary mb-6 leading-tight">
               Decisions We Make Together
             </h1>
-            <p className="text-xl md:text-2xl text-muted mb-8 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-gov-text-muted mb-8 leading-relaxed max-w-3xl mx-auto">
               The Commons is where communities decide their future — openly, fairly, and together. 
               It's built on the idea that everyone should have a voice and every decision should be clear and accountable.
             </p>
@@ -116,7 +116,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button size="lg" variant="ghost" className="text-lg px-8 py-3">
+                <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
                   Sign In
                 </Button>
               </Link>
@@ -125,14 +125,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Community Stories Section */}
-      <section className="py-16 px-4 bg-surface/50">
-        <div className="container mx-auto max-w-6xl">
+      {/* Community Stories Section - Government Style */}
+      <section className="gov-section bg-white">
+        <div className="gov-container max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
               From Ideas to Action
             </h2>
-            <p className="text-lg text-muted max-w-2xl mx-auto">
+            <p className="text-lg text-gov-text-muted max-w-2xl mx-auto">
               How communities have turned discussion into real change
             </p>
           </div>
@@ -143,27 +143,27 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.2 }}
-                className="p-6 bg-surface border border-border rounded-lg text-center"
+                className="gov-card gov-card-hover text-center"
               >
-                <div className="text-primary mb-4 flex justify-center">
+                <div className="text-gov-secondary mb-4 flex justify-center">
                   {story.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{story.title}</h3>
-                <p className="text-muted">{story.description}</p>
+                <h3 className="text-xl font-semibold text-gov-text mb-3">{story.title}</h3>
+                <p className="text-gov-text-muted">{story.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section - Human-Centered */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-6xl">
+      {/* Features Section - Government Style */}
+      <section className="gov-section">
+        <div className="gov-container max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
               How It Works
             </h2>
-            <p className="text-lg text-muted max-w-2xl mx-auto">
+            <p className="text-lg text-gov-text-muted max-w-2xl mx-auto">
               Simple tools that make community decision-making accessible to everyone
             </p>
           </div>
@@ -174,27 +174,27 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="p-6 bg-surface border border-border rounded-lg text-center"
+                className="gov-card gov-card-hover text-center"
               >
-                <div className="text-primary mb-4 flex justify-center">
+                <div className="text-gov-secondary mb-4 flex justify-center">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-gov-text mb-2">{feature.title}</h3>
+                <p className="text-sm text-gov-text-muted">{feature.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-16 px-4 bg-surface/50">
-        <div className="container mx-auto max-w-4xl">
+      {/* Benefits Section - Government Style */}
+      <section className="gov-section bg-white">
+        <div className="gov-container max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
               Why Two Levels?
             </h2>
-            <p className="text-lg text-muted">
+            <p className="text-lg text-gov-text-muted">
               Build stronger, more connected communities through democratic participation
             </p>
           </div>
@@ -207,26 +207,26 @@ export default function LandingPage() {
                 transition={{ delay: index * 0.1 }}
                 className="flex items-start gap-3"
               >
-                <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-                <span className="text-muted">{benefit}</span>
+                <CheckCircle className="w-5 h-5 text-gov-secondary flex-shrink-0 mt-1" />
+                <span className="text-gov-text-muted">{benefit}</span>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto text-center max-w-3xl">
+      {/* CTA Section - Government Style */}
+      <section className="gov-section">
+        <div className="gov-container text-center max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
               Your Voice Belongs Here
             </h2>
-            <p className="text-lg text-muted mb-8">
+            <p className="text-lg text-gov-text-muted mb-8">
               Start shaping your community's decisions today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -237,7 +237,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link to="/why">
-                <Button size="lg" variant="ghost" className="text-lg px-8 py-3">
+                <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
                   Learn More
                 </Button>
               </Link>
@@ -246,26 +246,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 px-4">
-        <div className="container mx-auto text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">C</span>
+      {/* Government Footer */}
+      <footer className="gov-footer">
+        <div className="gov-container text-center">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="w-6 h-6 bg-gov-secondary rounded flex items-center justify-center">
+              <span className="text-gov-primary font-bold text-xs">C</span>
             </div>
             <span className="text-lg font-bold text-white">The Commons</span>
           </div>
-          <p className="text-muted mb-4">
+          <p className="text-gray-300 mb-4">
             Deciding together, openly.
           </p>
           <div className="flex justify-center space-x-6 text-sm">
-            <Link to="/why" className="text-muted hover:text-white transition-colors">
+            <Link to="/why" className="text-gray-300 hover:text-white transition-colors">
               Why Two Levels?
             </Link>
-            <Link to="/auth" className="text-muted hover:text-white transition-colors">
+            <Link to="/auth" className="text-gray-300 hover:text-white transition-colors">
               Sign In
             </Link>
-            <Link to="/auth?mode=register" className="text-muted hover:text-white transition-colors">
+            <Link to="/auth?mode=register" className="text-gray-300 hover:text-white transition-colors">
               Get Started
             </Link>
           </div>
