@@ -268,6 +268,27 @@ class DelegationLimitExceededError(DelegationValidationError):
 
 
 
+class DelegationDepthExceededError(DelegationValidationError):
+    """Raised when a delegation chain exceeds the maximum allowed depth."""
+
+    def __init__(
+        self,
+        user_id: UUID,
+        max_depth: int,
+        details: Optional[Dict[str, Any]] = None,
+        status_code: int = 400,
+    ):
+        message = "Delegation chain depth limit exceeded"
+        super().__init__(
+            message=message,
+            delegator_id=user_id,
+            status_code=status_code,
+            details=details or {"user_id": str(user_id), "max_depth": max_depth},
+        )
+
+
+
+
 class DelegationStatsError(DelegationError):
     """Raised when there's an error calculating delegation statistics."""
 

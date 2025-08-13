@@ -10,11 +10,11 @@ from backend.core.exceptions.delegation import (
     CircularDelegationError,
     DelegationAlreadyExistsError,
     DelegationChainError,
-    DelegationLimitExceededError,
+    DelegationDepthExceededError,
+    DelegationError,
     DelegationNotFoundError,
     DelegationStatsError,
     InvalidDelegationPeriodError,
-    PostVoteDelegationError,
     SelfDelegationError,
 )
 from backend.models.delegation import Delegation
@@ -76,9 +76,19 @@ class DelegationService:
         if delegator_id == delegatee_id:
             raise SelfDelegationError(str(delegator_id))
 
-        # Check for circular delegation
-        if await self._would_create_circular_delegation(delegator_id, delegatee_id, poll_id):
-            raise CircularDelegationError(str(delegator_id), str(delegatee_id))
+        # Check for circular delegation and depth limits
+        try:
+            if await self._would_create_circular_delegation(delegator_id, delegatee_id, poll_id):
+                raise CircularDelegationError(str(delegator_id), str(delegatee_id))
+        except DelegationDepthExceededError as e:
+            # Re-raise as DelegationError to match test expectation
+            raise DelegationError(
+                message=e.message,
+                delegator_id=delegator_id,
+                delegatee_id=delegatee_id,
+                poll_id=poll_id,
+                details=e.details,
+            )
 
         # Check for overlapping delegations
         now = func.now()
@@ -251,7 +261,8 @@ class DelegationService:
             List[str]: Ordered list of user IDs visited, including start user and final resolved voter
 
         Raises:
-            DelegationChainError: If circular delegation detected or max depth exceeded
+            DelegationChainError: If circular delegation detected
+            DelegationDepthExceededError: If max depth exceeded
         """
         current_id = user_id
         path = [str(current_id)]
@@ -260,15 +271,14 @@ class DelegationService:
 
         while True:
             # Check depth limit before trying to follow delegation
-
-            delegation = await self.get_active_delegation(current_id, poll_id)
-            # Check for max_depth=0 after getting delegation
-            if delegation and max_depth == 0:
-                raise DelegationChainError(
-                    message="Delegation chain depth limit exceeded",
+            if depth >= max_depth:
+                raise DelegationDepthExceededError(
                     user_id=user_id,
-                    details={"max_depth": max_depth, "path": path},
+                    max_depth=max_depth,
+                    details={"path": path},
                 )
+            
+            delegation = await self.get_active_delegation(current_id, poll_id)
             if not delegation:
                 break
             current_id = delegation.delegatee_id
@@ -284,10 +294,6 @@ class DelegationService:
             visited.add(current_id)
             path.append(str(current_id))
             depth += 1
-            
-            # If we've reached the max depth, we should stop here
-            if depth >= max_depth:
-                break
 
         return path
 
@@ -303,12 +309,18 @@ class DelegationService:
 
         Returns:
             bool: True if circular delegation would be created
+
+        Raises:
+            DelegationDepthExceededError: If delegation chain depth limit exceeded
         """
         try:
             chain = await self.resolve_delegation_chain(delegatee_id, poll_id)
             return str(delegator_id) in chain
+        except DelegationDepthExceededError:
+            # Re-raise depth exceeded errors
+            raise
         except DelegationChainError:
-            # If we hit a circular delegation or depth limit, it means we would create a cycle
+            # If we hit a circular delegation, it means we would create a cycle
             return True
 
     async def get_active_delegations(self, user_id: UUID) -> List[Delegation]:
