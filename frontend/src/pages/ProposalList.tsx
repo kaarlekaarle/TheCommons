@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FileText, Plus } from 'lucide-react';
+import { FileText, Plus, Compass, Target } from 'lucide-react';
 import { listPolls } from '../lib/api';
-import type { Poll, DecisionType } from '../types';
+import type { Poll } from '../types';
 import Button from '../components/ui/Button';
 import Empty from '../components/ui/Empty';
 import { useToast } from '../components/ui/useToast';
@@ -245,7 +244,10 @@ export default function ProposalList() {
           <div className="w-8 h-8 bg-gov-secondary rounded-md flex items-center justify-center">
             <FileText className="w-5 h-5 text-gov-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-gov-primary">Community Ideas</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gov-primary">All Community Ideas</h1>
+            <p className="text-gov-text-muted mt-1">Browse all principles and actions together</p>
+          </div>
         </div>
         <Link to="/proposals/new">
           <Button variant="primary">
@@ -285,8 +287,16 @@ export default function ProposalList() {
             <LevelSection level="a" title="Long-Term Direction">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {levelAPolls.map((poll, index) => (
-                  <ProposalCard key={poll.id} poll={poll} index={index} />
+                  <ProposalCard key={`level-a-${poll.id}`} poll={poll} index={index} />
                 ))}
+              </div>
+              <div className="mt-6 text-center">
+                <Link to="/principles">
+                  <Button variant="ghost" className="text-sky-600 hover:text-sky-700">
+                    <Compass className="w-4 h-4 mr-2" />
+                    See All Principles
+                  </Button>
+                </Link>
               </div>
             </LevelSection>
           )}
@@ -296,8 +306,16 @@ export default function ProposalList() {
             <LevelSection level="b" title="Short-Term Decisions">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {levelBPolls.map((poll, index) => (
-                  <ProposalCard key={poll.id} poll={poll} index={index} />
+                  <ProposalCard key={`level-b-${poll.id}`} poll={poll} index={index} />
                 ))}
+              </div>
+              <div className="mt-6 text-center">
+                <Link to="/actions">
+                  <Button variant="ghost" className="text-green-600 hover:text-green-700">
+                    <Target className="w-4 h-4 mr-2" />
+                    See All Actions
+                  </Button>
+                </Link>
               </div>
             </LevelSection>
           )}

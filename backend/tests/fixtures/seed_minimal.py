@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.user import User
 from backend.models.poll import Poll, DecisionType, PollStatus, PollVisibility
 from backend.models.activity_log import ActivityLog, ActionType
+from backend.models.label import Label
 from backend.core.security import get_password_hash
 
 
@@ -13,11 +14,11 @@ async def seed_minimal_user(db: AsyncSession, email="u@example.com", username="u
     return u
 
 
-async def seed_minimal_poll(db: AsyncSession, owner_id: str) -> Poll:
+async def seed_minimal_poll(db: AsyncSession, owner_id: str, decision_type: str = "level_b") -> Poll:
     p = Poll(
         title="Test Poll",
         description="seeded",
-        decision_type=DecisionType.LEVEL_B,
+        decision_type=DecisionType(decision_type),
         status=PollStatus.ACTIVE,
         visibility=PollVisibility.PUBLIC,
         created_by=owner_id,
@@ -31,6 +32,17 @@ async def seed_minimal_poll(db: AsyncSession, owner_id: str) -> Poll:
     db.add(p)
     await db.flush()
     return p
+
+
+async def seed_minimal_label(db: AsyncSession, name: str = "Test Label", slug: str = "test-label") -> Label:
+    l = Label(
+        name=name,
+        slug=slug,
+        is_active=True
+    )
+    db.add(l)
+    await db.flush()
+    return l
 
 
 async def seed_minimal_activity(db: AsyncSession, user_id: str, poll_id: str) -> ActivityLog:

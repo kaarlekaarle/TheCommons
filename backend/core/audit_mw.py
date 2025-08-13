@@ -88,8 +88,24 @@ class AuditMiddleware(BaseHTTPMiddleware):
 async def get_current_active_user_optional(request: Request):
     """Get current user without raising exceptions if not authenticated."""
     try:
-        from backend.core.auth import get_current_active_user
-        return await get_current_active_user(request)
+        from backend.core.auth import get_current_user_optional
+        from backend.database import get_db
+        from fastapi import Depends
+        
+        # Extract token from request headers
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return None
+        
+        token = auth_header.split(" ")[1]
+        if not token:
+            return None
+        
+        # Get database session
+        db = await anext(get_db())
+        
+        # Get user from token
+        return await get_current_user_optional(token, db)
     except Exception:
         return None
 

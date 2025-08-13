@@ -13,6 +13,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 import backend.models.option
 import backend.models.poll
+import backend.models.label
+import backend.models.poll_label
 
 # Import models after Base to avoid circular imports
 import backend.models.user

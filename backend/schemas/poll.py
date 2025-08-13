@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import List, Optional, Literal, Annotated
+from typing import List, Optional, Literal, Annotated, Union
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator, PlainSerializer
+from pydantic import BaseModel, ConfigDict, Field, model_validator, PlainSerializer, field_validator
 from backend.models.option import Option
 from backend.models.poll import DecisionType
+from backend.schemas.label import Label
 
 # Custom UUID field that serializes to string
 UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
@@ -13,6 +14,15 @@ UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
 DecisionTypeString = Annotated[DecisionType, PlainSerializer(lambda x: x.value, return_type=str)]
 
 
+class PollSummary(BaseModel):
+    """Schema for poll summary data used in label overview."""
+    id: str = Field(..., description="Poll ID")
+    title: str = Field(..., description="Poll title")
+    decision_type: str = Field(..., description="Decision type (level_a or level_b)")
+    created_at: str = Field(..., description="ISO datetime when poll was created")
+    labels: List[dict] = Field(..., description="List of labels with name and slug")
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PollBase(BaseModel):
@@ -34,6 +44,19 @@ class PollBase(BaseModel):
         max_length=200, 
         description="Required for Level A decisions. Specifies the baseline direction (e.g., 'Environmental Policy', 'Transportation Safety')"
     )
+    labels: List[Union[str, UUIDString]] = Field(
+        default_factory=list,
+        max_length=5,
+        description="List of label slugs or IDs (max 5 labels per poll)"
+    )
+
+    @field_validator('labels')
+    @classmethod
+    def validate_labels(cls, v: List[Union[str, UUIDString]]) -> List[Union[str, UUIDString]]:
+        """Validate labels list."""
+        if len(v) > 5:
+            raise ValueError('Maximum 5 labels allowed per poll')
+        return v
 
     @model_validator(mode='after')
     def validate_direction_choice(self):
@@ -100,6 +123,10 @@ class Poll(PollBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     decision_type: DecisionTypeString
+    labels: List[Label] = Field(
+        default_factory=list,
+        description="List of labels associated with this poll"
+    )
     your_vote_status: Optional[VoteStatus] = Field(
         None, description="Vote status for the current user"
     )

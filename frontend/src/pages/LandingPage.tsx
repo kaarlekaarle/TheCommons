@@ -6,12 +6,9 @@ import {
   MessageCircle, 
   Users, 
   TrendingUp, 
-  Shield, 
-  Globe,
   ArrowRight,
   CheckCircle,
   Heart,
-  Sparkles,
   Handshake,
   Lightbulb
 } from 'lucide-react';

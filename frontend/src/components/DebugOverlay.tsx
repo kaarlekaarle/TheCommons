@@ -84,6 +84,11 @@ export default function DebugOverlay({ isVisible }: DebugOverlayProps) {
     return 'text-gray-500';
   };
 
+  const clearLocalStorage = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
   return (
     <div className="fixed top-4 right-4 z-50">
       {/* Toggle Button */}
@@ -148,6 +153,18 @@ export default function DebugOverlay({ isVisible }: DebugOverlayProps) {
                   ))
                 )}
               </div>
+            </div>
+
+            {/* Cache Management */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Cache</h4>
+              <button
+                onClick={clearLocalStorage}
+                className="w-full text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
+                title="Clear localStorage and reload"
+              >
+                Clear Local Storage
+              </button>
             </div>
           </div>
         </div>

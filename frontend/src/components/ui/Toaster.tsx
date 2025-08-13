@@ -1,60 +1,24 @@
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createContext, useContext, useState, useCallback } from 'react';
+import { ToasterProvider as BaseToasterProvider } from './toast-context';
+import { useToaster } from './use-toaster';
 
-interface Toast {
-  id: string;
-  type: 'success' | 'error' | 'info';
-  message: string;
-  duration?: number;
-}
-
-interface ToastContextType {
-  toasts: Toast[];
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
-
-export const useToaster = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToaster must be used within a ToasterProvider');
-  }
-  return context;
-};
+export { ToasterProvider as BaseToasterProvider } from './toast-context';
+export type { Toast } from './toast-context-definition';
 
 export const ToasterProvider = ({ children }: { children: React.ReactNode }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newToast = { ...toast, id };
-    setToasts(prev => [...prev, newToast]);
-
-    // Auto-remove after duration
-    const duration = toast.duration || (toast.type === 'error' ? 6000 : toast.type === 'success' ? 3000 : 4000);
-    setTimeout(() => {
-      removeToast(id);
-    }, duration);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
-
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <BaseToasterProvider>
       {children}
       <Toaster />
-    </ToastContext.Provider>
+    </BaseToasterProvider>
   );
 };
 
 const Toaster = () => {
   const { toasts, removeToast } = useToaster();
 
-  const getToastStyles = (type: Toast['type']) => {
+  const getToastStyles = (type: 'success' | 'error' | 'info' | 'warning') => {
     switch (type) {
       case 'success':
         return 'bg-green-50 border-green-200 text-green-800';
@@ -67,7 +31,7 @@ const Toaster = () => {
     }
   };
 
-  const getIcon = (type: Toast['type']) => {
+  const getIcon = (type: 'success' | 'error' | 'info' | 'warning') => {
     switch (type) {
       case 'success':
         return '✓';
@@ -116,5 +80,3 @@ const Toaster = () => {
     </div>
   );
 };
-
-export default Toaster;

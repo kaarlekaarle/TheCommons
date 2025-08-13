@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight, Code } from 'lucide-react';
 
 interface DebugRawDataProps {
-  data: any;
+  data: unknown;
   title?: string;
 }
 

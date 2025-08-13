@@ -140,8 +140,9 @@ export default function ManageDelegationModal({
       // Refresh delegation to get full chain
       await loadCurrentDelegation();
       onClose();
-    } catch (err: any) {
-      setError(err.message || delegationCopy.error_generic);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || delegationCopy.error_generic);
       // Revert optimistic update
       if (onDelegationChange) {
         onDelegationChange(currentDelegation);
@@ -176,8 +177,9 @@ export default function ManageDelegationModal({
       // Refresh delegation
       await loadCurrentDelegation();
       onClose();
-    } catch (err: any) {
-      setError(err.message || delegationCopy.error_generic);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || delegationCopy.error_generic);
       // Revert optimistic update
       if (onDelegationChange) {
         onDelegationChange(currentDelegation);

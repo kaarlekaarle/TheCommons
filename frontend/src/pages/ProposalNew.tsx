@@ -1,44 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../components/ui/Button";
 import { createProposal } from "../lib/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Compass, Target } from "lucide-react";
-
-const LEVEL_A_CHOICES = [
-  "Transportation Safety",
-  "Government Transparency", 
-  "Environmental Policy",
-  "Housing & Development",
-  "Parks & Recreation",
-  "Climate & Sustainability",
-  "Financial Management",
-  "Technology & Innovation",
-  "Arts & Culture",
-  "Food Security",
-  "Public Transit",
-  "Public Health",
-  "Water Management",
-  "Waste Management",
-  "Civic Engagement",
-  "Labor & Employment",
-  "Public Safety",
-  "Urban Forestry",
-  "Heritage Conservation"
-];
+import { LEVEL_A_CHOICES } from "../config/levelA";
+import type { Label } from "../types";
+import LabelSelector from "../components/ui/LabelSelector";
+import { flags } from "../config/flags";
 
 // Feature flag for Level A decisions
 const LEVEL_A_ENABLED = import.meta.env.VITE_LEVEL_A_ENABLED !== "false";
 
 export default function ProposalNew() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   const [decisionType, setDecisionType] = useState<"level_a" | "level_b">("level_b");
   const [directionChoice, setDirectionChoice] = useState<string>("");
+  const [selectedLabels, setSelectedLabels] = useState<Label[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Handle type query parameter for preselection
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam === 'level_a' || typeParam === 'level_b') {
+      setDecisionType(typeParam);
+    }
+  }, [searchParams]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,11 +49,13 @@ export default function ProposalNew() {
         description: description.trim(),
         decision_type: decisionType,
         direction_choice: decisionType === "level_a" ? directionChoice : null,
+        labels: selectedLabels.map(label => label.slug),
       };
       const created = await createProposal(payload);
       navigate(`/proposals/${created.id}`);
-    } catch (err: any) {
-      setError(err?.message || err?.response?.data?.message || "Could not create proposal.");
+    } catch (err: unknown) {
+      const error = err as { message?: string; response?: { data?: { message?: string } } };
+      setError(error?.message || error?.response?.data?.message || "Could not create proposal.");
     } finally {
       setSubmitting(false);
     }
@@ -198,6 +192,16 @@ export default function ProposalNew() {
                 placeholder="Explain why it matters and what it will change"
               />
             </div>
+
+            {/* Label selector */}
+            {flags.labelsEnabled && (
+              <LabelSelector
+                selectedLabels={selectedLabels}
+                onLabelsChange={setSelectedLabels}
+                maxLabels={5}
+                disabled={submitting}
+              />
+            )}
 
             <div className="pt-2">
               <Button type="submit" variant="primary" size="lg" disabled={submitting}>

@@ -117,6 +117,7 @@ describe('ProposalNew', () => {
         description: 'Test description',
         decision_type: 'level_a',
         direction_choice: 'Transportation Safety',
+        labels: [],
       });
     });
     
@@ -157,6 +158,7 @@ describe('ProposalNew', () => {
         description: 'Test description',
         decision_type: 'level_b',
         direction_choice: null,
+        labels: [],
       });
     });
     

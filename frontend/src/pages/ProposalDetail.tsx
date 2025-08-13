@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, BarChart3, MessageCircle, CheckCircle, XCircle, Minus, Compass, Target, Users } from 'lucide-react';
+import { ArrowLeft, FileText, BarChart3, MessageCircle, CheckCircle, XCircle, Minus, Compass, Target, Users, Link as LinkIcon } from 'lucide-react';
 import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults, getMyDelegation } from '../lib/api';
-import type { Poll, PollOption, Vote, PollResults } from '../types';
+import type { Poll, PollOption, Vote, PollResults, Label, DelegationSummary } from '../types';
 import type { DelegationInfo } from '../types/delegation';
 import Button from '../components/ui/Button';
 import ProposalComments from '../components/ProposalComments';
@@ -13,9 +13,14 @@ import ManageDelegationModal from '../components/delegation/ManageDelegationModa
 import { delegationCopy } from '../i18n/en/delegation';
 import { canUseDelegation } from '../lib/featureAccess';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import LabelChip from '../components/ui/LabelChip';
+import LinkedPrinciplesDrawer from '../components/LinkedPrinciplesDrawer';
+import DelegationPath from '../components/DelegationPath';
+import { flags } from '../config/flags';
 
 export default function ProposalDetail() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
   const [myVote, setMyVote] = useState<Vote | null>(null);
@@ -23,7 +28,10 @@ export default function ProposalDetail() {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
   const [delegationInfo, setDelegationInfo] = useState<DelegationInfo | null>(null);
+  const [delegationSummary, setDelegationSummary] = useState<DelegationSummary | null>(null);
   const [delegationModalOpen, setDelegationModalOpen] = useState(false);
+  const [linkedDrawerOpen, setLinkedDrawerOpen] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState<Label | null>(null);
   const { success, error: showError } = useToast();
   const { user } = useCurrentUser();
 
@@ -32,6 +40,30 @@ export default function ProposalDetail() {
       fetchData();
     }
   }, [id]);
+
+  // Handle deep-linking for linked principles drawer
+  useEffect(() => {
+    const linkedLabel = searchParams.get('linked');
+    if (linkedLabel && poll && poll.labels) {
+      const label = poll.labels.find(l => l.slug === linkedLabel);
+      if (label) {
+        setSelectedLabel(label);
+        setLinkedDrawerOpen(true);
+      }
+    }
+  }, [searchParams, poll]);
+
+  const handleLabelClick = (label: Label) => {
+    setSelectedLabel(label);
+    setLinkedDrawerOpen(true);
+    setSearchParams({ linked: label.slug });
+  };
+
+  const handleCloseDrawer = () => {
+    setLinkedDrawerOpen(false);
+    setSelectedLabel(null);
+    setSearchParams({});
+  };
 
   const fetchData = async () => {
     try {
@@ -70,6 +102,18 @@ export default function ProposalDetail() {
       } catch (delegationError) {
         console.log('[DEBUG] Could not fetch delegation data:', delegationError);
         setDelegationInfo(null);
+      }
+
+      // Fetch delegation summary for path preview
+      if (flags.labelsEnabled) {
+        try {
+          const { getDelegationSummary } = await import('../lib/api');
+          const summaryData = await getDelegationSummary();
+          setDelegationSummary(summaryData);
+        } catch (summaryError) {
+          console.log('[DEBUG] Could not fetch delegation summary:', summaryError);
+          setDelegationSummary(null);
+        }
       }
       
       console.log('[DEBUG] Proposal data loaded successfully');
@@ -166,6 +210,50 @@ export default function ProposalDetail() {
             )}
           </span>
         </div>
+        
+        {/* Labels */}
+        {flags.labelsEnabled && poll.labels && poll.labels.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {poll.labels.map(label => (
+              <LabelChip
+                key={`detail-label-${label.id}`}
+                label={label}
+                size="sm"
+                onClick={(slug) => {
+                  // Navigate to topic page
+                  window.location.href = `/t/${slug}`;
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Linked Principles Card - Only for Level B proposals */}
+        {flags.labelsEnabled && poll.decision_type === 'level_b' && poll.labels && poll.labels.length > 0 && (
+          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-6">
+            <div className="flex items-start gap-3">
+              <LinkIcon className="w-5 h-5 text-blue-300 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-blue-200 font-medium mb-2">Linked Principles</h3>
+                <p className="text-sm text-blue-300/80 mb-3">
+                  This action connects to these long-term principles:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {poll.labels.map(label => (
+                    <button
+                      key={`linked-principle-${label.id}`}
+                      onClick={() => handleLabelClick(label)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 transition-colors"
+                    >
+                      {label.name}
+                      <span className="text-xs opacity-75">→ see related</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Level Context Banner */}
         <div className={`p-4 rounded-lg mb-6 ${
@@ -302,6 +390,13 @@ export default function ProposalDetail() {
         <div className="lg:col-span-1">
           <div className="sticky top-8">
             <div className="p-6 bg-surface border border-border rounded-lg space-y-4">
+              {/* Delegation Path Preview */}
+              <DelegationPath
+                poll={poll}
+                delegationSummary={delegationSummary}
+                currentUserId={user?.id}
+              />
+              
               <h3 className="font-semibold text-white">Vote</h3>
               
                       {/* Delegation Banner */}
@@ -347,7 +442,7 @@ export default function ProposalDetail() {
                 <div className="space-y-3">
                   {options.map((option) => (
                     <Button
-                      key={option.id}
+                      key={`desktop-option-${option.id}`}
                       onClick={() => handleVote(option.id)}
                       disabled={isClosed || voting === option.id}
                       loading={voting === option.id}
@@ -389,7 +484,7 @@ export default function ProposalDetail() {
             ) : (
               options.map((option) => (
                 <Button
-                  key={option.id}
+                  key={`mobile-option-${option.id}`}
                   onClick={() => handleVote(option.id)}
                   disabled={isClosed || voting === option.id}
                   loading={voting === option.id}
@@ -420,6 +515,16 @@ export default function ProposalDetail() {
           />
         ) : null;
       })()}
+
+      {/* Linked Principles Drawer */}
+      {selectedLabel && (
+        <LinkedPrinciplesDrawer
+          isOpen={linkedDrawerOpen}
+          onClose={handleCloseDrawer}
+          label={selectedLabel}
+          currentPollId={poll?.id || ''}
+        />
+      )}
     </div>
   );
 }

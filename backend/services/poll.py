@@ -7,6 +7,7 @@ from backend.models.poll import Poll
 from backend.models.option import Option
 from backend.models.vote import Vote
 from backend.models.delegation import Delegation
+from backend.models.label import Label
 from backend.schemas.poll import PollResult
 from backend.core.logging_config import get_logger
 
@@ -62,7 +63,7 @@ async def get_poll_results(poll_id: UUID, db: AsyncSession) -> List[PollResult]:
     )
     direct_votes = votes_result.scalars().all()
     
-    # Get all active delegations (global delegations, not poll-specific)
+    # Get all active delegations (global and label-specific)
     delegations_result = await db.execute(
         select(Delegation).where(
             and_(
@@ -71,6 +72,12 @@ async def get_poll_results(poll_id: UUID, db: AsyncSession) -> List[PollResult]:
         )
     )
     delegations = delegations_result.scalars().all()
+    
+    # Get poll labels for label-specific delegation matching
+    poll_labels_result = await db.execute(
+        select(Poll.labels).where(Poll.id == poll_id)
+    )
+    poll_labels = poll_labels_result.scalar_one_or_none() or []
     
     # Create a mapping of option_id to vote counts
     option_votes: Dict[UUID, Dict[str, int]] = {}
@@ -106,23 +113,37 @@ async def get_poll_results(poll_id: UUID, db: AsyncSession) -> List[PollResult]:
             
             # If delegator hasn't voted directly, check their delegate's vote
             if not delegator_vote:
-                # Find the delegate's vote
-                delegate_vote_result = await db.execute(
-                    select(Vote).where(
-                        and_(
-                            Vote.user_id == delegation.delegatee_id,
-                            Vote.poll_id == poll_id,
-                            Vote.is_deleted == False
+                # Determine if this delegation applies to this poll
+                delegation_applies = False
+                
+                if delegation.label_id:
+                    # Label-specific delegation - check if poll has matching label
+                    for poll_label in poll_labels:
+                        if poll_label.id == delegation.label_id:
+                            delegation_applies = True
+                            break
+                else:
+                    # Global delegation - always applies
+                    delegation_applies = True
+                
+                if delegation_applies:
+                    # Find the delegate's vote
+                    delegate_vote_result = await db.execute(
+                        select(Vote).where(
+                            and_(
+                                Vote.user_id == delegation.delegatee_id,
+                                Vote.poll_id == poll_id,
+                                Vote.is_deleted == False
+                            )
                         )
                     )
-                )
-                delegate_vote = delegate_vote_result.scalar_one_or_none()
-                
-                if delegate_vote:
-                    # Add the delegation weight to the delegate's chosen option
-                    delegation_weight = 1  # Default weight for delegation
-                    option_votes[delegate_vote.option_id]["delegated_votes"] += delegation_weight
-                    option_votes[delegate_vote.option_id]["total_votes"] += delegation_weight
+                    delegate_vote = delegate_vote_result.scalar_one_or_none()
+                    
+                    if delegate_vote:
+                        # Add the delegation weight to the delegate's chosen option
+                        delegation_weight = 1  # Default weight for delegation
+                        option_votes[delegate_vote.option_id]["delegated_votes"] += delegation_weight
+                        option_votes[delegate_vote.option_id]["total_votes"] += delegation_weight
                     
         except Exception as e:
             logger.warning(

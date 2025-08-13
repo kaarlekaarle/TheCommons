@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import BaseModel, Field
 
 
@@ -32,6 +32,6 @@ class StoryItem(BaseModel):
 
 class ContentResponse(BaseModel):
     """Generic response wrapper for content lists."""
-    items: List[PrincipleItem | ActionItem | StoryItem]
+    items: List[Union[PrincipleItem, ActionItem, StoryItem]]
     count: int
     source: str = Field(..., description="Source of the content: 'demo' or 'file'")

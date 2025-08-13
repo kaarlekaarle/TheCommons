@@ -10,6 +10,7 @@ For a deeper exploration of the philosophy behind The Commons, see [VISION.md](V
 - 🔄 Dynamic delegation system (delegate voting power, revoke anytime)
 - 📝 Public activity feed (see who did what, when)
 - 🗳️ Robust voting system with integrity checks
+- 🏷️ Topic Labels (A↔B connector) - controlled categories linking principles to actions
 - 🚀 High-performance RESTful API
 - 🗄️ PostgreSQL database with async support
 - 📊 Comprehensive test suite
@@ -25,6 +26,14 @@ For a deeper exploration of the philosophy behind The Commons, see [VISION.md](V
 
 ## Project Structure
 Detailed architecture in [docs/architecture.md](docs/architecture.md).
+
+## Topic Labels (A↔B connector)
+Topic Labels serve as connective tissue between Level A (Principles) and Level B (Actions) decisions, enabling:
+- **Delegation by topic area** - delegate specific subjects to trusted experts
+- **A↔B relationships** - see how immediate actions connect to long-term values  
+- **Controlled categorization** - consistent, community-focused topic areas
+
+📖 **Documentation**: [Labels Overview](docs/labels_overview.md) | [Labels Playbook](docs/labels_playbook.md)
 
 ## Prerequisites
 - Python 3.8 or higher
@@ -168,6 +177,37 @@ This script:
 - Sets `decision_type="level_b"` where NULL
 - Sets `direction_choice=NULL` for Level B polls
 - Logs any corrections made
+
+### Demo Data / Direction Presets
+
+The Commons uses standardized Level-A direction categories. To modify these presets:
+
+1. **Frontend Configuration**: Edit `frontend/src/config/levelA.ts`
+   - Add/remove categories from `LEVEL_A_PRESETS`
+   - Categories are used in proposal creation and display
+
+2. **Cleanup Old Data**: If you have old demo direction strings, run:
+   ```bash
+   # Preview changes (dry run)
+   make fix-old-directions
+   
+   # Apply changes
+   make fix-old-directions FORCE=1
+   
+   # Or wipe all Level-A demo data
+   cd backend && python scripts/cleanup_old_directions.py --wipe-level-a --force
+   ```
+
+3. **Clear Frontend Cache**: If you see stale data in the browser:
+   ```bash
+   # Clear localStorage and reload
+   npm run clear-local
+   # Then hard refresh your browser (Ctrl+F5 / Cmd+Shift+R)
+   ```
+   
+   Or use the Debug Overlay (when `VITE_DEBUG_OVERLAY=true`):
+   - Click the "D" button in the top-right corner
+   - Click "Clear Local Storage" button
 
 ### Migration Safety
 

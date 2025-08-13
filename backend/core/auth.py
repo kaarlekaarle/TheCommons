@@ -176,3 +176,32 @@ async def get_current_user_from_token(token: str, db: AsyncSession) -> User:
             
     except JWTError:  # Invalid token format or signature
         raise credentials_exception
+
+
+async def get_current_user_optional(
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    """Get current user from JWT token, returns None if not authenticated."""
+    if not token:
+        return None
+        
+    try:
+        # First try to decode the token
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+            
+        # Then try to get the user
+        try:
+            user = await db.get(User, UUID(user_id))
+            if user is None or not user.is_user_active():
+                return None
+            return user
+        except ValueError:  # Invalid UUID format
+            return None
+            
+    except JWTError:  # Invalid token format or signature
+        return None

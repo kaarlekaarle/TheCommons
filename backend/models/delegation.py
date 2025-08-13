@@ -22,6 +22,9 @@ class Delegation(SQLAlchemyBase):
     poll_id = Column(
         GUID(), ForeignKey("polls.id", ondelete="CASCADE"), nullable=True
     )
+    label_id = Column(
+        GUID(), ForeignKey("labels.id", ondelete="SET NULL"), nullable=True
+    )
     chain_origin_id = Column(
         GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=True
     )
@@ -47,6 +50,7 @@ class Delegation(SQLAlchemyBase):
     delegator = relationship("User", foreign_keys=[delegator_id], back_populates="delegations_as_delegator")
     delegatee = relationship("User", foreign_keys=[delegatee_id], back_populates="delegations_as_delegatee")
     poll = relationship("Poll", back_populates="delegations")
+    label = relationship("Label", back_populates="delegations")
     chain_origin = relationship("User", foreign_keys=[chain_origin_id])
 
     async def soft_delete(self, db_session) -> None:

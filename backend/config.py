@@ -69,6 +69,11 @@ class Settings(BaseSettings):
     
     # Feature flags
     LEVEL_A_ENABLED: bool = os.getenv("LEVEL_A_ENABLED", "true").lower() == "true"
+    LABELS_ENABLED: bool = os.getenv("LABELS_ENABLED", "true").lower() == "true"
+    ALLOW_PUBLIC_LABELS: bool = os.getenv("ALLOW_PUBLIC_LABELS", "false").lower() == "true"
+    
+    # Testing
+    TESTING: bool = os.getenv("TESTING", "false").lower() == "true"
     
     # Content pipeline settings
     USE_DEMO_CONTENT: bool = os.getenv("USE_DEMO_CONTENT", "false").lower() == "true"

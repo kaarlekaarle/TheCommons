@@ -34,7 +34,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
 
   useEffect(() => {
     fetchComments();
-  }, [pollId]);
+  }, [pollId, fetchComments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -88,7 +88,7 @@ test.describe('Delegation Accessibility Compliance', () => {
       
       if (await firstProposal.isVisible()) {
         await firstProposal.click();
-        await expect(page).toHaveURL(/\/proposals\/[^\/]+$/);
+        await expect(page).toHaveURL(/\/proposals\/[^/]+$/);
 
         // Check for delegation banner
         const delegationBanner = page.locator('text=You are delegating this poll to Alice Smith');

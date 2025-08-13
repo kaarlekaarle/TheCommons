@@ -9,7 +9,17 @@ export interface User {
 }
 
 // Decision types
-export type DecisionType = "level_a" | "level_b";
+export type DecisionType = "level_a" | "level_b" | "level_c";
+
+// Label types
+export interface Label {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
 
 // Poll/Proposal types
 export interface VoteStatus {
@@ -30,6 +40,7 @@ export interface Poll {
   your_vote_status?: VoteStatus;
   decision_type: DecisionType;
   direction_choice?: string | null;
+  labels?: Label[];
 }
 
 export interface PollOption {
@@ -66,6 +77,23 @@ export interface DelegationInfo {
   delegate_username?: string;
   delegate_email?: string;
   created_at?: string;
+}
+
+export interface DelegationSummary {
+  global_delegate?: DelegationInfo;
+  per_label: Array<{
+    label: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+    delegate: {
+      id: string;
+      username: string;
+      email: string;
+    };
+    created_at?: string;
+  }>;
 }
 
 // API Response types
@@ -110,6 +138,60 @@ export interface ActivityItem {
   user: ActivityUser;
   timestamp: string;
   details: string;
+  decision_type?: string;
+  direction_choice?: string;
+  labels?: Array<{name: string; slug: string}>;
+}
+
+// Label overview types
+export interface PollSummary {
+  id: string;
+  title: string;
+  decision_type: string;
+  created_at: string;
+  labels: Array<{name: string; slug: string}>;
+}
+
+export interface PageInfo {
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface LabelOverview {
+  label: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  counts: {
+    level_a: number;
+    level_b: number;
+    level_c: number;
+    total: number;
+  };
+  page: PageInfo;
+  items: PollSummary[];
+  delegation_summary?: {
+    label_delegate: {
+      id: string;
+      username: string;
+      email: string;
+    } | null;
+    global_delegate: {
+      id: string;
+      username: string;
+      email: string;
+    } | null;
+  };
+}
+
+export interface PopularLabel {
+  id: string;
+  name: string;
+  slug: string;
+  poll_count: number;
 }
 
 // Comment types

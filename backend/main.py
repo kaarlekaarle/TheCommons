@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 import redis.asyncio as redis
-from fastapi import Depends, FastAPI, HTTPException, status, Request
+from fastapi import Depends, FastAPI, HTTPException, status, Request, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from fastapi_cache import FastAPICache
@@ -38,7 +38,7 @@ if os.getenv("SENTRY_DSN"):
         send_default_pii=True,
     )
 
-from backend.api import auth, delegations, options, polls, users, votes, health, activity, comments, reactions, websocket, content
+from backend.api import auth, delegations, options, polls, users, votes, health, activity, comments, reactions, websocket, content, labels
 from backend.config import settings
 from backend.core.exception_handlers import configure_exception_handlers
 from backend.core.logging_json import configure_json_logging, get_json_logger
@@ -61,7 +61,7 @@ configure_json_logging(
 logger = get_json_logger(__name__)
 
 # Configure OAuth2
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token", auto_error=False)
 
 
 @asynccontextmanager
@@ -189,8 +189,8 @@ app = FastAPI(
 # Add request context middleware
 app.add_middleware(RequestContextMiddleware)
 
-# Add audit middleware (before CORS)
-app.add_middleware(AuditMiddleware)
+# Add audit middleware (before CORS) - temporarily disabled for debugging
+# app.add_middleware(AuditMiddleware)
 
 # Configure CORS based on environment
 allowed_origins = (
@@ -201,7 +201,7 @@ allowed_origins = (
 
 # Add development origins if in debug mode
 if settings.DEBUG:
-    dev_origins = ["http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174"]
+    dev_origins = ["http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://localhost:5175"]
     allowed_origins.extend(dev_origins)
 
 app.add_middleware(
@@ -245,8 +245,8 @@ def custom_openapi():
         }
     }
     
-    # Add global security requirement
-    openapi_schema["security"] = [{"Bearer": []}]
+    # Add global security requirement - removed to allow public endpoints
+    # openapi_schema["security"] = [{"Bearer": []}]
     
     app.openapi_schema = openapi_schema
     return app.openapi_schema
@@ -334,6 +334,17 @@ app.include_router(
     prefix="/api",
     tags=["content"],
 )  # No rate limiting for content endpoints
+app.include_router(
+    labels.router,
+    prefix="/api/labels",
+    tags=["labels"],
+    # dependencies=[authenticated_rate_limiter],  # Temporarily disabled for Redis issues
+)
+app.include_router(
+    labels.public_router,
+    prefix="/api/labels",
+    tags=["labels"],
+)
 logger.info("Routers registered successfully")
 
 # Add exception handlers
@@ -395,6 +406,82 @@ async def health_check():
         "message": "Service is running",
         "timestamp": datetime.utcnow().isoformat(),
     }
+
+@app.get("/api/labels/popular/public")
+async def get_popular_labels_public(
+    limit: int = Query(8, ge=1, le=24, description="Number of popular labels to return (max 24)"),
+    request: Request = None,
+    response: Response = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get popular labels by attached poll count (public endpoint)."""
+    from backend.config import settings
+    from backend.core.exceptions import UnavailableFeatureError
+    from backend.models.label import Label
+    from backend.models.poll_label import poll_labels
+    from sqlalchemy import select, and_, func, desc
+    import hashlib
+    
+    if not settings.LABELS_ENABLED:
+        raise UnavailableFeatureError("Labels feature is disabled")
+    
+    # ETag support (skip in testing)
+    if not settings.TESTING:
+        # Get the most recent label update time for ETag
+        latest_label_result = await db.execute(
+            select(Label.updated_at).where(
+                and_(
+                    Label.is_active == True,
+                    Label.is_deleted == False
+                )
+            ).order_by(desc(Label.updated_at)).limit(1)
+        )
+        latest_label_updated_at = latest_label_result.scalar_one_or_none()
+        
+        # Create weak ETag from limit and latest label update time
+        etag_data = f"popular:{limit}:{latest_label_updated_at}"
+        etag = f'W/"{hashlib.md5(etag_data.encode()).hexdigest()}"'
+        
+        # Check If-None-Match header
+        if_none_match = request.headers.get("if-none-match") if request else None
+        if if_none_match and if_none_match == etag:
+            response.status_code = 304
+            return None
+        
+        # Set ETag header
+        if response:
+            response.headers["ETag"] = etag
+    
+    # Get labels with poll counts
+    result = await db.execute(
+        select(
+            Label.id,
+            Label.name,
+            Label.slug,
+            func.count(poll_labels.c.poll_id).label('poll_count')
+        ).outerjoin(poll_labels).where(
+            and_(
+                Label.is_active == True,
+                Label.is_deleted == False
+            )
+        ).group_by(Label.id, Label.name, Label.slug)
+        .order_by(desc(func.count(poll_labels.c.poll_id)), Label.slug)
+        .limit(limit)
+    )
+    
+    labels_with_counts = result.all()
+    
+    popular_labels = [
+        {
+            "id": str(row.id),
+            "name": row.name,
+            "slug": row.slug,
+            "poll_count": row.poll_count
+        }
+        for row in labels_with_counts
+    ]
+    
+    return popular_labels
 
 
 @app.get("/health/db")

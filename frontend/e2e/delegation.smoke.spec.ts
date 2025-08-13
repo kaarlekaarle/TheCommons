@@ -179,7 +179,7 @@ test.describe('Delegation System Smoke Test', () => {
         await firstProposal.click();
         
         // Wait for poll page to load
-        await expect(page).toHaveURL(/\/proposals\/[^\/]+$/);
+        await expect(page).toHaveURL(/\/proposals\/[^/]+$/);
         
         // Verify delegation banner appears
         await expect(page.locator('text=You are delegating this poll to Alice Smith')).toBeVisible();

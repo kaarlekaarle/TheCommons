@@ -1,9 +1,9 @@
 import { vi } from 'vitest';
-import type { User, DelegationInfo, CreateDelegationRequest, RemoveDelegationRequest } from '../../types';
+import type { User, DelegationInfo } from '../../types';
 import type { ContentResponse } from '../../types/content';
 
 // Mock API response types
-export interface MockApiResponse<T = any> {
+export interface MockApiResponse<T = unknown> {
   data: T;
   status?: number;
 }
@@ -186,7 +186,7 @@ export const mockAuthApi = {
 };
 
 // Setup API mocks for tests
-export const setupApiMocks = (mockApi: any) => {
+export const setupApiMocks = (mockApi: { get: { mockResolvedValue: (value: unknown) => void }; post: { mockResolvedValue: (value: unknown) => void }; put: { mockResolvedValue: (value: unknown) => void }; delete: { mockResolvedValue: (value: unknown) => void }; patch: { mockResolvedValue: (value: unknown) => void } }) => {
   // Default to success responses
   mockApi.get.mockResolvedValue({ data: {} });
   mockApi.post.mockResolvedValue({ data: {} });
@@ -199,10 +199,10 @@ export const setupApiMocks = (mockApi: any) => {
 
 // Helper to mock specific API calls
 export const mockApiCall = (
-  mockApi: any,
+  mockApi: { [key: string]: { mockImplementation: (fn: (url: string) => Promise<unknown>) => void } },
   method: 'get' | 'post' | 'put' | 'delete' | 'patch',
   url: string,
-  response: any
+  response: unknown
 ) => {
   mockApi[method].mockImplementation((callUrl: string) => {
     if (callUrl === url) {
@@ -214,7 +214,7 @@ export const mockApiCall = (
 
 // Helper to mock API errors
 export const mockApiError = (
-  mockApi: any,
+  mockApi: { [key: string]: { mockImplementation: (fn: (url: string) => Promise<unknown>) => void } },
   method: 'get' | 'post' | 'put' | 'delete' | 'patch',
   url: string,
   error: MockApiError

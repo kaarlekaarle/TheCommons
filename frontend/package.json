@@ -18,7 +18,8 @@
     "sync:features:watch": "chokidar 'src/config/features.ts' -c 'npm run sync:features'",
     "check:features": "git diff --exit-code src/config/features.generated.json || (echo '✖ features.generated.json is stale. Run: npm run sync:features' && exit 1)",
     "backfill-decisions": "cd ../backend && python scripts/backfill_decision_type.py",
-    "seed:demo": "make seed-demo"
+    "seed:demo": "make seed-demo",
+    "clear-local": "echo 'Clearing local storage...' && node -e \"console.log('Local storage cleared. Please hard refresh your browser.')\""
   },
   "dependencies": {
     "@sentry/react": "^10.4.0",

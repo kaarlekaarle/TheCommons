@@ -36,6 +36,7 @@ class PollVisibility(str, Enum):
 class DecisionType(str, Enum):
     LEVEL_A = "level_a"
     LEVEL_B = "level_b"
+    LEVEL_C = "level_c"
 
 
 
@@ -77,6 +78,12 @@ class Poll(SQLAlchemyBase):
     )  # type: Any
     delegations = relationship(
         "Delegation", back_populates="poll", cascade="all, delete-orphan"
+    )  # type: Any
+    labels = relationship(
+        "Label",
+        secondary="poll_labels",
+        back_populates="polls",
+        lazy="selectin"
     )  # type: Any
 
     async def soft_delete(self, db_session: Session) -> None:

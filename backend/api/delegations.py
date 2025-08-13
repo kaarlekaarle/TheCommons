@@ -18,12 +18,15 @@ from backend.core.metrics import increment_delegation_metric
 from backend.database import get_db
 from backend.models.delegation import Delegation
 from backend.models.user import User
+from backend.models.label import Label
 from backend.schemas.delegation import (
     DelegationCreate,
     DelegationInfo,
     DelegationResponse,
+    DelegationSummary,
 )
 from backend.services.delegation import DelegationService
+from backend.config import settings
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["delegations"])
@@ -62,12 +65,55 @@ async def create_delegation(
         if delegation_in.delegatee_id == current_user.id:
             raise ValidationError("Cannot delegate to yourself")
         
-        # Create the delegation directly without complex validation
-        delegation = Delegation(
-            delegator_id=current_user.id,
-            delegatee_id=delegation_in.delegatee_id
+        # Handle label-specific delegation
+        label_id = None
+        if delegation_in.label_slug:
+            # Find label by slug
+            label_result = await db.execute(
+                select(Label).where(
+                    and_(
+                        Label.slug == delegation_in.label_slug,
+                        Label.is_active == True,
+                        Label.is_deleted == False
+                    )
+                )
+            )
+            label = label_result.scalar_one_or_none()
+            if not label:
+                raise ValidationError(f"Label with slug '{delegation_in.label_slug}' not found")
+            label_id = label.id
+        
+        # Check for existing delegation (global or label-specific)
+        existing_query = select(Delegation).where(
+            and_(
+                Delegation.delegator_id == current_user.id,
+                Delegation.is_deleted == False
+            )
         )
-        db.add(delegation)
+        
+        if label_id:
+            # Label-specific delegation
+            existing_query = existing_query.where(Delegation.label_id == label_id)
+        else:
+            # Global delegation
+            existing_query = existing_query.where(Delegation.label_id.is_(None))
+        
+        existing_result = await db.execute(existing_query)
+        existing_delegation = existing_result.scalar_one_or_none()
+        
+        if existing_delegation:
+            # Update existing delegation
+            existing_delegation.delegatee_id = delegation_in.delegatee_id
+            delegation = existing_delegation
+        else:
+            # Create new delegation
+            delegation = Delegation(
+                delegator_id=current_user.id,
+                delegatee_id=delegation_in.delegatee_id,
+                label_id=label_id
+            )
+            db.add(delegation)
+        
         await db.commit()
         
         logger.info(
@@ -381,3 +427,114 @@ async def get_my_delegation(
             exc_info=True,
         )
         raise ServerError("Failed to get delegation information")
+
+
+@router.get("/me/summary", response_model=DelegationSummary)
+async def get_my_delegation_summary(
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> DelegationSummary:
+    """Get the current user's delegation summary including global and label-specific delegations.
+
+    Args:
+        token: OAuth2 token
+        current_user: Currently authenticated user
+        db: Database session
+
+    Returns:
+        DelegationSummary: User's delegation summary
+    """
+    logger.info(
+        "Getting user delegation summary",
+        extra={"user_id": current_user.id},
+    )
+    
+    try:
+        service = DelegationService(db)
+        
+        # Get global delegation
+        global_delegation = await service.get_active_delegation(current_user.id)
+        global_delegate_info = None
+        
+        if global_delegation and not global_delegation.label_id:
+            # Fetch delegate info for global delegation
+            delegate_result = await db.execute(
+                select(User).where(
+                    and_(
+                        User.id == global_delegation.delegatee_id,
+                        User.is_deleted == False
+                    )
+                )
+            )
+            delegate = delegate_result.scalar_one_or_none()
+            
+            if delegate:
+                global_delegate_info = DelegationInfo(
+                    has_delegatee=True,
+                    delegatee_id=delegate.id,
+                    delegatee_username=delegate.username,
+                    delegatee_email=delegate.email,
+                    created_at=global_delegation.created_at
+                )
+        
+        # Get label-specific delegations
+        per_label_delegations = []
+        if settings.LABELS_ENABLED:
+            label_delegations_result = await db.execute(
+                select(Delegation).where(
+                    and_(
+                        Delegation.delegator_id == current_user.id,
+                        Delegation.label_id.isnot(None),
+                        Delegation.is_deleted == False,
+                        Delegation.revoked_at.is_(None)
+                    )
+                )
+            )
+            label_delegations = label_delegations_result.scalars().all()
+            
+            for delegation in label_delegations:
+                # Get label info
+                label_result = await db.execute(
+                    select(Label).where(Label.id == delegation.label_id)
+                )
+                label = label_result.scalar_one_or_none()
+                
+                # Get delegate info
+                delegate_result = await db.execute(
+                    select(User).where(
+                        and_(
+                            User.id == delegation.delegatee_id,
+                            User.is_deleted == False
+                        )
+                    )
+                )
+                delegate = delegate_result.scalar_one_or_none()
+                
+                if label and delegate:
+                    per_label_delegations.append({
+                        "label": {
+                            "id": str(label.id),
+                            "name": label.name,
+                            "slug": label.slug
+                        },
+                        "delegate": {
+                            "id": str(delegate.id),
+                            "username": delegate.username,
+                            "email": delegate.email
+                        },
+                        "created_at": delegation.created_at.isoformat() if delegation.created_at else None
+                    })
+        
+        return DelegationSummary(
+            global_delegate=global_delegate_info,
+            per_label=per_label_delegations
+        )
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get user delegation summary",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to get delegation summary")

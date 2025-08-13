@@ -2,8 +2,9 @@ from typing import Any, Dict, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, text, insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from backend.core.auth import get_current_active_user
 from backend.core.exceptions import (
@@ -18,6 +19,8 @@ from backend.database import get_db
 from backend.models.poll import Poll
 from backend.models.user import User
 from backend.models.vote import Vote
+from backend.models.label import Label
+from backend.models.poll_label import poll_labels
 from backend.schemas.poll import Poll as PollSchema
 from backend.schemas.poll import PollCreate, PollUpdate, VoteStatus, PollResult
 from backend.services.delegation import DelegationService
@@ -67,6 +70,37 @@ async def create_poll(
         db.add(poll)
         await db.commit()
         await db.refresh(poll)
+        
+        # Handle labels if feature is enabled
+        if settings.LABELS_ENABLED and poll_data.labels:
+            # Resolve label slugs to label IDs
+            labels_result = await db.execute(
+                select(Label.id, Label.slug).where(Label.slug.in_(poll_data.labels))
+            )
+            labels = labels_result.all()
+            
+            if len(labels) != len(poll_data.labels):
+                found_slugs = {row.slug for row in labels}
+                missing_slugs = set(poll_data.labels) - found_slugs
+                raise ResourceNotFoundError(f"Labels not found: {missing_slugs}")
+            
+            if len(labels) > 5:
+                raise ValidationError("A poll can have a maximum of 5 labels.")
+            
+            # Bulk insert association rows
+            if labels:
+                await db.execute(
+                    insert(poll_labels),
+                    [{"poll_id": str(poll.id), "label_id": str(row.id)} for row in labels]
+                )
+        
+        await db.commit()
+        
+        # Re-fetch fully hydrated poll with labels
+        poll_result = await db.execute(
+            select(Poll).options(selectinload(Poll.labels)).where(Poll.id == poll.id)
+        )
+        poll = poll_result.scalar_one()
 
         # Broadcast new proposal to activity feed
         try:
@@ -119,7 +153,9 @@ async def create_poll(
 @router.get("/", response_model=List[PollSchema])
 async def list_polls(
     skip: int = 0, 
-    limit: int = 100, 
+    limit: int = 100,
+    label: str = None,
+    decision_type: str = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> List[Poll]:
@@ -128,20 +164,37 @@ async def list_polls(
     Args:
         skip: Number of records to skip
         limit: Maximum number of records to return
+        label: Filter by label slug (comma-separated for multiple)
+        decision_type: Filter by decision type (level_a, level_b)
         db: Database session
         current_user: Currently authenticated user
 
     Returns:
         List[Poll]: List of polls
     """
-    result = await db.execute(select(Poll).offset(skip).limit(limit))
+    query = select(Poll).options(selectinload(Poll.labels))
+    
+    # Apply decision_type filter
+    if decision_type:
+        query = query.where(Poll.decision_type == decision_type)
+    
+    # Apply label filter if feature is enabled
+    if settings.LABELS_ENABLED and label:
+        label_slugs = [slug.strip() for slug in label.split(',')]
+        # Join with labels table and filter by slug
+        query = query.join(Poll.labels).where(Label.slug.in_(label_slugs))
+    
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
     polls = result.scalars().all()
 
     logger.info(
         "Retrieved polls", 
         extra={
             "skip": skip, 
-            "limit": limit, 
+            "limit": limit,
+            "label_filter": label,
+            "decision_type_filter": decision_type,
             "count": len(polls),
             "user_id": current_user.id
         }
@@ -183,7 +236,7 @@ async def get_poll(
     try:
         # Get poll
         logger.debug("Executing poll query", extra={"poll_id": str(poll_id)})
-        result = await db.execute(select(Poll).where(Poll.id == poll_id))
+        result = await db.execute(select(Poll).options(selectinload(Poll.labels)).where(Poll.id == poll_id))
         poll = result.scalar_one_or_none()
         
         if not poll:

@@ -8,11 +8,17 @@ import Dashboard from './pages/Dashboard';
 import ProposalList from './pages/ProposalList';
 import ProposalDetail from './pages/ProposalDetail';
 import ProposalNew from './pages/ProposalNew';
+import PrinciplesList from './pages/PrinciplesList';
+import ActionsList from './pages/ActionsList';
+import TopicPage from './pages/TopicPage';
 import ActivityFeed from './components/ActivityFeed';
 import DebugOverlay from './components/DebugOverlay';
 
 // Lazy load the WhyTwoLevels page
 const WhyTwoLevels = React.lazy(() => import('./pages/WhyTwoLevels'));
+
+// Dev-only accessibility check page
+const A11yCheck = React.lazy(() => import('./pages/_A11yCheck'));
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -97,6 +103,16 @@ export default function App() {
               <WhyTwoLevels />
             </Suspense>
           } />
+          <Route path="/t/:slug" element={<TopicPage />} />
+          
+          {/* Dev-only accessibility check route */}
+          {import.meta.env.DEV && (
+            <Route path="/_a11y" element={
+              <Suspense fallback={<div className="min-h-screen bg-neutral-50 flex items-center justify-center"><div className="p-8 text-neutral-600">Loading…</div></div>}>
+                <A11yCheck />
+              </Suspense>
+            } />
+          )}
           
           {/* Authentication route */}
           <Route 
@@ -135,6 +151,8 @@ export default function App() {
                 <Layout>
                   <Routes>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/principles" element={<PrinciplesList />} />
+                    <Route path="/actions" element={<ActionsList />} />
                     <Route path="/proposals" element={<ProposalList />} />
                     <Route path="/proposals/:id" element={<ProposalDetail />} />
                     <Route path="/proposals/new" element={<ProposalNew />} />

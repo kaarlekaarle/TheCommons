@@ -62,7 +62,7 @@ test.describe('Basic User Flow', () => {
       await page.click('button[type="submit"]');
       
       // Wait for successful creation and redirect
-      await expect(page).toHaveURL(/\/proposals\/[^\/]+$/);
+              await expect(page).toHaveURL(/\/proposals\/[^/]+$/);
       
       // Verify proposal details are displayed
       await expect(page.locator(`text=${testProposal.title}`)).toBeVisible();

@@ -8,7 +8,69 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Official Government Color Palette
+        // USWDS-inspired color palette
+        primary: {
+          50: '#eef5ff',
+          100: '#dbe9ff', 
+          200: '#bad3ff',
+          300: '#8fb7ff',
+          400: '#5f97f7',
+          500: '#2f6fe6',
+          600: '#1f54b5',
+          700: '#183f87',
+          800: '#122e63',
+          900: '#0e244e',
+        },
+        success: {
+          50: '#eefcf4',
+          100: '#d6f7e4',
+          200: '#a9eecc',
+          300: '#74e1b0',
+          400: '#3cca93',
+          500: '#16a34a',
+          600: '#148343',
+          700: '#0f6336',
+          800: '#0c4a2f',
+          900: '#093b27',
+        },
+        accent: {
+          500: '#f59e0b', // Sparingly used
+        },
+        neutral: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1f2937',
+          900: '#0f172a',
+        },
+        
+        // Legacy Civic UI colors (keeping for compatibility)
+        civic: {
+          // Core semantic colors
+          ink: '#1b1b1b', // Primary text
+          'muted-ink': '#4b5563', // Secondary text
+          canvas: '#f7f7f7', // Page background
+          surface: '#ffffff', // Card background
+          border: '#e5e7eb', // Lines and borders
+          brand: '#0b6fbf', // Actions and links
+          'brand-hover': '#095b99', // Brand hover state
+          
+          // Status colors
+          success: '#2e7d32', // Success green
+          warning: '#c77700', // Warning orange
+          danger: '#b3261e', // Danger red
+          
+          // Level-specific colors
+          levelA: '#0b6fbf', // Blue for Level A (Principles)
+          levelB: '#1b7f5f', // Teal/green for Level B (Actions)
+        },
+        
+        // Legacy gov colors (keeping for compatibility)
         gov: {
           primary: '#002f6c', // Navy blue
           secondary: '#f1c40f', // Muted gold
@@ -24,19 +86,6 @@ export default {
           'info': '#17a2b8', // Government blue
         },
         
-        // Legacy color support (keeping for compatibility)
-        primary: {
-          50: '#e6f3ff',
-          100: '#cce7ff',
-          200: '#99cfff',
-          300: '#66b7ff',
-          400: '#339fff',
-          500: '#002f6c', // gov-primary
-          600: '#002855',
-          700: '#001c3d',
-          800: '#001025',
-          900: '#00040c',
-        },
         'primary-foreground': '#ffffff',
         
         // Background colors
@@ -98,20 +147,7 @@ export default {
           DEFAULT: '#6c757d',
         },
         
-        // Success - Government green
-        success: {
-          50: '#d4edda',
-          100: '#c3e6cb',
-          200: '#a7d8b8',
-          300: '#8bcaa5',
-          400: '#6fbc92',
-          500: '#28a745', // gov-success
-          600: '#1e7e34',
-          700: '#155724',
-          800: '#0c3014',
-          900: '#030a04',
-          DEFAULT: '#28a745',
-        },
+
         
         // Warning - Government yellow
         warning: {
@@ -159,28 +195,33 @@ export default {
         },
       },
       borderRadius: {
+        // USWDS-inspired border radius scale
         'xs': '2px',
         'sm': '4px',
-        'md': '6px',
-        'lg': '8px',
-        'xl': '12px',
-        '2xl': '16px',
-        '3xl': '20px',
+        'md': '8px', // Primary card radius
+        'lg': '12px', // Secondary card radius
+        'xl': '16px',
+        '2xl': '20px',
+        '3xl': '24px',
       },
       fontFamily: {
         sans: ['system-ui', 'ui-sans-serif', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
       fontSize: {
-        'xs': ['0.75rem', { lineHeight: '1rem' }],
-        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-        'base': ['1rem', { lineHeight: '1.5rem' }],
-        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
-        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
-        '2xl': ['1.5rem', { lineHeight: '2rem' }], // H1 equivalent
-        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
-        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
-        '5xl': ['3rem', { lineHeight: '1' }],
-        '6xl': ['3.75rem', { lineHeight: '1' }],
+        // USWDS-inspired typography scale
+        'xs': ['0.75rem', { lineHeight: '1.1' }], // 12px
+        'sm': ['0.875rem', { lineHeight: '1.45' }], // 14px
+        'base': ['1rem', { lineHeight: '1.75' }], // 16px - body text
+        'lg': ['1.125rem', { lineHeight: '1.55' }], // 18px
+        'xl': ['1.25rem', { lineHeight: '1.5' }], // 20px
+        '2xl': ['1.5rem', { lineHeight: '1.4' }], // 24px - H3
+        '3xl': ['1.875rem', { lineHeight: '1.3' }], // 30px - H2
+        '4xl': ['2.25rem', { lineHeight: '1.25' }], // 36px - H1
+        '5xl': ['3rem', { lineHeight: '1.2' }], // 48px
+        '6xl': ['3.75rem', { lineHeight: '1.1' }], // 60px
+        'h1': ['clamp(2.25rem, 2.2vw + 1.5rem, 3rem)', { lineHeight: '1.2' }],
+        'h2': ['2rem', { lineHeight: '1.3' }],
+        'h3': ['1.5rem', { lineHeight: '1.4' }],
       },
       spacing: {
         '18': '4.5rem',
@@ -197,6 +238,17 @@ export default {
         },
       },
       boxShadow: {
+        // USWDS-inspired shadows
+        'card': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        'card-md': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+        'card-lg': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+        'card-xl': '0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04)',
+        
+        // Legacy shadows (keeping for compatibility)
+        'civic': '0 1px 2px rgba(0, 0, 0, 0.05)',
+        'civic-md': '0 2px 4px rgba(0, 0, 0, 0.08)',
+        'civic-lg': '0 4px 8px rgba(0, 0, 0, 0.1)',
+        'civic-xl': '0 8px 16px rgba(0, 0, 0, 0.12)',
         'gov': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
         'gov-md': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
         'gov-lg': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',

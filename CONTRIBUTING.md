@@ -31,6 +31,37 @@ If you’re unsure where to start, check the `#start-here` channel in our Discor
 
 For a full project overview, see [README.md](README.md) and [docs/architecture.md](docs/architecture.md).
 
+## Working with Labels
+
+### Quick-Start Checklist
+
+When working with the label system:
+
+- [ ] **Enable labels**: Set `LABELS_ENABLED=true` (backend) and `VITE_LABELS_ENABLED=true` (frontend)
+- [ ] **Seed data**: Run `python backend/scripts/seed_labels.py` for default labels
+- [ ] **Test flows**: Verify label creation, assignment, filtering, and delegation
+- [ ] **Check performance**: Test with stress data using `make seed-stress`
+- [ ] **Validate UX**: Ensure label components work across all pages
+
+### Key Resources
+
+- 📖 [Labels Overview](docs/labels_overview.md) - Philosophy and data model
+- 🛠️ [Labels Playbook](docs/labels_playbook.md) - Practical implementation guide
+- 🧪 [Label System Validation](docs/label_system_validation.md) - Testing procedures
+
+### Common Patterns
+
+```typescript
+// Frontend: Filter by label
+const polls = await listPolls({ label: 'mobility' });
+
+// Backend: Create poll with labels
+poll_data = { title: "...", labels: ["mobility", "education"] }
+
+// API: Set label-specific delegation
+await setDelegation("username", "mobility");
+```
+
 ---
 
 ## Development Setup

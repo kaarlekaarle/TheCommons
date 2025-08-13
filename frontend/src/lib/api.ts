@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { Poll, PollOption, Vote, PollResults, User, DelegationInfo, ActivityItem, CommentList, Comment, ReactionResponse, ReactionSummary, AxiosErrorResponse, DecisionType } from '../types';
+import type { Poll, PollOption, Vote, PollResults, User, DelegationInfo, ActivityItem, CommentList, Comment, ReactionResponse, ReactionSummary, AxiosErrorResponse, DecisionType, Label, DelegationSummary, LabelOverview, PopularLabel } from '../types';
 import type { DelegationInfo as NewDelegationInfo, CreateDelegationRequest, RemoveDelegationRequest } from '../types/delegation';
-import type { PrincipleItem, ActionItem, StoryItem, ContentResponse } from '../types/content';
+import type { PrincipleItem, ActionItem, StoryItem } from '../types/content';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -53,11 +53,28 @@ api.interceptors.response.use(
 );
 
 // API Helper Functions
-export const listPolls = async () => {
+export const listPolls = async (params?: { decision_type?: DecisionType; label?: string; limit?: number; offset?: number }) => {
   try {
     console.log('API: Making request to /api/polls/');
     console.log('API: Token in localStorage:', !!localStorage.getItem('token'));
-    const response = await api.get('/api/polls/');
+    console.log('API: Params:', params);
+    
+    const queryParams = new URLSearchParams();
+    if (params?.decision_type) {
+      queryParams.append('decision_type', params.decision_type);
+    }
+    if (params?.label) {
+      queryParams.append('label', params.label);
+    }
+    if (params?.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+    if (params?.offset) {
+      queryParams.append('offset', params.offset.toString());
+    }
+    
+    const url = queryParams.toString() ? `/api/polls/?${queryParams.toString()}` : '/api/polls/';
+    const response = await api.get(url);
     console.log('API: Response received:', response.status, response.data.length, 'polls');
     return response.data;
   } catch (error: unknown) {
@@ -83,6 +100,54 @@ export const getPoll = async (id: string): Promise<Poll> => {
     };
   }
 };
+
+// Label API functions
+export const listLabels = async (includeInactive: boolean = false): Promise<Label[]> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (includeInactive) {
+      queryParams.append('include_inactive', '1');
+    }
+    
+    const url = queryParams.toString() ? `/api/labels/?${queryParams.toString()}` : '/api/labels/';
+    const response = await api.get(url);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to fetch labels'
+    };
+  }
+};
+
+export const getLabel = async (id: string): Promise<Label> => {
+  try {
+    const response = await api.get(`/api/labels/${id}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to fetch label'
+    };
+  }
+};
+
+export const getLabelBySlug = async (slug: string): Promise<Label> => {
+  try {
+    const response = await api.get(`/api/labels/slug/${slug}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to fetch label'
+    };
+  }
+};
+
+
 
 export const getPollOptions = async (pollId: string): Promise<PollOption[]> => {
   try {
@@ -221,6 +286,37 @@ export const removeDelegate = async (): Promise<void> => {
     throw {
       status: err.response?.status || 500,
       message: err.response?.data?.detail || err.message || 'Failed to remove delegate'
+    };
+  }
+};
+
+export const getDelegationSummary = async (): Promise<DelegationSummary> => {
+  try {
+    const response = await api.get('/api/delegations/me/summary');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to fetch delegation summary'
+    };
+  }
+};
+
+export const setDelegation = async (delegateId: string, labelSlug?: string): Promise<DelegationInfo> => {
+  try {
+    const payload: { delegatee_id: string; label_slug?: string } = { delegatee_id: delegateId };
+    if (labelSlug) {
+      payload.label_slug = labelSlug;
+    }
+    
+    const response = await api.post('/api/delegations/', payload);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to set delegation'
     };
   }
 };
@@ -443,6 +539,55 @@ export async function getContentStories(): Promise<StoryItem[]> {
     const err = error as AxiosErrorResponse;
     console.warn('Failed to fetch content stories:', err.message);
     return [];
+  }
+}
+
+export async function getLabelOverview(
+  slug: string,
+  params?: {
+    tab?: 'all' | 'principles' | 'actions';
+    page?: number;
+    per_page?: number;
+    sort?: 'newest' | 'oldest';
+  }
+): Promise<LabelOverview> {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.tab) {
+      queryParams.append('tab', params.tab);
+    }
+    if (params?.page) {
+      queryParams.append('page', params.page.toString());
+    }
+    if (params?.per_page) {
+      queryParams.append('per_page', params.per_page.toString());
+    }
+    if (params?.sort) {
+      queryParams.append('sort', params.sort);
+    }
+    
+    const url = queryParams.toString() ? `/api/labels/${slug}/overview?${queryParams.toString()}` : `/api/labels/${slug}/overview`;
+    const response = await api.get(url);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to fetch label overview'
+    };
+  }
+}
+
+export async function getPopularLabels(limit: number = 8): Promise<PopularLabel[]> {
+  try {
+    const response = await api.get(`/api/labels/popular/public?limit=${limit}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to fetch popular labels'
+    };
   }
 }
 

@@ -5,8 +5,10 @@ import { getActivityFeed } from '../lib/api';
 import type { ActivityItem } from '../types';
 import Button from './ui/Button';
 import Empty from './ui/Empty';
+import LabelChip from './ui/LabelChip';
 import { useToast } from './ui/useToast';
 import LevelFilter, { type LevelFilterType } from './LevelFilter';
+import { flags } from '../config/flags';
 
 export default function ActivityFeed() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -40,7 +42,59 @@ export default function ActivityFeed() {
 
   useEffect(() => {
     fetchActivities();
-  }, []);
+  }, [fetchActivities]);
+
+  const handleLabelClick = (slug: string) => {
+    window.location.href = `/t/${slug}?tab=all&page=1`;
+  };
+
+  const renderActivityItem = (activity: ActivityItem, index: number, cardClass: string, icon: React.ReactNode, iconColor: string) => (
+    <motion.div
+      key={activity.id}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: "easeOut", delay: index * 0.05 }}
+      className={cardClass}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`flex-shrink-0 w-8 h-8 ${iconColor} rounded-full flex items-center justify-center`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-medium text-white">{activity.user.username}</span>
+            <span className="text-xs text-muted capitalize">{activity.type}</span>
+          </div>
+          <p className="text-sm text-muted">{activity.details}</p>
+          
+          {/* Labels */}
+          {flags.labelsEnabled && activity.labels && activity.labels.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {activity.labels.map((label, labelIndex) => (
+                <LabelChip
+                  key={`activity-${activity.id}-label-${label.slug}-${labelIndex}`}
+                  label={{
+                    id: label.slug,
+                    name: label.name,
+                    slug: label.slug,
+                    is_active: true,
+                    created_at: '',
+                    updated_at: ''
+                  }}
+                  size="sm"
+                  onClick={handleLabelClick}
+                />
+              ))}
+            </div>
+          )}
+          
+          <time className="text-xs text-muted mt-2 block">
+            {new Date(activity.timestamp).toLocaleString()}
+          </time>
+        </div>
+      </div>
+    </motion.div>
+  );
 
   if (loading) {
     return (
@@ -118,23 +172,23 @@ export default function ActivityFeed() {
         <div className="space-y-6">
           {/* Filter activities by level */}
           {(() => {
-            const filteredActivities = activities.filter(activity => {
+            const filteredActivities = activities.filter(() => {
               if (activeFilter === 'all') return true;
               // For now, we'll show all activities since the API doesn't provide level info
               // In a real implementation, activities would have level information
               return true;
             });
 
-            const levelAActivities = filteredActivities.filter(activity => 
-              activity.details.toLowerCase().includes('principle') || 
-              activity.details.toLowerCase().includes('level a')
+            const levelAActivities = filteredActivities.filter(item => 
+              item.details.toLowerCase().includes('principle') || 
+              item.details.toLowerCase().includes('level a')
             );
-            const levelBActivities = filteredActivities.filter(activity => 
-              activity.details.toLowerCase().includes('action') || 
-              activity.details.toLowerCase().includes('level b')
+            const levelBActivities = filteredActivities.filter(item => 
+              item.details.toLowerCase().includes('action') || 
+              item.details.toLowerCase().includes('level b')
             );
-            const otherActivities = filteredActivities.filter(activity => 
-              !levelAActivities.includes(activity) && !levelBActivities.includes(activity)
+            const otherActivities = filteredActivities.filter(item => 
+              !levelAActivities.includes(item) && !levelBActivities.includes(item)
             );
 
             return (
@@ -148,29 +202,7 @@ export default function ActivityFeed() {
                     </div>
                     <AnimatePresence>
                       {levelAActivities.map((activity, index) => (
-                        <motion.div
-                          key={activity.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.18, ease: "easeOut", delay: index * 0.05 }}
-                          className="p-4 card-level-a"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                              <Compass className="w-4 h-4 text-blue-300" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-white">{activity.user.username}</span>
-                                <span className="text-xs text-blue-300 capitalize">{activity.type}</span>
-                              </div>
-                              <p className="text-sm text-muted">{activity.details}</p>
-                              <time className="text-xs text-muted mt-2 block">
-                                {new Date(activity.timestamp).toLocaleString()}
-                              </time>
-                            </div>
-                          </div>
-                        </motion.div>
+                        renderActivityItem(activity, index, "p-4 card-level-a", <Compass className="w-4 h-4 text-blue-300" />, "bg-blue-500/20")
                       ))}
                     </AnimatePresence>
                   </div>
@@ -185,29 +217,7 @@ export default function ActivityFeed() {
                     </div>
                     <AnimatePresence>
                       {levelBActivities.map((activity, index) => (
-                        <motion.div
-                          key={activity.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.18, ease: "easeOut", delay: index * 0.05 }}
-                          className="p-4 card-level-b"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                              <Target className="w-4 h-4 text-emerald-300" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-white">{activity.user.username}</span>
-                                <span className="text-xs text-emerald-300 capitalize">{activity.type}</span>
-                              </div>
-                              <p className="text-sm text-muted">{activity.details}</p>
-                              <time className="text-xs text-muted mt-2 block">
-                                {new Date(activity.timestamp).toLocaleString()}
-                              </time>
-                            </div>
-                          </div>
-                        </motion.div>
+                        renderActivityItem(activity, index, "p-4 card-level-b", <Target className="w-4 h-4 text-emerald-300" />, "bg-emerald-500/20")
                       ))}
                     </AnimatePresence>
                   </div>
@@ -222,29 +232,7 @@ export default function ActivityFeed() {
                     </div>
                     <AnimatePresence>
                       {otherActivities.map((activity, index) => (
-                        <motion.div
-                          key={activity.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.18, ease: "easeOut", delay: index * 0.05 }}
-                          className="p-4 bg-surface border border-border rounded-lg"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                              <Activity className="w-4 h-4 text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-white">{activity.user.username}</span>
-                                <span className="text-xs text-muted capitalize">{activity.type}</span>
-                              </div>
-                              <p className="text-sm text-muted">{activity.details}</p>
-                              <time className="text-xs text-muted mt-2 block">
-                                {new Date(activity.timestamp).toLocaleString()}
-                              </time>
-                            </div>
-                          </div>
-                        </motion.div>
+                        renderActivityItem(activity, index, "p-4 bg-surface border border-border rounded-lg", <Activity className="w-4 h-4 text-primary" />, "bg-primary/10")
                       ))}
                     </AnimatePresence>
                   </div>
