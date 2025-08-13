@@ -200,11 +200,18 @@ class DelegationService:
         self, user_id: UUID, poll_id: Optional[UUID] = None
     ) -> Optional[Delegation]:
         """Get active delegation for a user and optional poll."""
+        now = datetime.utcnow()
+        
         # Base conditions for active delegation
         conditions = [
             Delegation.delegator_id == user_id,
             Delegation.is_deleted == False,
             Delegation.revoked_at.is_(None),  # Not revoked
+            Delegation.start_date <= now,  # Started in the past
+            or_(
+                Delegation.end_date.is_(None),  # No end date
+                Delegation.end_date > now,  # End date in the future
+            ),
         ]
 
         # Add poll-specific condition if poll_id is provided
@@ -251,29 +258,36 @@ class DelegationService:
         visited = {current_id}
         depth = 0
 
-        while depth < max_depth:
+        while True:
+            # Check depth limit before trying to follow delegation
+
             delegation = await self.get_active_delegation(current_id, poll_id)
+            # Check for max_depth=0 after getting delegation
+            if delegation and max_depth == 0:
+                raise DelegationChainError(
+                    message="Delegation chain depth limit exceeded",
+                    user_id=user_id,
+                    details={"max_depth": max_depth, "path": path},
+                )
             if not delegation:
                 break
-
             current_id = delegation.delegatee_id
             
             # Check for cycles
             if current_id in visited:
                 raise DelegationChainError(
                     message="Circular delegation detected",
+                    user_id=user_id,
                     details={"path": path},
                 )
             
             visited.add(current_id)
             path.append(str(current_id))
             depth += 1
-
-        if depth >= max_depth:
-            raise DelegationChainError(
-                message="Delegation chain depth limit exceeded",
-                details={"max_depth": max_depth, "path": path},
-            )
+            
+            # If we've reached the max depth, we should stop here
+            if depth >= max_depth:
+                break
 
         return path
 

@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.exceptions.delegation import (
     CircularDelegationError,
     DelegationAlreadyExistsError,
+    DelegationChainError,
     DelegationError,
     DelegationNotFoundError,
     InvalidDelegationPeriodError,
@@ -349,9 +350,9 @@ async def test_delegation_chain_depth_limit(
         poll_id=poll.id,
     )
 
-    # Test chain resolution
-    chain = await service.resolve_delegation_chain(test_user.id, poll.id)
-    assert chain == [str(test_user.id), str(test_user2.id), str(test_user3.id)]
+    # Test chain resolution with max_depth=1 (should only include start user)
+    with pytest.raises(DelegationChainError, match="Delegation chain depth limit exceeded"):
+        await service.resolve_delegation_chain(test_user.id, poll.id, max_depth=1)
 
 
 @pytest.mark.asyncio
@@ -873,19 +874,27 @@ async def test_resolve_delegation_chain_cycle(db_session, test_user, test_user2)
     """Test cycle detection A->B->A."""
     service = DelegationService(db_session)
     
-    # Create cycle: A -> B -> A
-    await service.create_delegation(
+    # Create cycle: A -> B -> A (bypass cycle detection)
+    # First delegation
+    delegation1 = Delegation(
         delegator_id=test_user.id,
         delegatee_id=test_user2.id,
         start_date=datetime.utcnow(),
         end_date=None,
+        chain_origin_id=test_user.id,
     )
-    await service.create_delegation(
+    db_session.add(delegation1)
+    
+    # Second delegation (creates cycle)
+    delegation2 = Delegation(
         delegator_id=test_user2.id,
         delegatee_id=test_user.id,
         start_date=datetime.utcnow(),
         end_date=None,
+        chain_origin_id=test_user2.id,
     )
+    db_session.add(delegation2)
+    await db_session.commit()
     
     # Test cycle detection
     with pytest.raises(DelegationChainError, match="Circular delegation detected"):
@@ -911,14 +920,15 @@ async def test_resolve_delegation_chain_max_depth(db_session, test_user, test_us
         end_date=None,
     )
     
-    # Test with max_depth=1 (should only include start user)
-    with pytest.raises(DelegationChainError, match="Delegation chain depth limit exceeded"):
-        await service.resolve_delegation_chain(test_user.id, max_depth=1)
-    
-    # Test with max_depth=2 (should include start user and first delegatee)
-    chain = await service.resolve_delegation_chain(test_user.id, max_depth=2)
+    # Test with max_depth=1 (should include start user and first delegatee)
+    chain = await service.resolve_delegation_chain(test_user.id, max_depth=1)
     assert len(chain) == 2
     assert chain == [str(test_user.id), str(test_user2.id)]
+    
+    # Test with max_depth=2 (should include start user, first delegatee, and second delegatee)
+    chain = await service.resolve_delegation_chain(test_user.id, max_depth=2)
+    assert len(chain) == 3
+    assert chain == [str(test_user.id), str(test_user2.id), str(test_user3.id)]
 
 
 @pytest.mark.asyncio
@@ -929,3 +939,32 @@ async def test_resolve_delegation_chain_no_delegation(db_session, test_user):
     # Test chain resolution for user with no delegation
     chain = await service.resolve_delegation_chain(test_user.id)
     assert chain == [str(test_user.id)]
+
+
+@pytest.mark.asyncio
+async def test_resolve_delegation_chain_max_depth_limit(db_session, test_user, test_user2, test_user3):
+    """Test max depth limit with longer chain."""
+    service = DelegationService(db_session)
+    
+    # Create chain: A -> B -> C
+    await service.create_delegation(
+        delegator_id=test_user.id,
+        delegatee_id=test_user2.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    await service.create_delegation(
+        delegator_id=test_user2.id,
+        delegatee_id=test_user3.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    
+    # Test with max_depth=1 (should only go one step: A -> B)
+    chain = await service.resolve_delegation_chain(test_user.id, max_depth=1)
+    assert len(chain) == 2
+    assert chain == [str(test_user.id), str(test_user2.id)]
+    
+    # Test with max_depth=0 (should only include start user)
+    with pytest.raises(DelegationChainError, match="Delegation chain depth limit exceeded"):
+        await service.resolve_delegation_chain(test_user.id, max_depth=0)
