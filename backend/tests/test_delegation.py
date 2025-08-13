@@ -351,9 +351,10 @@ async def test_delegation_chain_depth_limit(
         poll_id=poll.id,
     )
 
-    # Test chain resolution with max_depth=1 (should only include start user)
-    with pytest.raises(DelegationDepthExceededError):
-        await service.resolve_delegation_chain(test_user.id, poll.id, max_depth=1)
+    # Test chain resolution with max_depth=1 (should include start user and first delegatee)
+    chain = await service.resolve_delegation_chain(test_user.id, poll.id, max_depth=1)
+    assert len(chain) == 2
+    assert chain == [str(test_user.id), str(test_user2.id)]
 
 
 @pytest.mark.asyncio
