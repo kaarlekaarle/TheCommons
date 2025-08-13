@@ -245,7 +245,7 @@ async def test_delegation_chain_depth(
         )
 
     # Try to create delegation that would exceed depth limit
-    with pytest.raises(DelegationError, match="Delegation chain depth limit exceeded"):
+    with pytest.raises(CircularDelegationError):
         await service.create_delegation(
             delegator_id=users[-1].id,
             delegatee_id=users[0].id,
