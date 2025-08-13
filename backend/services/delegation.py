@@ -367,11 +367,11 @@ class DelegationService:
         # Try to get cached stats first
         cached_stats = await self._get_cached_stats(poll_id)
         if cached_stats:
-            return self._format_stats(cached_stats)
+            return self._format_stats(cached_stats, poll_id=poll_id)
 
         # Calculate fresh stats
         stats = await self._calculate_delegation_stats(poll_id)
-        formatted_stats = self._format_stats(stats)
+        formatted_stats = self._format_stats(stats, poll_id=poll_id)
 
         # Cache the results
         await self._cache_stats(stats, poll_id)
@@ -398,25 +398,47 @@ class DelegationService:
             return None
         return stats
 
-    def _format_stats(self, stats: Any) -> Dict[str, Any]:
-        """Format delegation statistics.
+    def _format_stats(self, stats: Dict[str, Any], poll_id: Optional[UUID] = None) -> Dict[str, Any]:
+        """Format delegation statistics with type coercion and defaults.
 
         Args:
             stats: Raw statistics data
+            poll_id: Optional poll ID to include in formatted stats
 
         Returns:
-            Dict[str, Any]: Formatted statistics with complete structure
+            Dict[str, Any]: Formatted statistics with complete structure and correct types
         """
+        def as_int(v): 
+            try: 
+                return int(v)
+            except Exception: 
+                return 0
+        def as_float(v):
+            try: 
+                return float(v)
+            except Exception: 
+                return 0.0
+        
+        top = stats.get("top_delegatees") or []
+        # normalize top_delegatees to list[tuple[str,int]]
+        norm_top = []
+        for item in top:
+            try:
+                did, cnt = item
+                norm_top.append((str(did), as_int(cnt)))
+            except Exception:
+                continue
+
         return {
-            "active_delegations": stats.get("active_delegations", 0),
-            "unique_delegators": stats.get("unique_delegators", 0),
-            "unique_delegatees": stats.get("unique_delegatees", 0),
-            "avg_chain_length": stats.get("avg_chain_length", 0.0),
-            "max_chain_length": stats.get("max_chain_length", 0),
-            "cycles_detected": stats.get("cycles_detected", 0),
-            "orphaned_delegations": stats.get("orphaned_delegations", 0),
-            "top_delegatees": stats.get("top_delegatees", []),
-            "poll_id": str(stats.get("poll_id")) if stats.get("poll_id") else None,
+            "active_delegations": as_int(stats.get("active_delegations")),
+            "unique_delegators": as_int(stats.get("unique_delegators")),
+            "unique_delegatees": as_int(stats.get("unique_delegatees")),
+            "avg_chain_length": as_float(stats.get("avg_chain_length")),
+            "max_chain_length": as_int(stats.get("max_chain_length")),
+            "cycles_detected": as_int(stats.get("cycles_detected")),
+            "orphaned_delegations": as_int(stats.get("orphaned_delegations")),
+            "top_delegatees": norm_top,
+            "poll_id": str(poll_id) if poll_id else None,
         }
 
     async def _trigger_background_refresh(self, poll_id: Optional[UUID] = None) -> None:
@@ -573,6 +595,18 @@ class DelegationService:
             "orphaned_delegations": int(orphaned_delegations),
             "top_delegatees": top_delegatees,
         }
+
+    async def get_delegation_stats(self, poll_id: Optional[UUID] = None) -> Dict[str, Any]:
+        """Get formatted delegation statistics.
+
+        Args:
+            poll_id: Optional poll ID for poll-specific stats
+
+        Returns:
+            Dict[str, Any]: Complete, typed delegation statistics
+        """
+        raw = await self._calculate_delegation_stats(poll_id=poll_id)
+        return self._format_stats(raw, poll_id=poll_id)
 
     async def invalidate_stats_cache(self, poll_id: Optional[UUID] = None) -> None:
         """Invalidate cached delegation stats."""
