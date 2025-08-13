@@ -1,13 +1,11 @@
 import pytest
+from datetime import datetime, timedelta
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database import get_db
+from backend.tests.fixtures.seed_minimal import seed_minimal_activity, seed_minimal_user, seed_minimal_poll
 from backend.models.user import User
-from backend.models.poll import Poll
-from backend.models.option import Option
-from backend.models.vote import Vote
-from backend.models.delegation import Delegation
+from backend.models.poll import Poll, PollStatus, PollVisibility, DecisionType
 from backend.core.security import get_password_hash
 
 
@@ -15,71 +13,8 @@ from backend.core.security import get_password_hash
 async def test_activity_feed_structure(async_client: AsyncClient, db_session: AsyncSession):
     """Test that the activity feed returns the correct structure."""
     
-    # Create test users
-    user1 = User(
-        username="testuser1",
-        email="test1@example.com",
-        hashed_password=get_password_hash("password123"),
-        is_active=True,
-        email_verified=True,
-        is_deleted=False
-    )
-    user2 = User(
-        username="testuser2", 
-        email="test2@example.com",
-        hashed_password=get_password_hash("password123"),
-        is_active=True,
-        email_verified=True,
-        is_deleted=False
-    )
-    
-    db_session.add(user1)
-    db_session.add(user2)
-    await db_session.commit()
-    await db_session.refresh(user1)
-    await db_session.refresh(user2)
-    
-    # Create a test proposal
-    poll = Poll(
-        title="Test Proposal",
-        description="A test proposal",
-        created_by=user1.id,
-        is_active=True,
-        is_deleted=False
-    )
-    db_session.add(poll)
-    await db_session.commit()
-    await db_session.refresh(poll)
-    
-    # Create options
-    option_yes = Option(poll_id=poll.id, text="Yes")
-    option_no = Option(poll_id=poll.id, text="No")
-    db_session.add(option_yes)
-    db_session.add(option_no)
-    await db_session.commit()
-    await db_session.refresh(option_yes)
-    await db_session.refresh(option_no)
-    
-    # Create a vote
-    vote = Vote(
-        poll_id=poll.id,
-        option_id=option_yes.id,
-        user_id=user2.id,
-        is_deleted=False
-    )
-    db_session.add(vote)
-    await db_session.commit()
-    await db_session.refresh(vote)
-    
-    # Create a delegation
-    delegation = Delegation(
-        delegator_id=user1.id,
-        delegatee_id=user2.id,
-        is_deleted=False
-    )
-    db_session.add(delegation)
-    await db_session.commit()
-    await db_session.refresh(delegation)
+    # Seed minimal activity data
+    seeded_data = await seed_minimal_activity(db_session)
     
     # Test the activity feed
     response = await async_client.get("/api/activity/")
@@ -113,29 +48,24 @@ async def test_activity_feed_ordering(async_client: AsyncClient, db_session: Asy
     """Test that activity feed items are ordered by timestamp (newest first)."""
     
     # Create test user
-    user = User(
-        username="testuser",
-        email="test@example.com", 
-        hashed_password=get_password_hash("password123"),
-        is_active=True,
-        email_verified=True,
-        is_deleted=False
-    )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
+    user = await seed_minimal_user(db_session, "ordering-test@example.com", "orderinguser")
     
     # Create two proposals with different timestamps
-    from datetime import datetime, timedelta
-    
     # Older proposal
     old_poll = Poll(
         title="Older Proposal",
         description="This should appear second",
         created_by=user.id,
         created_at=datetime.utcnow() - timedelta(hours=2),
-        is_active=True,
-        is_deleted=False
+        status=PollStatus.ACTIVE,
+        visibility=PollVisibility.PUBLIC,
+        start_date=datetime.utcnow(),
+        end_date=datetime.utcnow() + timedelta(days=7),
+        allow_delegation=True,
+        require_authentication=False,
+        max_votes_per_user=1,
+        decision_type=DecisionType.LEVEL_B,
+        direction_choice="up_down",
     )
     
     # Newer proposal  
@@ -144,8 +74,15 @@ async def test_activity_feed_ordering(async_client: AsyncClient, db_session: Asy
         description="This should appear first",
         created_by=user.id,
         created_at=datetime.utcnow() - timedelta(hours=1),
-        is_active=True,
-        is_deleted=False
+        status=PollStatus.ACTIVE,
+        visibility=PollVisibility.PUBLIC,
+        start_date=datetime.utcnow(),
+        end_date=datetime.utcnow() + timedelta(days=7),
+        allow_delegation=True,
+        require_authentication=False,
+        max_votes_per_user=1,
+        decision_type=DecisionType.LEVEL_B,
+        direction_choice="up_down",
     )
     
     db_session.add(old_poll)
@@ -183,17 +120,7 @@ async def test_activity_feed_limit(async_client: AsyncClient, db_session: AsyncS
     """Test that the limit parameter works correctly."""
     
     # Create test user
-    user = User(
-        username="testuser",
-        email="test@example.com",
-        hashed_password=get_password_hash("password123"),
-        is_active=True,
-        email_verified=True,
-        is_deleted=False
-    )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
+    user = await seed_minimal_user(db_session, "limit-test@example.com", "limituser")
     
     # Create multiple proposals
     for i in range(25):
@@ -201,8 +128,15 @@ async def test_activity_feed_limit(async_client: AsyncClient, db_session: AsyncS
             title=f"Proposal {i}",
             description=f"Test proposal {i}",
             created_by=user.id,
-            is_active=True,
-            is_deleted=False
+            status=PollStatus.ACTIVE,
+            visibility=PollVisibility.PUBLIC,
+            start_date=datetime.utcnow(),
+            end_date=datetime.utcnow() + timedelta(days=7),
+            allow_delegation=True,
+            require_authentication=False,
+            max_votes_per_user=1,
+            decision_type=DecisionType.LEVEL_B,
+            direction_choice="up_down",
         )
         db_session.add(poll)
     
