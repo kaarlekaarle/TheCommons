@@ -270,14 +270,6 @@ class DelegationService:
         depth = 0
 
         while True:
-            # Check depth limit before trying to follow delegation
-            if depth >= max_depth:
-                raise DelegationDepthExceededError(
-                    user_id=user_id,
-                    max_depth=max_depth,
-                    details={"path": path},
-                )
-            
             delegation = await self.get_active_delegation(current_id, poll_id)
             if not delegation:
                 break
@@ -294,6 +286,14 @@ class DelegationService:
             visited.add(current_id)
             path.append(str(current_id))
             depth += 1
+            
+            # Check depth limit after following delegation
+            if depth >= max_depth:
+                raise DelegationDepthExceededError(
+                    user_id=user_id,
+                    max_depth=max_depth,
+                    details={"path": path},
+                )
 
         return path
 
