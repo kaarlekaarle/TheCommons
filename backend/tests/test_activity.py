@@ -18,8 +18,11 @@ async def test_activity_feed_structure(client: AsyncClient, db_session: AsyncSes
     assert isinstance(data, list)
     if data:
         item = data[0]
-        assert "action_type" in item
-        assert "actor" in item
+        assert "type" in item
+        assert "id" in item
+        assert "user" in item
+        assert "timestamp" in item
+        assert "details" in item
 
 
 @pytest.mark.asyncio
