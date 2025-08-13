@@ -55,9 +55,7 @@ class StatsCalculationTask:
         for attempt in range(self.retry_attempts):
             try:
                 # Calculate fresh stats
-                stats = await self.delegation_service._calculate_delegation_stats(
-                    poll_id
-                )
+                stats = await self.delegation_service.get_delegation_stats(poll_id=poll_id)
 
                 # Cache the stats
                 await self._cache_stats(stats, poll_id)
