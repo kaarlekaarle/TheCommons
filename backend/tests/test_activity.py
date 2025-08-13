@@ -74,7 +74,7 @@ async def test_activity_feed_structure(async_client: AsyncClient, db_session: As
     # Create a delegation
     delegation = Delegation(
         delegator_id=user1.id,
-        delegate_id=user2.id,
+        delegatee_id=user2.id,
         is_deleted=False
     )
     db_session.add(delegation)

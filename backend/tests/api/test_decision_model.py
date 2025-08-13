@@ -104,7 +104,7 @@ async def test_level_a_blocked_when_feature_disabled(client: AsyncClient, auth_h
     
     response = await client.post("/api/polls/", json=poll_data, headers=auth_headers)
     assert response.status_code == 403
-    assert "Level A decisions are currently disabled" in response.json()["detail"]["message"]
+    assert "Level A decisions are currently disabled" in response.json()["detail"]
 
 
 @pytest.mark.asyncio

@@ -387,6 +387,16 @@ async def root():
     return {"message": "Welcome to The Commons API"}
 
 
+@app.get("/health")
+async def health_check():
+    """Basic health check endpoint."""
+    return {
+        "status": "healthy",
+        "message": "Service is running",
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
 @app.get("/health/db")
 async def health_check_db():
     """Check database health."""
