@@ -119,10 +119,56 @@ async def test_revoke_delegation(
         poll_id=None,
     )
 
+    # Verify delegation is active
+    active_delegation = await service.get_active_delegation(test_user.id)
+    assert active_delegation is not None
+    assert active_delegation.id == delegation.id
+
     # Revoke delegation
     await service.revoke_delegation(delegation.id)
     await db_session.refresh(delegation)
     assert delegation.revoked_at is not None
+
+    # Verify delegation is no longer active
+    active_delegation = await service.get_active_delegation(test_user.id)
+    assert active_delegation is None
+
+
+@pytest.mark.asyncio
+async def test_revoke_user_delegation_api(
+    db_session: AsyncSession, test_user: User, test_user2: User
+):
+    """Test that revoking a user's delegation via API clears active state."""
+    service = DelegationService(db_session)
+    
+    # Create delegation
+    delegation = await service.create_delegation(
+        delegator_id=test_user.id,
+        delegatee_id=test_user2.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+        poll_id=None,
+    )
+
+    # Verify delegation is active
+    active_delegation = await service.get_active_delegation(test_user.id)
+    assert active_delegation is not None
+    assert active_delegation.id == delegation.id
+
+    # Revoke user's delegation using service method
+    await service.revoke_user_delegation(test_user.id)
+    await db_session.refresh(delegation)
+    
+    # Verify delegation is revoked in database
+    assert delegation.revoked_at is not None
+    assert delegation.is_deleted == False  # Should not be soft-deleted, just revoked
+
+    # Verify delegation is no longer active
+    active_delegation = await service.get_active_delegation(test_user.id)
+    assert active_delegation is None
+
+    # Verify stats are updated (if stats calculation runs)
+    # This would be tested in a separate integration test
 
 
 @pytest.mark.asyncio

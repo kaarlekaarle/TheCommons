@@ -23,6 +23,7 @@ from backend.schemas.delegation import (
     DelegationInfo,
     DelegationResponse,
 )
+from backend.services.delegation import DelegationService
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["delegations"])
@@ -285,27 +286,15 @@ async def remove_delegation(
     )
     
     try:
-        # Find the user's delegation
-        delegation_result = await db.execute(
-            select(Delegation).where(
-                and_(
-                    Delegation.delegator_id == current_user.id,
-                    Delegation.is_deleted == False
-                )
-            )
-        )
-        delegation = delegation_result.scalar_one_or_none()
+        service = DelegationService(db)
         
-        if not delegation:
-            raise ResourceNotFoundError("No delegation found")
-        
-        # Soft delete the delegation
-        await delegation.soft_delete(db)
+        # Revoke the user's delegation using the service
+        await service.revoke_user_delegation(current_user.id)
         await db.commit()
         
         logger.info(
-            "Delegation removed successfully",
-            extra={"delegation_id": delegation.id, "user_id": current_user.id},
+            "Delegation revoked successfully",
+            extra={"user_id": current_user.id},
         )
         
         # Track delegation revocation metric
@@ -315,9 +304,7 @@ async def remove_delegation(
         audit_event(
             "delegation_removed",
             {
-                "delegation_id": str(delegation.id),
-                "delegator_id": str(delegation.delegator_id),
-                "delegatee_id": str(delegation.delegatee_id),
+                "delegator_id": str(current_user.id),
             },
             request
         )
@@ -356,16 +343,10 @@ async def get_my_delegation(
     )
     
     try:
-        # Find the user's delegation
-        delegation_result = await db.execute(
-            select(Delegation).where(
-                and_(
-                    Delegation.delegator_id == current_user.id,
-                    Delegation.is_deleted == False
-                )
-            )
-        )
-        delegation = delegation_result.scalar_one_or_none()
+        service = DelegationService(db)
+        
+        # Get active delegation using service (checks both is_deleted and revoked_at)
+        delegation = await service.get_active_delegation(current_user.id)
         
         if not delegation:
             return DelegationInfo(has_delegate=False)

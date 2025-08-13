@@ -180,6 +180,22 @@ class DelegationService:
         # Trigger stats recalculation
         await self.stats_task.calculate_stats(delegation.poll_id)
 
+    async def revoke_user_delegation(self, delegator_id: UUID, poll_id: Optional[UUID] = None) -> None:
+        """Revoke a user's active delegation.
+
+        Args:
+            delegator_id: ID of the delegator
+            poll_id: Optional poll ID for poll-specific delegation
+
+        Raises:
+            DelegationNotFoundError: If no active delegation found
+        """
+        delegation = await self.get_active_delegation(delegator_id, poll_id)
+        if not delegation:
+            raise DelegationNotFoundError(f"No active delegation found for user {delegator_id}")
+
+        await self.revoke_delegation(delegation.id)
+
     async def get_active_delegation(
         self, user_id: UUID, poll_id: Optional[UUID] = None
     ) -> Optional[Delegation]:
