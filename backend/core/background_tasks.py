@@ -13,6 +13,28 @@ from backend.models.delegation_stats import DelegationStats
 
 logger = get_logger(__name__)
 
+DEFAULT_DELEGATION_STATS = {
+    "active_delegations": 0,
+    "unique_delegators": 0,
+    "unique_delegatees": 0,
+    "avg_chain_length": 0.0,
+    "max_chain_length": 0,
+    "cycles_detected": 0,
+    "orphaned_delegations": 0,
+    "top_delegatees": [],  # list of [delegatee_id, count]
+}
+
+def _merge_stats_with_defaults(stats: dict | None) -> dict:
+    # Defensive merge so missing keys don't blow up the cache step
+    base = DEFAULT_DELEGATION_STATS.copy()
+    if stats:
+        base.update(stats)
+        # If a provider accidentally returns None for a key, coerce to default
+        for k, v in DEFAULT_DELEGATION_STATS.items():
+            if base.get(k) is None:
+                base[k] = v
+    return base
+
 class StatsCalculationTask:
     """Background task for calculating delegation statistics."""
 
@@ -74,6 +96,13 @@ class StatsCalculationTask:
             poll_id: Optional poll ID the stats are for
         """
         try:
+            # Apply defensive defaults to prevent KeyError
+            stats = _merge_stats_with_defaults(stats)
+            
+            # Log if defaults were applied
+            if stats != _merge_stats_with_defaults({k: stats.get(k) for k in DEFAULT_DELEGATION_STATS}):
+                logger.warning("delegation_stats: applied defaults for missing/None keys")
+            
             # Convert top_delegatees to a JSON-serializable format
             top_delegatees = [
                 {"delegatee_id": str(delegatee_id), "count": count}
@@ -84,7 +113,7 @@ class StatsCalculationTask:
                 poll_id=poll_id,
                 top_delegatees=top_delegatees,
                 avg_chain_length=float(stats["avg_chain_length"]),
-                longest_chain=int(stats["longest_chain"]),
+                longest_chain=int(stats["max_chain_length"]),  # Use max_chain_length from defaults
                 active_delegations=int(stats["active_delegations"]),
                 calculated_at=datetime.utcnow()
             )
