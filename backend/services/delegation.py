@@ -83,7 +83,7 @@ class DelegationService:
         except DelegationDepthExceededError as e:
             # Re-raise as DelegationError to match test expectation
             raise DelegationError(
-                message=e.message,
+                message=str(e),
                 delegator_id=delegator_id,
                 delegatee_id=delegatee_id,
                 poll_id=poll_id,
