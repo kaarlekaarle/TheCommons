@@ -181,8 +181,8 @@ async def test_delegation_stats_contract_with_delegations(db_session):
     assert stats["active_delegations"] == 1
     assert stats["unique_delegators"] == 1
     assert stats["unique_delegatees"] == 1
-    assert stats["avg_chain_length"] == 0.0  # No chain, just direct delegation
-    assert stats["max_chain_length"] == 0
+    assert stats["avg_chain_length"] == 1.0  # One delegation step
+    assert stats["max_chain_length"] == 1
     assert stats["cycles_detected"] == 0
     assert stats["orphaned_delegations"] == 0
     assert len(stats["top_delegatees"]) == 1
