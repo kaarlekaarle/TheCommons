@@ -357,14 +357,17 @@ class DelegationService:
             stats: Raw statistics data
 
         Returns:
-            Dict[str, Any]: Formatted statistics
+            Dict[str, Any]: Formatted statistics with complete structure
         """
         return {
             "active_delegations": stats.get("active_delegations", 0),
-            "total_delegations": stats.get("total_delegations", 0),
-            "delegation_chains": stats.get("delegation_chains", []),
-            "delegation_depth": stats.get("delegation_depth", {}),
-            "poll_specific": stats.get("poll_specific", False),
+            "unique_delegators": stats.get("unique_delegators", 0),
+            "unique_delegatees": stats.get("unique_delegatees", 0),
+            "avg_chain_length": stats.get("avg_chain_length", 0.0),
+            "max_chain_length": stats.get("max_chain_length", 0),
+            "cycles_detected": stats.get("cycles_detected", 0),
+            "orphaned_delegations": stats.get("orphaned_delegations", 0),
+            "top_delegatees": stats.get("top_delegatees", []),
             "poll_id": str(stats.get("poll_id")) if stats.get("poll_id") else None,
         }
 
@@ -384,7 +387,7 @@ class DelegationService:
             poll_id=poll_id,
             active_delegations=stats["active_delegations"],
             avg_chain_length=stats["avg_chain_length"],
-            longest_chain=stats["longest_chain"],
+            longest_chain=stats["max_chain_length"],  # Use max_chain_length from new structure
             top_delegatees=stats["top_delegatees"],
             calculated_at=datetime.utcnow(),
         )
@@ -400,10 +403,14 @@ class DelegationService:
             poll_id: Optional poll ID for poll-specific stats
 
         Returns:
-            Dict[str, Any]: Calculated statistics
+            Dict[str, Any]: Complete statistics with all required fields
         """
+        from sqlalchemy import distinct, func as sql_func
+        from backend.models.user import User
+
         now = func.now()
         conditions = [
+            Delegation.is_deleted == False,
             or_(Delegation.end_date.is_(None), Delegation.end_date > now),
             Delegation.start_date <= now,
         ]
@@ -413,40 +420,111 @@ class DelegationService:
         else:
             conditions.append(Delegation.poll_id.is_(None))
 
-        # Get active delegations
-        query = select(Delegation).where(and_(*conditions))
-        result = await self.db.execute(query)
-        active_delegations = result.scalars().all()
+        # 1. Active delegations count
+        active_query = select(sql_func.count(Delegation.id)).where(and_(*conditions))
+        result = await self.db.execute(active_query)
+        active_delegations = result.scalar() or 0
 
-        # Calculate chain depths and paths
-        delegation_chains = []
-        delegation_depth = {}
-        for delegation in active_delegations:
-            try:
-                final_delegatee, path = await self.resolve_delegation_chain(
-                    delegation.delegator_id,
-                    poll_id,
-                    include_path=True,
+        # 2. Unique delegators count
+        delegators_query = select(sql_func.count(distinct(Delegation.delegator_id))).where(and_(*conditions))
+        result = await self.db.execute(delegators_query)
+        unique_delegators = result.scalar() or 0
+
+        # 3. Unique delegatees count
+        delegatees_query = select(sql_func.count(distinct(Delegation.delegatee_id))).where(and_(*conditions))
+        result = await self.db.execute(delegatees_query)
+        unique_delegatees = result.scalar() or 0
+
+        # 4. Top delegatees (most delegated to)
+        top_delegatees_query = (
+            select(Delegation.delegatee_id, sql_func.count(Delegation.id).label('count'))
+            .where(and_(*conditions))
+            .group_by(Delegation.delegatee_id)
+            .order_by(sql_func.count(Delegation.id).desc())
+            .limit(10)
+        )
+        result = await self.db.execute(top_delegatees_query)
+        top_delegatees = [(str(row.delegatee_id), int(row.count)) for row in result]
+
+        # 5. Orphaned delegations (delegations to/from non-existent users)
+        # Check delegations where delegator or delegatee doesn't exist
+        orphaned_delegator_query = (
+            select(sql_func.count(Delegation.id))
+            .outerjoin(User, Delegation.delegator_id == User.id)
+            .where(
+                and_(
+                    *conditions,
+                    User.id.is_(None)  # delegator doesn't exist
                 )
-                chain_length = len(path) - 1  # Subtract 1 to exclude the delegator
-                delegation_chains.append({
-                    "delegator_id": str(delegation.delegator_id),
-                    "final_delegatee_id": str(final_delegatee),
-                    "chain_length": chain_length,
-                    "path": [str(p) for p in path],
-                })
-                delegation_depth[str(delegation.delegator_id)] = chain_length
-            except DelegationChainError:
-                # Skip invalid chains
-                continue
+            )
+        )
+        result = await self.db.execute(orphaned_delegator_query)
+        orphaned_delegators = result.scalar() or 0
+
+        orphaned_delegatee_query = (
+            select(sql_func.count(Delegation.id))
+            .outerjoin(User, Delegation.delegatee_id == User.id)
+            .where(
+                and_(
+                    *conditions,
+                    User.id.is_(None)  # delegatee doesn't exist
+                )
+            )
+        )
+        result = await self.db.execute(orphaned_delegatee_query)
+        orphaned_delegatees = result.scalar() or 0
+
+        orphaned_delegations = orphaned_delegators + orphaned_delegatees
+
+        # 6. Chain length calculations (sample-based for performance)
+        avg_chain_length = 0.0
+        max_chain_length = 0
+        cycles_detected = 0
+
+        if active_delegations > 0:
+            # Sample delegators for chain analysis (limit to 500 for performance)
+            sample_query = (
+                select(Delegation.delegator_id)
+                .where(and_(*conditions))
+                .group_by(Delegation.delegator_id)
+                .order_by(Delegation.created_at.desc())
+                .limit(500)
+            )
+            result = await self.db.execute(sample_query)
+            sample_delegators = result.scalars().all()
+
+            chain_lengths = []
+            for delegator_id in sample_delegators:
+                try:
+                    final_delegatee, path = await self.resolve_delegation_chain(
+                        delegator_id,
+                        poll_id,
+                        include_path=True,
+                        max_depth=10
+                    )
+                    chain_length = len(path) - 1  # Subtract 1 to exclude the delegator
+                    chain_lengths.append(chain_length)
+                    max_chain_length = max(max_chain_length, chain_length)
+                except DelegationChainError as e:
+                    # Count cycles or depth limit exceeded as cycles
+                    cycles_detected += 1
+                    continue
+
+            if chain_lengths:
+                avg_chain_length = sum(chain_lengths) / len(chain_lengths)
+            else:
+                avg_chain_length = 0.0
+                max_chain_length = 0
 
         return {
-            "active_delegations": len(active_delegations),
-            "total_delegations": len(active_delegations),
-            "delegation_chains": delegation_chains,
-            "delegation_depth": delegation_depth,
-            "poll_specific": poll_id is not None,
-            "poll_id": poll_id,
+            "active_delegations": int(active_delegations),
+            "unique_delegators": int(unique_delegators),
+            "unique_delegatees": int(unique_delegatees),
+            "avg_chain_length": float(avg_chain_length),
+            "max_chain_length": int(max_chain_length),
+            "cycles_detected": int(cycles_detected),
+            "orphaned_delegations": int(orphaned_delegations),
+            "top_delegatees": top_delegatees,
         }
 
     async def invalidate_stats_cache(self, poll_id: Optional[UUID] = None) -> None:
