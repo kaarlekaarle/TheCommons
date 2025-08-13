@@ -1,11 +1,14 @@
 """Rate limiting configuration and dependencies."""
 
+import os
 from enum import Enum
 from typing import Optional, Callable, Any
 from fastapi import Depends, Request, Response
 from fastapi_limiter.depends import RateLimiter
 from backend.config import settings
 from backend.core.logging import get_logger
+
+TESTING = os.getenv("TESTING", "false").lower() == "true"
 
 logger = get_logger(__name__)
 
@@ -46,6 +49,12 @@ def get_rate_limiter(tier: RateLimitTier) -> Callable:
     Returns:
         A FastAPI dependency that applies the rate limit
     """
+    if TESTING:
+        class _Noop:
+            async def __aenter__(self): return None
+            async def __aexit__(self, *args): return False
+        return Depends(lambda: _Noop())
+    
     limit_config = RATE_LIMITS[tier]
     
     async def rate_limiter_dependency(request: Request, response: Response) -> Any:

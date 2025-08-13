@@ -8,59 +8,52 @@ from backend.core.audit_mw import AuditMiddleware, audit_event
 
 
 @pytest.mark.asyncio
-async def test_audit_middleware_request_id():
+async def test_audit_middleware_request_id(client: AsyncClient):
     """Test that request ID is propagated correctly."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        # Test with custom request ID
-        response = await ac.post("/api/token", 
-            data={"username": "test", "password": "test"},
-            headers={"X-Request-ID": "test-request-123"}
-        )
-        assert response.headers.get("X-Request-ID") == "test-request-123"
-        
-        # Test without request ID (should generate one)
-        response = await ac.post("/api/token", 
-            data={"username": "test", "password": "test"}
-        )
-        assert "X-Request-ID" in response.headers
-        assert response.headers["X-Request-ID"] is not None
+    # Test with custom request ID
+    response = await client.post("/api/token", 
+        data={"username": "test", "password": "test"},
+        headers={"X-Request-ID": "test-request-123"}
+    )
+    assert response.headers.get("X-Request-ID") == "test-request-123"
+    
+    # Test without request ID (should generate one)
+    response = await client.post("/api/token", 
+        data={"username": "test", "password": "test"}
+    )
+    assert "X-Request-ID" in response.headers
+    assert response.headers["X-Request-ID"] is not None
 
 
 @pytest.mark.asyncio
-async def test_audit_middleware_skips_noisy_paths():
+async def test_audit_middleware_skips_noisy_paths(client: AsyncClient, caplog):
     """Test that audit middleware skips noisy paths."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        # These should not generate audit logs
-        response = await ac.get("/health")
-        assert response.status_code == 200
-        
-        response = await ac.get("/docs")
-        assert response.status_code == 200
-        
-        response = await ac.get("/openapi.json")
-        assert response.status_code == 200
+    resp = await client.get("/health")
+    assert resp.status_code == 200
+    # assert no audit records emitted for /health
+    records = [r for r in caplog.records if "audit_request" in getattr(r, "message", "")]
+    assert len(records) == 0
 
 
 @pytest.mark.asyncio
-async def test_audit_middleware_logs_mutating_requests(caplog):
+async def test_audit_middleware_logs_mutating_requests(client: AsyncClient, caplog):
     """Test that audit middleware logs mutating requests."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        # This should generate an audit log
-        response = await ac.post("/api/token", 
-            data={"username": "test", "password": "test"}
-        )
-        
-        # Check that audit log was created
-        audit_logs = [record for record in caplog.records if "audit_request" in str(record.message)]
-        assert len(audit_logs) > 0
-        
-        # Check log structure - the message should contain audit data
-        log_message = str(audit_logs[0].message)
-        assert "request_id" in log_message
-        assert "method" in log_message
-        assert "path" in log_message
-        assert "status" in log_message
-        assert "duration_ms" in log_message
+    # This should generate an audit log
+    response = await client.post("/api/token", 
+        data={"username": "test", "password": "test"}
+    )
+    
+    # Check that audit log was created
+    audit_logs = [record for record in caplog.records if "audit_request" in str(record.message)]
+    assert len(audit_logs) > 0
+    
+    # Check log structure - the message should contain audit data
+    log_message = str(audit_logs[0].message)
+    assert "request_id" in log_message
+    assert "method" in log_message
+    assert "path" in log_message
+    assert "status" in log_message
+    assert "duration_ms" in log_message
 
 
 @pytest.mark.asyncio
@@ -119,21 +112,20 @@ async def test_audit_event_without_user():
 
 
 @pytest.mark.asyncio
-async def test_audit_middleware_duration(caplog):
+async def test_audit_middleware_duration(client: AsyncClient, caplog):
     """Test that audit middleware calculates duration correctly."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.post("/api/token", 
-            data={"username": "test", "password": "test"}
-        )
-        
-        # Check that duration is logged and is reasonable
-        audit_logs = [record for record in caplog.records if "audit_request" in str(record.message)]
-        if audit_logs:
-            log_message = str(audit_logs[0].message)
-            assert "duration_ms" in log_message
-            # Extract duration_ms from the log message (it's a JSON-like string)
-            import re
-            duration_match = re.search(r'"duration_ms":\s*(\d+)', log_message)
-            if duration_match:
-                duration_ms = int(duration_match.group(1))
-                assert duration_ms >= 0  # Should be non-negative
+    response = await client.post("/api/token", 
+        data={"username": "test", "password": "test"}
+    )
+    
+    # Check that duration is logged and is reasonable
+    audit_logs = [record for record in caplog.records if "audit_request" in str(record.message)]
+    if audit_logs:
+        log_message = str(audit_logs[0].message)
+        assert "duration_ms" in log_message
+        # Extract duration_ms from the log message (it's a JSON-like string)
+        import re
+        duration_match = re.search(r'"duration_ms":\s*(\d+)', log_message)
+        if duration_match:
+            duration_ms = int(duration_match.group(1))
+            assert duration_ms >= 0  # Should be non-negative

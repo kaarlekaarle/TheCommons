@@ -30,10 +30,12 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 @pytest_asyncio.fixture(scope="session")
 async def db_ready() -> None:
     """Ensure database schema exists before any tests run."""
+    import os
     from backend.database import init_db
     
-    # Initialize database schema (idempotent)
+    os.environ["TESTING"] = "true"
     await init_db()
+    yield
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -46,7 +48,7 @@ async def db_session(db_ready) -> AsyncGenerator:
 
 
 @pytest_asyncio.fixture
-async def client():
+async def client(db_ready):
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 

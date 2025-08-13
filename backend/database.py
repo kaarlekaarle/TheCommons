@@ -17,8 +17,11 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # Get database configuration from environment variables
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/the_commons"
+TESTING = os.getenv("TESTING", "false").lower() == "true"
+DATABASE_URL = (
+    "sqlite+aiosqlite:///./test.db"
+    if TESTING
+    else os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/the_commons")
 )
 DB_ECHO_LOG = os.getenv("DB_ECHO_LOG", "false").lower() == "true"
 
