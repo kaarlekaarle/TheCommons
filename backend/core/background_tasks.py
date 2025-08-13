@@ -77,7 +77,7 @@ class StatsCalculationTask:
             # Convert top_delegatees to a JSON-serializable format
             top_delegatees = [
                 {"delegatee_id": str(delegatee_id), "count": count}
-                for delegatee_id, count in stats["top_delegatees"]
+                for delegatee_id, count in stats.get("top_delegatees", [])
             ]
 
             delegation_stats = DelegationStats(
