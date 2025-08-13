@@ -123,7 +123,7 @@ async def test_delegation_performance(
     # Measure delegation creation time
     async def create_delegation(user_index: int):
         delegation_data = {
-            "delegate_id": str(users[0].id),
+            "delegatee_id": str(users[0].id),
             "poll_id": str(poll.id)
         }
         return await client.post(

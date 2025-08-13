@@ -329,7 +329,7 @@ async def test_soft_delete_delegation_visibility(db_session, test_user):
     delegation2 = Delegation(
         id=delegation2_id,
         delegator_id=user2.id,
-        delegate_id=test_user.id
+        delegatee_id=test_user.id
     )
     db_session.add(delegation2)
     await db_session.commit()

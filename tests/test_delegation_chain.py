@@ -40,7 +40,7 @@ async def test_delegation_chain_10_hop_resolution(db_session):
         delegation = Delegation(
             id=delegation_id,
             delegator_id=users[i].id,
-            delegate_id=users[i + 1].id
+            delegatee_id=users[i + 1].id
         )
         db_session.add(delegation)
         delegations.append(delegation)
@@ -98,7 +98,7 @@ async def test_delegation_cycle_detection(db_session):
         delegation = Delegation(
             id=delegation_id,
             delegator_id=users[i].id,
-            delegate_id=users[(i + 1) % 3].id  # Creates cycle: 0->1, 1->2, 2->0
+            delegatee_id=users[(i + 1) % 3].id  # Creates cycle: 0->1, 1->2, 2->0
         )
         db_session.add(delegation)
         delegations.append(delegation)
@@ -186,7 +186,7 @@ async def test_delegation_chain_resolution_with_gaps(db_session):
         delegation = Delegation(
             id=delegation_id,
             delegator_id=users[delegator_idx].id,
-            delegate_id=users[delegate_idx].id
+            delegatee_id=users[delegate_idx].id
         )
         db_session.add(delegation)
         delegations.append(delegation)
@@ -249,7 +249,7 @@ async def test_delegation_chain_max_depth_protection(db_session):
         delegation = Delegation(
             id=delegation_id,
             delegator_id=users[i].id,
-            delegate_id=users[i + 1].id
+            delegatee_id=users[i + 1].id
         )
         db_session.add(delegation)
         delegations.append(delegation)
@@ -302,7 +302,7 @@ async def test_delegation_chain_with_soft_deleted_delegations(db_session):
         delegation = Delegation(
             id=delegation_id,
             delegator_id=users[i].id,
-            delegate_id=users[i + 1].id
+            delegatee_id=users[i + 1].id
         )
         db_session.add(delegation)
         delegations.append(delegation)
@@ -358,7 +358,7 @@ async def test_delegation_chain_bidirectional_cycle_detection(db_session):
     delegation1 = Delegation(
         id=delegation1_id,
         delegator_id=users[0].id,
-        delegate_id=users[1].id
+        delegatee_id=users[1].id
     )
     db_session.add(delegation1)
     await db_session.commit()
@@ -413,7 +413,7 @@ async def test_delegation_complex_cycle_detection(db_session):
         delegation = Delegation(
             id=delegation_id,
             delegator_id=users[delegator_idx].id,
-            delegate_id=users[delegate_idx].id
+            delegatee_id=users[delegate_idx].id
         )
         db_session.add(delegation)
         delegations.append(delegation)

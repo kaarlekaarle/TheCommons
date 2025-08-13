@@ -206,7 +206,7 @@ class TestPollDetail:
         delegation = Delegation(
             id=uuid4(),
             delegator_id=test_user.id,
-            delegate_id=another_user.id,
+            delegatee_id=another_user.id,
         )
         db_session.add(delegation)
         db_session.commit()
