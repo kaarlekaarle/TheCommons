@@ -55,6 +55,10 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+/backend/test.db
+/backend/.pytest_cache/
+/backend/.coverage
+/.pytest_cache/
 
 # Docker
 .docker/

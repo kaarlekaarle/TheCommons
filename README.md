@@ -331,7 +331,17 @@ docker-compose down -v
 
 ## Testing
 
-### Testing (Online and Offline)
+### Quick Start
+
+**Local Backend Tests (Recommended)**
+```bash
+cd backend
+make test
+```
+
+This runs the full test suite with SQLite database and no external services (Redis/PostgreSQL).
+
+### Testing Options
 
 **Online (normal)**
 ```bash
@@ -362,11 +372,24 @@ make test-docker
 
 ### Backend Tests
 
-Run the test suite:
+**Makefile Targets (in backend/)**
+- `make test`: Full pytest run with proper test environment
+- `make test-fast`: Fast tests only (excludes slow tests)
+- `make clean-testdb`: Remove test database file
+- `make cov`: Run tests with coverage report
+
+**Manual Test Run**
 ```bash
-python -m pip install -r requirements-dev.txt
-pytest -q
+cd backend
+python -m pip install -r requirements-test.txt
+TESTING=true SECRET_KEY="test-secret-key-for-testing-only" USE_DEMO_CONTENT=false CONTENT_DATA_DIR="../data/real_content" pytest
 ```
+
+**Test Environment**
+- Uses SQLite in-memory database (no PostgreSQL required)
+- Rate limiting disabled (no Redis required)
+- Test-specific secret key and content settings
+- All external services mocked or disabled
 
 **Offline Test Suite**
 

@@ -1,0 +1,40 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      working-directory: ./backend
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements-test.txt
+    
+    - name: Run tests
+      working-directory: ./backend
+      env:
+        TESTING: true
+        SECRET_KEY: "test-secret-key-for-testing-only"
+        USE_DEMO_CONTENT: false
+        CONTENT_DATA_DIR: "../data/real_content"
+      run: |
+        pytest -v

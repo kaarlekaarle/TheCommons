@@ -102,3 +102,10 @@ def get_settings() -> Settings:
 
 # Create a global settings instance
 settings = get_settings()
+
+# Safety guard: prevent TESTING=true in production
+TESTING = os.getenv("TESTING", "false").lower() == "true"
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+
+if TESTING and ENVIRONMENT in {"production", "prod"}:
+    raise Exception("TESTING must not be true in production environment")
