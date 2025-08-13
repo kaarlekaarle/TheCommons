@@ -10,7 +10,7 @@ UUIDString = Annotated[UUID, PlainSerializer(lambda x: str(x), return_type=str)]
 
 class DelegationBase(BaseModel):
     """Base schema for delegation data."""
-    delegate_id: UUIDString = Field(..., description="ID of the user being delegated to")
+    delegatee_id: UUIDString = Field(..., description="ID of the user being delegated to")
 
 
 class DelegationCreate(DelegationBase):
@@ -20,7 +20,7 @@ class DelegationCreate(DelegationBase):
 
 class DelegationUpdate(BaseModel):
     """Schema for updating a delegation."""
-    delegate_id: Optional[UUIDString] = None
+    delegatee_id: Optional[UUIDString] = None
 
 
 class Delegation(DelegationBase):
@@ -37,9 +37,9 @@ class DelegationResponse(BaseModel):
     """Schema for delegation response."""
     id: UUIDString
     delegator_id: UUIDString
-    delegate_id: UUIDString
-    delegate_username: str
-    delegate_email: str
+    delegatee_id: UUIDString
+    delegatee_username: str
+    delegatee_email: str
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -48,8 +48,8 @@ class DelegationResponse(BaseModel):
 
 class DelegationInfo(BaseModel):
     """Schema for delegation info."""
-    has_delegate: bool
-    delegate_id: Optional[UUIDString] = None
-    delegate_username: Optional[str] = None
-    delegate_email: Optional[str] = None
+    has_delegatee: bool
+    delegatee_id: Optional[UUIDString] = None
+    delegatee_username: Optional[str] = None
+    delegatee_email: Optional[str] = None
     created_at: Optional[datetime] = None

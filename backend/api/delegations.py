@@ -58,13 +58,13 @@ async def create_delegation(
     
     try:
         # Check if user is trying to delegate to themselves
-        if delegation_in.delegate_id == current_user.id:
+        if delegation_in.delegatee_id == current_user.id:
             raise ValidationError("Cannot delegate to yourself")
         
         # Create the delegation directly without complex validation
         delegation = Delegation(
             delegator_id=current_user.id,
-            delegate_id=delegation_in.delegate_id
+            delegatee_id=delegation_in.delegatee_id
         )
         db.add(delegation)
         await db.commit()
@@ -83,7 +83,7 @@ async def create_delegation(
             {
                 "delegation_id": str(delegation.id),
                 "delegator_id": str(delegation.delegator_id),
-                "delegate_id": str(delegation.delegate_id),
+                "delegatee_id": str(delegation.delegatee_id),
             },
             request
         )
@@ -94,7 +94,7 @@ async def create_delegation(
             await manager.broadcast_delegation_update({
                 "id": str(delegation.id),
                 "delegator_id": str(delegation.delegator_id),
-                "delegate_id": str(delegation.delegate_id),
+                "delegatee_id": str(delegation.delegatee_id),
                 "created_at": delegation.created_at.isoformat() if delegation.created_at else None
             })
         except Exception as e:
@@ -104,7 +104,7 @@ async def create_delegation(
         return {
             "id": str(delegation.id),
             "delegator_id": str(delegation.delegator_id),
-            "delegate_id": str(delegation.delegate_id),
+            "delegatee_id": str(delegation.delegatee_id),
             "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
             "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None
         }
@@ -136,7 +136,7 @@ async def create_delegation_simple(
     
     try:
         # Check if user is trying to delegate to themselves
-        if delegation_in.delegate_id == current_user.id:
+        if delegation_in.delegatee_id == current_user.id:
             raise ValidationError("Cannot delegate to yourself")
         
         # Remove any existing delegation first
@@ -148,13 +148,13 @@ async def create_delegation_simple(
         # Insert new delegation using raw SQL
         result = await db.execute(
             """
-            INSERT INTO delegations (id, delegator_id, delegate_id, created_at, updated_at, is_deleted)
-            VALUES (gen_random_uuid(), :delegator_id, :delegate_id, now(), now(), false)
-            RETURNING id, delegator_id, delegate_id, created_at, updated_at
+            INSERT INTO delegations (id, delegator_id, delegatee_id, created_at, updated_at, is_deleted)
+            VALUES (gen_random_uuid(), :delegator_id, :delegatee_id, now(), now(), false)
+            RETURNING id, delegator_id, delegatee_id, created_at, updated_at
             """,
             {
                 "delegator_id": str(current_user.id),
-                "delegate_id": str(delegation_in.delegate_id)
+                "delegatee_id": str(delegation_in.delegatee_id)
             }
         )
         
@@ -170,7 +170,7 @@ async def create_delegation_simple(
             return {
                 "id": str(row[0]),
                 "delegator_id": str(row[1]),
-                "delegate_id": str(row[2]),
+                "delegatee_id": str(row[2]),
                 "created_at": row[3].isoformat() if row[3] else None,
                 "updated_at": row[4].isoformat() if row[4] else None
             }
@@ -203,7 +203,7 @@ async def create_delegation_direct(
     
     try:
         # Check if user is trying to delegate to themselves
-        if delegation_in.delegate_id == current_user.id:
+        if delegation_in.delegatee_id == current_user.id:
             raise ValidationError("Cannot delegate to yourself")
         
         # Use a direct database connection
@@ -225,13 +225,13 @@ async def create_delegation_direct(
             
             await conn.execute(
                 text("""
-                INSERT INTO delegations (id, delegator_id, delegate_id, created_at, updated_at, is_deleted)
-                VALUES (:id, :delegator_id, :delegate_id, :created_at, :updated_at, false)
+                INSERT INTO delegations (id, delegator_id, delegatee_id, created_at, updated_at, is_deleted)
+                VALUES (:id, :delegator_id, :delegatee_id, :created_at, :updated_at, false)
                 """),
                 {
                     "id": delegation_id,
                     "delegator_id": str(current_user.id),
-                    "delegate_id": str(delegation_in.delegate_id),
+                    "delegatee_id": str(delegation_in.delegatee_id),
                     "created_at": now,
                     "updated_at": now
                 }
@@ -245,7 +245,7 @@ async def create_delegation_direct(
         return {
             "id": delegation_id,
             "delegator_id": str(current_user.id),
-            "delegate_id": str(delegation_in.delegate_id),
+            "delegatee_id": str(delegation_in.delegatee_id),
             "created_at": now.isoformat(),
             "updated_at": now.isoformat()
         }
@@ -317,7 +317,7 @@ async def remove_delegation(
             {
                 "delegation_id": str(delegation.id),
                 "delegator_id": str(delegation.delegator_id),
-                "delegate_id": str(delegation.delegate_id),
+                "delegatee_id": str(delegation.delegatee_id),
             },
             request
         )
@@ -374,7 +374,7 @@ async def get_my_delegation(
         delegate_result = await db.execute(
             select(User).where(
                 and_(
-                    User.id == delegation.delegate_id,
+                    User.id == delegation.delegatee_id,
                     User.is_deleted == False
                 )
             )
@@ -386,10 +386,10 @@ async def get_my_delegation(
             return DelegationInfo(has_delegate=False)
         
         return DelegationInfo(
-            has_delegate=True,
-            delegate_id=delegate.id,
-            delegate_username=delegate.username,
-            delegate_email=delegate.email,
+            has_delegatee=True,
+            delegatee_id=delegate.id,
+            delegatee_username=delegate.username,
+            delegatee_email=delegate.email,
             created_at=delegation.created_at
         )
         

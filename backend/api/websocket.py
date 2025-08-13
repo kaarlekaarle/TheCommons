@@ -107,8 +107,16 @@ async def websocket_endpoint(
             "error": str(e)
         })
     finally:
-        # Clean up connection
-        manager.disconnect(connection_id)
+        # Clean up connection - leave all rooms first, then disconnect
+        try:
+            await manager.leave_all_rooms(connection_id)
+        except Exception as e:
+            logger.warning(f"Error leaving rooms during cleanup", extra={
+                "connection_id": connection_id,
+                "error": str(e)
+            })
+        finally:
+            manager.disconnect(connection_id)
 
 
 @router.get("/ws/stats")

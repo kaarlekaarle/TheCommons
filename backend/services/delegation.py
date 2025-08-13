@@ -238,7 +238,7 @@ class DelegationService:
             if not delegation:
                 break
 
-            current_id = delegation.delegate_id
+            current_id = delegation.delegatee_id
             if include_path:
                 if current_id in path:
                     raise DelegationChainError(

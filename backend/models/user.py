@@ -40,8 +40,8 @@ class User(SQLAlchemyBase):
     delegations_as_delegator = relationship(
         "Delegation", foreign_keys="Delegation.delegator_id", back_populates="delegator", cascade="all, delete-orphan"
     )
-    delegations_as_delegate = relationship(
-        "Delegation", foreign_keys="Delegation.delegate_id", back_populates="delegate", cascade="all, delete-orphan"
+    delegations_as_delegatee = relationship(
+        "Delegation", foreign_keys="Delegation.delegatee_id", back_populates="delegatee", cascade="all, delete-orphan"
     )
     comments = relationship(
         "Comment", back_populates="user", cascade="all, delete-orphan"

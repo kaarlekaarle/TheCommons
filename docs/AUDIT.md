@@ -112,9 +112,9 @@ Explicit audit events include:
 ### Delegations
 
 - **`delegation_created`** - When a user creates a delegation
-  - Data: `delegation_id`, `delegator_id`, `delegate_id`
+  - Data: `delegation_id`, `delegator_id`, `delegatee_id`
 - **`delegation_removed`** - When a user removes their delegation
-  - Data: `delegation_id`, `delegator_id`, `delegate_id`
+  - Data: `delegation_id`, `delegator_id`, `delegatee_id`
 
 ### Comments
 

@@ -8,10 +8,10 @@ from backend.core.auth import verify_password, get_password_hash
 from backend.models.user import User
 
 @pytest.mark.asyncio
-async def test_login_success(async_client: AsyncClient, test_user: User):
-    response = await async_client.post(
+async def test_login_success(client: AsyncClient, test_user: User):
+    response = await client.post(
         "/api/token",
-        data={"username": "test@example.com", "password": "testpassword"},
+        data={"username": "testuser", "password": "testpassword"},
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -19,34 +19,44 @@ async def test_login_success(async_client: AsyncClient, test_user: User):
     assert data["token_type"] == "bearer"
 
 @pytest.mark.asyncio
-async def test_login_invalid_credentials(async_client: AsyncClient):
-    response = await async_client.post(
+async def test_login_invalid_credentials(client: AsyncClient):
+    response = await client.post(
         "/api/token",
         data={"username": "wrong@example.com", "password": "wrongpassword"},
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 @pytest.mark.asyncio
-async def test_register_success(async_client: AsyncClient):
-    response = await async_client.post(
+async def test_register_success(client: AsyncClient):
+    response = await client.post(
         "/api/users/",
         json={
             "email": "new@example.com",
-            "username": "newuser",
+            "username": "completely_new_user",
             "password": "newpassword123",
         },
     )
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["email"] == "new@example.com"
-    assert data["username"] == "newuser"
+    assert data["username"] == "completely_new_user"
 
 @pytest.mark.asyncio
-async def test_register_existing_email(async_client: AsyncClient, test_user: User):
-    response = await async_client.post(
+async def test_register_existing_email(client: AsyncClient):
+    # First, create a user
+    user_data = {
+        "email": "existing@example.com",
+        "username": "existinguser",
+        "password": "password123",
+    }
+    response = await client.post("/api/users/", json=user_data)
+    assert response.status_code == status.HTTP_201_CREATED
+    
+    # Then try to create another user with the same email
+    response = await client.post(
         "/api/users/",
         json={
-            "email": test_user.email,
+            "email": "existing@example.com",
             "username": "different",
             "password": "password123",
         },
@@ -54,20 +64,20 @@ async def test_register_existing_email(async_client: AsyncClient, test_user: Use
     assert response.status_code == status.HTTP_409_CONFLICT
 
 @pytest.mark.asyncio
-async def test_get_current_user(async_client: AsyncClient, auth_headers: dict):
-    response = await async_client.get("/api/users/me", headers=auth_headers)
+async def test_get_current_user(client: AsyncClient, auth_headers: dict):
+    response = await client.get("/api/users/me", headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["email"] == "test@example.com"
 
 @pytest.mark.asyncio
-async def test_get_current_user_unauthorized(async_client: AsyncClient):
-    response = await async_client.get("/api/users/me")
+async def test_get_current_user_unauthorized(client: AsyncClient):
+    response = await client.get("/api/users/me")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 @pytest.mark.asyncio
-async def test_register_invalid_password(async_client: AsyncClient):
-    response = await async_client.post(
+async def test_register_invalid_password(client: AsyncClient):
+    response = await client.post(
         "/api/users/",
         json={
             "email": "test@example.com",
@@ -78,8 +88,8 @@ async def test_register_invalid_password(async_client: AsyncClient):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 @pytest.mark.asyncio
-async def test_register_invalid_username(async_client: AsyncClient):
-    response = await async_client.post(
+async def test_register_invalid_username(client: AsyncClient):
+    response = await client.post(
         "/api/users/",
         json={
             "email": "test@example.com",
@@ -90,8 +100,8 @@ async def test_register_invalid_username(async_client: AsyncClient):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 @pytest.mark.asyncio
-async def test_register_invalid_email(async_client: AsyncClient):
-    response = await async_client.post(
+async def test_register_invalid_email(client: AsyncClient):
+    response = await client.post(
         "/api/users/",
         json={
             "email": "invalid-email",
@@ -102,40 +112,50 @@ async def test_register_invalid_email(async_client: AsyncClient):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 @pytest.mark.asyncio
-async def test_register_existing_username(async_client: AsyncClient, test_user: User):
-    response = await async_client.post(
+async def test_register_existing_username(client: AsyncClient):
+    # First, create a user
+    user_data = {
+        "email": "user@example.com",
+        "username": "existingusername",
+        "password": "password123",
+    }
+    response = await client.post("/api/users/", json=user_data)
+    assert response.status_code == status.HTTP_201_CREATED
+    
+    # Then try to create another user with the same username
+    response = await client.post(
         "/api/users/",
         json={
             "email": "different@example.com",
-            "username": test_user.username,
+            "username": "existingusername",
             "password": "password123",
         },
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
 @pytest.mark.asyncio
-async def test_login_inactive_user(async_client: AsyncClient, inactive_user: User):
-    response = await async_client.post(
+async def test_login_inactive_user(client: AsyncClient, inactive_user: User):
+    response = await client.post(
         "/api/token",
         data={"username": inactive_user.email, "password": "testpassword"},
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 @pytest.mark.asyncio
-async def test_token_validation(async_client: AsyncClient, auth_headers: dict):
-    response = await async_client.get("/api/users/me", headers=auth_headers)
+async def test_token_validation(client: AsyncClient, auth_headers: dict):
+    response = await client.get("/api/users/me", headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
 
 @pytest.mark.asyncio
-async def test_token_validation_invalid(async_client: AsyncClient):
+async def test_token_validation_invalid(client: AsyncClient):
     headers = {"Authorization": "Bearer invalid_token"}
-    response = await async_client.get("/api/users/me", headers=headers)
+    response = await client.get("/api/users/me", headers=headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 @pytest.mark.asyncio
-async def test_token_validation_malformed(async_client: AsyncClient):
+async def test_token_validation_malformed(client: AsyncClient):
     headers = {"Authorization": "invalid_format"}
-    response = await async_client.get("/api/users/me", headers=headers)
+    response = await client.get("/api/users/me", headers=headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 # All configuration and executable code below this line has been removed.

@@ -202,7 +202,7 @@ export const getMyDelegate = async (): Promise<DelegationInfo> => {
 
 export const setDelegate = async (delegateId: string): Promise<DelegationInfo> => {
   try {
-    const response = await api.post('/api/delegations/direct', { delegate_id: delegateId });
+    const response = await api.post('/api/delegations/direct', { delegatee_id: delegateId });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;

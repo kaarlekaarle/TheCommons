@@ -62,7 +62,7 @@ export interface PollResults {
 // Delegation types
 export interface DelegationInfo {
   has_delegate: boolean;
-  delegate_id?: string;
+  delegatee_id?: string;
   delegate_username?: string;
   delegate_email?: string;
   created_at?: string;

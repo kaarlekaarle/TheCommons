@@ -1,5 +1,6 @@
--r requirements.txt
-pytest==8.3.5
-pytest-asyncio==0.25.3
-aiosqlite==0.21.0
-PyJWT==2.10.1
+pytest==7.4.4
+pytest-asyncio==0.21.1
+httpx==0.26.0
+anyio==4.2.0
+fakeredis==2.20.1
+aiosqlite==0.19.0

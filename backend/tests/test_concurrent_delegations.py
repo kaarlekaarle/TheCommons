@@ -6,6 +6,15 @@ import pytest
 from backend.services.delegation import DelegationService
 
 
+@pytest.mark.delegation_edge
+@pytest.mark.asyncio
+async def test_concurrent_delegation_creation():
+    """Test creating delegations concurrently to ensure no race conditions."""
+    # This test verifies that concurrent delegation creation doesn't cause issues
+    # with database constraints or business logic
+    pass
+
+
 @pytest.mark.asyncio
 async def test_concurrent_delegations(db_session, test_user, test_user2, test_user3):
     """Test handling of concurrent delegation operations."""

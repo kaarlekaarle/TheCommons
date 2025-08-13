@@ -97,16 +97,16 @@ class CircularDelegationError(DelegationValidationError):
     def __init__(
         self,
         user_id: str,
-        delegate_id: str,
+        delegatee_id: str,
         details: Optional[Dict[str, Any]] = None,
         status_code: int = 400,
     ):
         message = (
-            f"Circular delegation detected between users {user_id} and {delegate_id}"
+            f"Circular delegation detected between users {user_id} and {delegatee_id}"
         )
         super().__init__(
             message=message,
-            details=details or {"user_id": user_id, "delegate_id": delegate_id},
+            details=details or {"user_id": user_id, "delegatee_id": delegatee_id},
             status_code=status_code,
         )
 
@@ -196,14 +196,14 @@ class DelegationAlreadyExistsError(DelegationValidationError):
     def __init__(
         self,
         user_id: str,
-        delegate_id: str,
+        delegatee_id: str,
         details: Optional[Dict[str, Any]] = None,
         status_code: int = 400,
     ):
-        message = f"Delegation from user {user_id} to {delegate_id} already exists"
+        message = f"Delegation from user {user_id} to {delegatee_id} already exists"
         super().__init__(
             message=message,
-            details=details or {"user_id": user_id, "delegate_id": delegate_id},
+            details=details or {"user_id": user_id, "delegatee_id": delegatee_id},
             status_code=status_code,
         )
 

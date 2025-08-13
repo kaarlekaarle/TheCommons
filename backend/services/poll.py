@@ -110,7 +110,7 @@ async def get_poll_results(poll_id: UUID, db: AsyncSession) -> List[PollResult]:
                 delegate_vote_result = await db.execute(
                     select(Vote).where(
                         and_(
-                            Vote.user_id == delegation.delegate_id,
+                            Vote.user_id == delegation.delegatee_id,
                             Vote.poll_id == poll_id,
                             Vote.is_deleted == False
                         )

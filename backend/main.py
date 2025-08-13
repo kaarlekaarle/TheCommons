@@ -48,6 +48,8 @@ from backend.core.audit_mw import AuditMiddleware
 from backend.database import async_session_maker, get_db, init_db
 from backend.core.redis import get_redis_client, close_redis_client
 from backend.core.limiter import initialize_limiter, limiter_health
+from backend.core.auth import get_current_user
+from backend.models.user import User
 
 # Configure JSON logging
 configure_json_logging(
@@ -543,18 +545,19 @@ async def comprehensive_health_check():
 
 
 @app.get("/api/limiter/health")
-async def limiter_health_check():
+async def limiter_health_check(user: User = Depends(get_current_user)):
     """Rate limiter health check endpoint (admin only)."""
     from backend.core.admin_audit import require_admin
     from backend.core.admin_audit import log_admin_action
     
     # Check if user is admin
-    await require_admin()
+    require_admin(user)
     
     # Log the admin action
     log_admin_action(
         action="limiter_health_check",
         target_resource="rate_limiter",
+        user=user,
         result="success"
     )
     

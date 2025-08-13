@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 import backend.models
+import time
 from backend.core.auth import create_access_token, get_password_hash
 from backend.core.security import get_password_hash as core_get_password_hash
 from backend.database import Base, SQLAlchemyBase, get_db
@@ -48,6 +49,102 @@ TestingSessionLocal = sessionmaker(
 #             if hasattr(entity, 'entity') and issubclass(entity.entity, SQLAlchemyBase):
 #                 query = query.where(entity.entity.is_deleted == False)
 #                 execute_state.statement = query
+
+
+class FakeRedis:
+    """In-memory Redis implementation with TTL support for fastapi-limiter."""
+    
+    def __init__(self):
+        self._data: Dict[str, Any] = {}
+        self._expiry: Dict[str, float] = {}
+        self._scripts: Dict[str, str] = {}
+    
+    async def get(self, key: str):
+        """Get a value from Redis."""
+        if key in self._expiry and time.time() > self._expiry[key]:
+            del self._data[key]
+            del self._expiry[key]
+            return None
+        return self._data.get(key)
+    
+    async def setex(self, key: str, ttl: int, value: str) -> bool:
+        """Set a value with TTL."""
+        self._data[key] = value
+        self._expiry[key] = time.time() + ttl
+        return True
+    
+    async def incr(self, key: str) -> int:
+        """Increment a counter."""
+        current = await self.get(key)
+        if current is None:
+            new_value = 1
+        else:
+            new_value = int(current) + 1
+        await self.setex(key, 60, str(new_value))  # Default 60s TTL
+        return new_value
+    
+    async def ttl(self, key: str) -> int:
+        """Get TTL for a key."""
+        if key not in self._expiry:
+            return -1
+        remaining = self._expiry[key] - time.time()
+        return max(0, int(remaining))
+    
+    async def delete(self, *keys: str) -> int:
+        """Delete keys."""
+        deleted = 0
+        for key in keys:
+            if key in self._data:
+                del self._data[key]
+                if key in self._expiry:
+                    del self._expiry[key]
+                deleted += 1
+        return deleted
+    
+    async def script_load(self, script: str) -> str:
+        """Load a Lua script and return its SHA."""
+        import hashlib
+        script_hash = hashlib.sha1(script.encode()).hexdigest()
+        self._scripts[script_hash] = script
+        return script_hash
+    
+    async def evalsha(self, sha: str, numkeys: int, *args) -> Any:
+        """Execute a Lua script by SHA."""
+        if sha not in self._scripts:
+            raise Exception("NOSCRIPT No matching script")
+        
+        # Parse the actual script to understand what it does
+        script = self._scripts[sha]
+        
+        # Extract key and arguments
+        key = args[0] if len(args) > 0 else "rate_limit_key"
+        limit = int(args[1]) if len(args) > 1 else 5
+        window = int(args[2]) if len(args) > 2 else 60
+        
+        # Simulate the Lua script logic
+        current = await self.get(key)
+        if current is None:
+            await self.setex(key, window, "1")
+            return [1, window]  # [allowed, ttl]
+        else:
+            count = int(current)
+            if count >= limit:
+                return [0, await self.ttl(key)]  # [blocked, ttl]
+            else:
+                await self.setex(key, window, str(count + 1))
+                return [1, await self.ttl(key)]  # [allowed, ttl]
+    
+    async def close(self):
+        """Close the fake Redis connection."""
+        self._data.clear()
+        self._expiry.clear()
+        self._scripts.clear()
+
+
+@pytest.fixture
+def fake_redis():
+    """Create a fake Redis instance for testing."""
+    return FakeRedis()
 
 
 @pytest.fixture(scope="session")

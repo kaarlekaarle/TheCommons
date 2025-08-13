@@ -93,7 +93,7 @@ def get_limiter():
 def limiter_health() -> Dict[str, Any]:
     """Get the health status of the rate limiter."""
     if limiter is None:
-        return {"enabled": False, "backend": "uninitialized"}
+        return {"enabled": False, "backend": "noop"}
     
     if isinstance(limiter, NoOpLimiter):
         return {"enabled": False, "backend": "noop"}

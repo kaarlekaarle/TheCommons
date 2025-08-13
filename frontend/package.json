@@ -12,6 +12,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test --config=e2e/playwright.config.ts",
+    "test:e2e:smoke": "playwright test smoke.spec.ts --config=e2e/playwright.config.ts",
     "test:e2e:accessibility": "playwright test accessibility.spec.ts --config=e2e/playwright.config.ts",
     "sync:features": "tsx ../scripts/sync_features.ts",
     "sync:features:watch": "chokidar 'src/config/features.ts' -c 'npm run sync:features'",

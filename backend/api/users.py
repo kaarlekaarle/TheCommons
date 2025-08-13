@@ -8,7 +8,7 @@ from sqlalchemy import select, and_, func
 
 from backend.core.audit import AuditAction, audit_log, audit_log_decorator
 from backend.core.auth import get_current_active_user
-from backend.core.exceptions import ResourceNotFoundError, ServerError, ValidationError
+from backend.core.exceptions import ResourceNotFoundError, ServerError, ValidationError, ConflictError
 from backend.core.logging_json import get_json_logger, get_request_context
 from backend.database import get_db
 from backend.models.user import User
@@ -23,7 +23,7 @@ router = APIRouter()
 logger = get_json_logger(__name__)
 
 
-@router.post("/", response_model=UserResponse)
+@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 # @audit_log_decorator(AuditAction.USER_CREATE)  # Temporarily disabled due to decorator issue
 async def create_user(
     user_data: UserCreate, db: AsyncSession = Depends(get_db)
@@ -39,15 +39,17 @@ async def create_user(
 
     Raises:
         ValidationError: If user data is invalid
+        ConflictError: If username or email already exists
         ServerError: If an unexpected error occurs
     """
     user_service = UserService(db)
     try:
         user = await user_service.create_user(user_data)
         return user
+    except (ValidationError, ConflictError):
+        # Let these exceptions propagate with their proper status codes
+        raise
     except Exception as e:
-        if isinstance(e, ValidationError):
-            raise
         raise ServerError("Failed to create user")
 
 
@@ -155,7 +157,7 @@ async def delete_user_me(
         
         delegations_count = await db.execute(
             select(func.count(Delegation.id)).where(
-                (Delegation.delegator_id == current_user.id) | (Delegation.delegate_id == current_user.id),
+                (Delegation.delegator_id == current_user.id) | (Delegation.delegatee_id == current_user.id),
                 Delegation.is_deleted == False
             )
         )
@@ -339,24 +341,24 @@ async def export_user_data(
             {
                 "id": str(delegation.id),
                 "poll_id": str(delegation.poll_id),
-                "delegate_id": str(delegation.delegate_id),
-                "delegate_username": delegation.delegate.username if delegation.delegate else None,
+                "delegatee_id": str(delegation.delegatee_id),
+                "delegatee_username": delegation.delegatee.username if delegation.delegatee else None,
                 "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
                 "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None,
             }
             for delegation in delegations_as_delegator
         ]
         
-        # Export delegations where user is delegate
-        delegations_as_delegate_result = await db.execute(
+        # Export delegations where user is delegatee
+        delegations_as_delegatee_result = await db.execute(
             select(Delegation).where(
-                Delegation.delegate_id == current_user.id,
+                Delegation.delegatee_id == current_user.id,
                 Delegation.is_deleted == False
             ).order_by(Delegation.created_at.desc())
         )
-        delegations_as_delegate = delegations_as_delegate_result.scalars().all()
+        delegations_as_delegatee = delegations_as_delegatee_result.scalars().all()
         
-        user_data["delegations_as_delegate"] = [
+        user_data["delegations_as_delegatee"] = [
             {
                 "id": str(delegation.id),
                 "poll_id": str(delegation.poll_id),
@@ -365,7 +367,7 @@ async def export_user_data(
                 "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
                 "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None,
             }
-            for delegation in delegations_as_delegate
+            for delegation in delegations_as_delegatee
         ]
         
         # Export comments by user
@@ -395,7 +397,7 @@ async def export_user_data(
             "total_polls": len(user_data["polls"]),
             "total_votes": len(user_data["votes"]),
             "total_delegations_as_delegator": len(user_data["delegations_as_delegator"]),
-            "total_delegations_as_delegate": len(user_data["delegations_as_delegate"]),
+            "total_delegations_as_delegatee": len(user_data["delegations_as_delegatee"]),
             "total_comments": len(user_data["comments"]),
         }
         

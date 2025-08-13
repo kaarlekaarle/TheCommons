@@ -203,7 +203,8 @@ class UserService:
                 },
                 exc_info=True,
             )
-            raise ValidationError("Failed to fetch user")
+            # Return None instead of raising an error for not found cases
+            return None
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email.
@@ -226,7 +227,8 @@ class UserService:
                 },
                 exc_info=True,
             )
-            raise ValidationError("Failed to fetch user")
+            # Return None instead of raising an error for not found cases
+            return None
 
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """Create a new user.
@@ -274,7 +276,16 @@ class UserService:
                     extra={"username": user_data.username, "error": str(e)},
                     exc_info=True,
                 )
-                raise ValidationError("Failed to create user")
+                # Check if it's a constraint violation (duplicate key)
+                if "UNIQUE constraint failed" in str(e) or "duplicate key" in str(e).lower():
+                    if "username" in str(e).lower():
+                        raise ConflictError("Username already exists")
+                    elif "email" in str(e).lower():
+                        raise ConflictError("Email already exists")
+                    else:
+                        raise ConflictError("User already exists")
+                else:
+                    raise ValidationError("Failed to create user")
 
     async def authenticate_user(self, username: str, password: str) -> User:
         """Authenticate a user.

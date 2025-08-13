@@ -110,7 +110,7 @@ curl http://localhost:8000/health/comprehensive | jq .
 ### 6. **Fixed Critical Bugs**
 
 #### **Delegation Service Fix**
-- **Fixed Attribute Error**: Corrected `delegatee_id` → `delegate_id` in delegation service
+- **Fixed Attribute Error**: Corrected `delegate_id` → `delegatee_id` in delegation service
 - **Prevents Crashes**: Eliminates crashes caused by delegation chain resolution
 
 ## 📊 **Monitoring & Logging**
