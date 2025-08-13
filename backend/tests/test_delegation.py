@@ -314,8 +314,8 @@ async def test_resolve_delegation_chain(db_session, test_user, test_user2, test_
         start_date=datetime.utcnow(),
         end_date=None,
     )
-    final_delegatee = await service.resolve_delegation_chain(test_user.id, test_poll.id)
-    assert final_delegatee == test_user2.id
+    chain = await service.resolve_delegation_chain(test_user.id, test_poll.id)
+    assert chain == [str(test_user.id), str(test_user2.id)]
 
 
 @pytest.mark.asyncio
@@ -350,8 +350,8 @@ async def test_delegation_chain_depth_limit(
     )
 
     # Test chain resolution
-    final_delegatee = await service.resolve_delegation_chain(test_user.id, poll.id)
-    assert final_delegatee == test_user3.id
+    chain = await service.resolve_delegation_chain(test_user.id, poll.id)
+    assert chain == [str(test_user.id), str(test_user2.id), str(test_user3.id)]
 
 
 @pytest.mark.asyncio
@@ -614,16 +614,13 @@ async def test_delegation_chain_path(
         poll_id=poll.id,
     )
 
-    # Get chain with path
-    final_delegatee, path = await service.resolve_delegation_chain(
-        test_user.id, poll.id, include_path=True
-    )
+    # Get chain
+    chain = await service.resolve_delegation_chain(test_user.id, poll.id)
 
-    assert final_delegatee == test_user3.id
-    assert len(path) == 3
-    assert path[0] == test_user.id
-    assert path[1] == test_user2.id
-    assert path[2] == test_user3.id
+    assert len(chain) == 3
+    assert chain[0] == str(test_user.id)
+    assert chain[1] == str(test_user2.id)
+    assert chain[2] == str(test_user3.id)
 
 
 @pytest.mark.asyncio
@@ -741,12 +738,12 @@ async def test_multiple_active_chains(
     )
 
     # Verify both chains are active
-    chain1_final = await service.resolve_delegation_chain(test_user.id, None)
-    assert chain1_final[0] == test_user3.id
+    chain1 = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain1[-1] == str(test_user3.id)
 
-    chain2_final = await service.resolve_delegation_chain(test_user.id, None)
+    chain2 = await service.resolve_delegation_chain(test_user.id, None)
     assert (
-        chain2_final[0] == test_user3.id
+        chain2[-1] == str(test_user3.id)
     )  # Should still resolve to test_user3 since it's the most recent chain
 
     # Create a new delegation from test_user4 to test_user3
@@ -759,8 +756,8 @@ async def test_multiple_active_chains(
     )
 
     # Verify the final delegatee is still test_user3
-    final_delegatee = await service.resolve_delegation_chain(test_user.id, None)
-    assert final_delegatee[0] == test_user3.id
+    chain = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain[-1] == str(test_user3.id)
 
 
 @pytest.mark.asyncio
@@ -791,8 +788,8 @@ async def test_revoked_intermediate_delegatee(
     await service.revoke_delegation(delegation1.id)
 
     # Verify the chain is broken
-    final_delegatee = await service.resolve_delegation_chain(test_user.id, None)
-    assert final_delegatee == test_user.id  # Should return to original delegator
+    chain = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain == [str(test_user.id)]  # Should return to original delegator
 
 
 @pytest.mark.asyncio
@@ -843,5 +840,92 @@ async def test_delegation_chain_with_expired_delegations(
     )
 
     # Verify the chain is broken at the expired delegation
-    final_delegatee = await service.resolve_delegation_chain(test_user.id, None)
-    assert final_delegatee == test_user.id  # Should return to original delegator
+    chain = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain == [str(test_user.id)]  # Should return to original delegator
+
+
+@pytest.mark.asyncio
+async def test_resolve_delegation_chain_linear(db_session, test_user, test_user2, test_user3):
+    """Test linear chain resolution A->B->C."""
+    service = DelegationService(db_session)
+    
+    # Create linear chain: A -> B -> C
+    await service.create_delegation(
+        delegator_id=test_user.id,
+        delegatee_id=test_user2.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    await service.create_delegation(
+        delegator_id=test_user2.id,
+        delegatee_id=test_user3.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    
+    # Test chain resolution
+    chain = await service.resolve_delegation_chain(test_user.id)
+    assert chain == [str(test_user.id), str(test_user2.id), str(test_user3.id)]
+
+
+@pytest.mark.asyncio
+async def test_resolve_delegation_chain_cycle(db_session, test_user, test_user2):
+    """Test cycle detection A->B->A."""
+    service = DelegationService(db_session)
+    
+    # Create cycle: A -> B -> A
+    await service.create_delegation(
+        delegator_id=test_user.id,
+        delegatee_id=test_user2.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    await service.create_delegation(
+        delegator_id=test_user2.id,
+        delegatee_id=test_user.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    
+    # Test cycle detection
+    with pytest.raises(DelegationChainError, match="Circular delegation detected"):
+        await service.resolve_delegation_chain(test_user.id)
+
+
+@pytest.mark.asyncio
+async def test_resolve_delegation_chain_max_depth(db_session, test_user, test_user2, test_user3):
+    """Test max depth cut off."""
+    service = DelegationService(db_session)
+    
+    # Create chain longer than max_depth
+    await service.create_delegation(
+        delegator_id=test_user.id,
+        delegatee_id=test_user2.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    await service.create_delegation(
+        delegator_id=test_user2.id,
+        delegatee_id=test_user3.id,
+        start_date=datetime.utcnow(),
+        end_date=None,
+    )
+    
+    # Test with max_depth=1 (should only include start user)
+    with pytest.raises(DelegationChainError, match="Delegation chain depth limit exceeded"):
+        await service.resolve_delegation_chain(test_user.id, max_depth=1)
+    
+    # Test with max_depth=2 (should include start user and first delegatee)
+    chain = await service.resolve_delegation_chain(test_user.id, max_depth=2)
+    assert len(chain) == 2
+    assert chain == [str(test_user.id), str(test_user2.id)]
+
+
+@pytest.mark.asyncio
+async def test_resolve_delegation_chain_no_delegation(db_session, test_user):
+    """Test chain resolution when user has no delegation."""
+    service = DelegationService(db_session)
+    
+    # Test chain resolution for user with no delegation
+    chain = await service.resolve_delegation_chain(test_user.id)
+    assert chain == [str(test_user.id)]

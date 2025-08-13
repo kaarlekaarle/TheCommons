@@ -231,25 +231,24 @@ class DelegationService:
         self,
         user_id: UUID,
         poll_id: Optional[UUID] = None,
-        include_path: bool = False,
         max_depth: int = 10,
-    ) -> Tuple[UUID, Optional[List[UUID]]]:
+    ) -> List[str]:
         """Resolve the delegation chain for a user.
 
         Args:
             user_id: ID of the user to resolve chain for
             poll_id: Optional poll ID for poll-specific delegation
-            include_path: Whether to include the full delegation path
             max_depth: Maximum chain depth to prevent infinite loops
 
         Returns:
-            Tuple[UUID, Optional[List[UUID]]]: Final delegatee ID and optional path
+            List[str]: Ordered list of user IDs visited, including start user and final resolved voter
 
         Raises:
             DelegationChainError: If circular delegation detected or max depth exceeded
         """
         current_id = user_id
-        path = [current_id] if include_path else None
+        path = [str(current_id)]
+        visited = {current_id}
         depth = 0
 
         while depth < max_depth:
@@ -258,22 +257,25 @@ class DelegationService:
                 break
 
             current_id = delegation.delegatee_id
-            if include_path:
-                if current_id in path:
-                    raise DelegationChainError(
-                        message="Circular delegation detected",
-                        details={"path": [str(p) for p in path]},
-                    )
-                path.append(current_id)
+            
+            # Check for cycles
+            if current_id in visited:
+                raise DelegationChainError(
+                    message="Circular delegation detected",
+                    details={"path": path},
+                )
+            
+            visited.add(current_id)
+            path.append(str(current_id))
             depth += 1
 
         if depth >= max_depth:
             raise DelegationChainError(
                 message="Delegation chain depth limit exceeded",
-                details={"max_depth": max_depth},
+                details={"max_depth": max_depth, "path": path},
             )
 
-        return current_id, path
+        return path
 
     async def _would_create_circular_delegation(
         self, delegator_id: UUID, delegatee_id: UUID, poll_id: Optional[UUID]
@@ -289,10 +291,8 @@ class DelegationService:
             bool: True if circular delegation would be created
         """
         try:
-            final_delegatee, _ = await self.resolve_delegation_chain(
-                delegatee_id, poll_id, include_path=True
-            )
-            return final_delegatee == delegator_id
+            chain = await self.resolve_delegation_chain(delegatee_id, poll_id)
+            return str(delegator_id) in chain
         except DelegationChainError:
             # If we hit a circular delegation or depth limit, it means we would create a cycle
             return True
@@ -515,13 +515,12 @@ class DelegationService:
             chain_lengths = []
             for delegator_id in sample_delegators:
                 try:
-                    final_delegatee, path = await self.resolve_delegation_chain(
+                    chain = await self.resolve_delegation_chain(
                         delegator_id,
                         poll_id,
-                        include_path=True,
                         max_depth=10
                     )
-                    chain_length = len(path) - 1  # Subtract 1 to exclude the delegator
+                    chain_length = len(chain) - 1  # Subtract 1 to exclude the delegator
                     chain_lengths.append(chain_length)
                     max_chain_length = max(max_chain_length, chain_length)
                 except DelegationChainError as e:

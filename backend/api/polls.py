@@ -225,24 +225,25 @@ async def get_poll(
             logger.debug("Checking delegation chain", extra={"poll_id": str(poll_id), "user_id": str(current_user.id)})
             delegation_service = DelegationService(db)
             try:
-                final_delegatee = await delegation_service.resolve_delegation_chain(
+                chain = await delegation_service.resolve_delegation_chain(
                     current_user.id, poll_id
                 )
+                final_delegatee = chain[-1] if chain else str(current_user.id)
                 logger.debug("Delegation chain resolved", extra={
                     "poll_id": str(poll_id),
                     "user_id": str(current_user.id),
-                    "final_delegatee": str(final_delegatee),
+                    "final_delegatee": final_delegatee,
                 })
                 
-                if final_delegatee != current_user.id:
+                if final_delegatee != str(current_user.id):
                     vote_status.status = "delegated"
                     vote_status.final_delegatee_id = final_delegatee
-                    # TODO: Implement full chain path resolution
-                    vote_status.resolved_vote_path.append(final_delegatee)
+                    # Add the full chain path
+                    vote_status.resolved_vote_path = chain
                     logger.debug("User has delegation", extra={
                         "poll_id": str(poll_id),
                         "user_id": str(current_user.id),
-                        "delegated_to": str(final_delegatee),
+                        "delegated_to": final_delegatee,
                     })
             except Exception as e:
                 logger.error(

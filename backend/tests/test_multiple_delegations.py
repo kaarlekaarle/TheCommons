@@ -192,18 +192,16 @@ async def test_multiple_delegations_chain_resolution(
     )
 
     # Verify chain resolution uses most recent delegation
-    final_delegatee = await service.resolve_delegation_chain(test_user.id, None)
-    assert final_delegatee == test_user4.id, (
+    chain = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain[-1] == str(test_user4.id), (
         "Should resolve to user4 as it's the most recent"
     )
 
-    # Test chain resolution with path
-    final_delegatee, path = await service.resolve_delegation_chain(
-        test_user.id, None, include_path=True
-    )
-    assert final_delegatee == test_user4.id
-    assert len(path) == 2
-    assert path == [test_user.id, test_user4.id]
+    # Test chain resolution
+    chain = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain[-1] == str(test_user4.id)
+    assert len(chain) == 2
+    assert chain == [str(test_user.id), str(test_user4.id)]
 
 
 @pytest.mark.asyncio
@@ -625,20 +623,18 @@ async def test_delegation_chain_complexity(
     )
 
     # Test chain resolution
-    final_delegatee = await service.resolve_delegation_chain(test_user.id, None)
-    assert final_delegatee == test_user4.id
+    chain = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain[-1] == str(test_user4.id)
 
     # Test chain resolution with max depth
     with pytest.raises(DelegationChainError):
         await service.resolve_delegation_chain(test_user.id, None, max_depth=2)
 
-    # Test chain resolution with path
-    final_delegatee, path = await service.resolve_delegation_chain(
-        test_user.id, None, include_path=True
-    )
-    assert final_delegatee == test_user4.id
-    assert len(path) == 4
-    assert path == [test_user.id, test_user2.id, test_user3.id, test_user4.id]
+    # Test chain resolution
+    chain = await service.resolve_delegation_chain(test_user.id, None)
+    assert chain[-1] == str(test_user4.id)
+    assert len(chain) == 4
+    assert chain == [str(test_user.id), str(test_user2.id), str(test_user3.id), str(test_user4.id)]
 
 
 @pytest.mark.asyncio
