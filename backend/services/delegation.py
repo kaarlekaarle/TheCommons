@@ -171,10 +171,10 @@ class DelegationService:
         if not delegation:
             raise DelegationNotFoundError(delegation_id)
 
-        if delegation.end_date:
+        if delegation.revoked_at:
             return  # Already revoked, idempotent success
 
-        delegation.end_date = func.now()
+        delegation.revoked_at = func.now()
         await self.db.flush()
 
         # Trigger stats recalculation
@@ -184,15 +184,18 @@ class DelegationService:
         self, user_id: UUID, poll_id: Optional[UUID] = None
     ) -> Optional[Delegation]:
         """Get active delegation for a user and optional poll."""
-        # Base conditions for active delegation (no start_date/end_date in current model)
+        # Base conditions for active delegation
         conditions = [
             Delegation.delegator_id == user_id,
             Delegation.is_deleted == False,
+            Delegation.revoked_at.is_(None),  # Not revoked
         ]
 
-        # Note: Current model doesn't support poll-specific delegations
-        # All delegations are general (not poll-specific)
-        # If poll_id is provided, we ignore it for now since the model doesn't support it
+        # Add poll-specific condition if poll_id is provided
+        if poll_id is not None:
+            conditions.append(Delegation.poll_id == poll_id)
+        else:
+            conditions.append(Delegation.poll_id.is_(None))
 
         query = (
             select(Delegation)
@@ -411,6 +414,7 @@ class DelegationService:
         now = func.now()
         conditions = [
             Delegation.is_deleted == False,
+            Delegation.revoked_at.is_(None),  # Not revoked
             or_(Delegation.end_date.is_(None), Delegation.end_date > now),
             Delegation.start_date <= now,
         ]
