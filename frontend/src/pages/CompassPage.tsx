@@ -425,7 +425,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <main className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -603,7 +603,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
             </Button>
           </div>
         </section>
-      </div>
+      </main>
     </div>
   );
 }

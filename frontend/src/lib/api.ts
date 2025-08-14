@@ -717,6 +717,4 @@ export async function getPopularLabels(limit: number = 8, signal?: AbortSignal):
   }
 }
 
-
-
 export default api;

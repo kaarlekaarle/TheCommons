@@ -18,6 +18,7 @@ import LinkedPrinciplesDrawer from '../components/LinkedPrinciplesDrawer';
 import DelegationPath from '../components/DelegationPath';
 import { flags } from '../config/flags';
 import { useNavigate } from 'react-router-dom';
+import PrincipleProposal from '../components/principle/PrincipleProposal';
 
 export default function ProposalDetail() {
   const { id } = useParams<{ id: string }>();
@@ -79,12 +80,8 @@ export default function ProposalDetail() {
         getPollOptions(id!)
       ]);
 
-      // Redirect level_a polls to compass page when feature flag is enabled
-      if (pollData.decision_type === 'level_a' && flags.compassEnabled) {
-        console.debug('[compass-redirect]', flags.compassEnabled, pollData.decision_type, pollData.id);
-        navigate(`/compass/${id}`, { replace: true });
-        return;
-      }
+      // Note: level_a proposals now use the new structured format within this component
+      // No redirect needed - the PrincipleProposal component handles the display
 
       setPoll(pollData);
       setOptions(optionsData);
@@ -192,6 +189,29 @@ export default function ProposalDetail() {
     );
   }
 
+  // For level_a proposals, use the new structured format
+  if (poll.decision_type === 'level_a') {
+    const tally = results?.options.map(option => ({
+      optionId: option.option_id,
+      count: option.votes
+    })) || [];
+
+    return (
+      <PrincipleProposal
+        poll={poll}
+        options={options}
+        myVote={myVote}
+        onVoteSubmit={handleVote}
+        onChangeAlignmentTo={handleVote}
+        isSubmitting={!!voting}
+        onBack={() => navigate('/proposals')}
+        tally={tally}
+        totalVotes={results?.total_votes || 0}
+      />
+    );
+  }
+
+  // For level_b proposals, use the existing format
   return (
     <div className="container mx-auto px-4 pb-20 sm:pb-8">
       {/* Header */}

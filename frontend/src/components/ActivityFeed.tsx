@@ -87,9 +87,9 @@ export default function ActivityFeed() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-semibold text-white">{activity.user.username}</span>
-            <span className="text-xs font-medium text-muted capitalize bg-gray-700 px-2 py-0.5 rounded">{activity.type}</span>
+            <span className="text-xs font-medium text-gray-300 capitalize bg-gray-700 px-2 py-0.5 rounded">{activity.type}</span>
           </div>
-          <p className="text-sm text-body leading-relaxed">{activity.details}</p>
+          <p className="text-sm text-gray-200 leading-relaxed">{activity.details}</p>
 
           {/* Labels */}
           {flags.labelsEnabled && activity.labels && activity.labels.length > 0 && (
@@ -112,7 +112,7 @@ export default function ActivityFeed() {
             </div>
           )}
 
-                      <time className="text-xs text-subtle mt-2 block">
+          <time className="text-xs text-gray-400 mt-2 block">
             {new Date(activity.timestamp).toLocaleString()}
           </time>
         </div>

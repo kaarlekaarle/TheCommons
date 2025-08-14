@@ -7,9 +7,8 @@ import type { Poll } from '../types';
  * @returns The correct href for the poll
  */
 export function getProposalHref(poll: Poll): string {
-  if (flags.compassEnabled && poll.decision_type === 'level_a') {
-    return `/compass/${poll.id}`;
-  }
+  // All proposals should use the /proposals/ route
+  // The new structured format is handled within the ProposalDetail component
   return `/proposals/${poll.id}`;
 }
 
@@ -20,8 +19,7 @@ export function getProposalHref(poll: Poll): string {
  * @returns The correct href for the poll
  */
 export function getProposalHrefById(id: string, decisionType: string): string {
-  if (flags.compassEnabled && decisionType === 'level_a') {
-    return `/compass/${id}`;
-  }
+  // All proposals should use the /proposals/ route
+  // The new structured format is handled within the ProposalDetail component
   return `/proposals/${id}`;
 }

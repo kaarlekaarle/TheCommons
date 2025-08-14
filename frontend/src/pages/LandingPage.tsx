@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { 
-  Vote, 
-  MessageCircle, 
-  Users, 
-  TrendingUp, 
+import {
+  Vote,
+  MessageCircle,
+  Users,
+  TrendingUp,
   ArrowRight,
   CheckCircle,
   Heart,
@@ -123,166 +123,168 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section - Government Style */}
-      <section className="gov-section">
-        <div className="gov-container text-center max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-5xl md:text-6xl font-bold text-gov-primary mb-6 leading-tight">
-              Decisions We Make Together
-            </h1>
-            <p className="text-xl md:text-2xl text-gov-text-muted mb-8 leading-relaxed max-w-3xl mx-auto">
-              The Commons is where communities decide their future — openly, fairly, and together. 
-              It's built on the idea that everyone should have a voice and every decision should be clear and accountable.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth?mode=register">
-                <Button size="lg" variant="primary" className="text-lg px-8 py-3">
-                  Join Your Community
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
-                  Sign In
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Community Stories Section - Government Style */}
-      <section className="gov-section bg-white">
-        <div className="gov-container max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
-              From Ideas to Action
-            </h2>
-            <p className="text-lg text-gov-text-muted max-w-2xl mx-auto">
-              How communities have turned discussion into real change
-            </p>
+      <main>
+        {/* Hero Section - Government Style */}
+        <section className="gov-section">
+          <div className="gov-container text-center max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="text-5xl md:text-6xl font-bold text-gov-primary mb-6 leading-tight">
+                Decisions We Make Together
+              </h1>
+              <p className="text-xl md:text-2xl text-gov-text-muted mb-8 leading-relaxed max-w-3xl mx-auto">
+                The Commons is where communities decide their future — openly, fairly, and together.
+                It's built on the idea that everyone should have a voice and every decision should be clear and accountable.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/auth?mode=register">
+                  <Button size="lg" variant="primary" className="text-lg px-8 py-3">
+                    Join Your Community
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
           </div>
-          {flags.useDemoContent ? (
-            <div className="grid md:grid-cols-3 gap-8">
-              {demoStories.map((story, index) => (
+        </section>
+
+        {/* Community Stories Section - Government Style */}
+        <section className="gov-section bg-white">
+          <div className="gov-container max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
+                From Ideas to Action
+              </h2>
+              <p className="text-lg text-gov-text-muted max-w-2xl mx-auto">
+                How communities have turned discussion into real change
+              </p>
+            </div>
+            {flags.useDemoContent ? (
+              <div className="grid md:grid-cols-3 gap-8">
+                {demoStories.map((story, index) => (
+                  <motion.div
+                    key={story.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.2 }}
+                    className="gov-card gov-card-hover text-center"
+                  >
+                    <div className="text-gov-secondary mb-4 flex justify-center">
+                      {story.icon}
+                    </div>
+                    <h3 className="text-xl font-semibold text-gov-text mb-3">{story.title}</h3>
+                    <p className="text-gov-text-muted">{story.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <StoryCards
+                stories={stories}
+                loading={loading}
+                error={error}
+              />
+            )}
+          </div>
+        </section>
+
+        {/* Features Section - Government Style */}
+        <section className="gov-section">
+          <div className="gov-container max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
+                How It Works
+              </h2>
+              <p className="text-lg text-gov-text-muted max-w-2xl mx-auto">
+                Simple tools that make community decision-making accessible to everyone
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {waysToConnect.map((feature, index) => (
                 <motion.div
-                  key={story.title}
+                  key={feature.title}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.2 }}
+                  transition={{ delay: index * 0.1 }}
                   className="gov-card gov-card-hover text-center"
                 >
                   <div className="text-gov-secondary mb-4 flex justify-center">
-                    {story.icon}
+                    {feature.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-gov-text mb-3">{story.title}</h3>
-                  <p className="text-gov-text-muted">{story.description}</p>
+                  <h3 className="text-lg font-semibold text-gov-text mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gov-text-muted">{feature.description}</p>
                 </motion.div>
               ))}
             </div>
-          ) : (
-            <StoryCards
-              stories={stories}
-              loading={loading}
-              error={error}
-            />
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* Features Section - Government Style */}
-      <section className="gov-section">
-        <div className="gov-container max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
-              How It Works
-            </h2>
-            <p className="text-lg text-gov-text-muted max-w-2xl mx-auto">
-              Simple tools that make community decision-making accessible to everyone
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {waysToConnect.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="gov-card gov-card-hover text-center"
-              >
-                <div className="text-gov-secondary mb-4 flex justify-center">
-                  {feature.icon}
-                </div>
-                <h3 className="text-lg font-semibold text-gov-text mb-2">{feature.title}</h3>
-                <p className="text-sm text-gov-text-muted">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section - Government Style */}
-      <section className="gov-section bg-white">
-        <div className="gov-container max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
-              Why Two Levels?
-            </h2>
-            <p className="text-lg text-gov-text-muted">
-              Build stronger, more connected communities through democratic participation
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-start gap-3"
-              >
-                <CheckCircle className="w-5 h-5 text-gov-secondary flex-shrink-0 mt-1" />
-                <span className="text-gov-text-muted">{benefit}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section - Government Style */}
-      <section className="gov-section">
-        <div className="gov-container text-center max-w-3xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
-              Your Voice Belongs Here
-            </h2>
-            <p className="text-lg text-gov-text-muted mb-8">
-              Start shaping your community's decisions today.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth?mode=register">
-                <Button size="lg" variant="primary" className="text-lg px-8 py-3">
-                  Start Now
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link to="/why">
-                <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
-                  Learn More
-                </Button>
-              </Link>
+        {/* Benefits Section - Government Style */}
+        <section className="gov-section bg-white">
+          <div className="gov-container max-w-4xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
+                Why Two Levels?
+              </h2>
+              <p className="text-lg text-gov-text-muted">
+                Build stronger, more connected communities through democratic participation
+              </p>
             </div>
-          </motion.div>
-        </div>
-      </section>
+            <div className="grid md:grid-cols-2 gap-6">
+              {benefits.map((benefit, index) => (
+                <motion.div
+                  key={benefit}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-start gap-3"
+                >
+                  <CheckCircle className="w-5 h-5 text-gov-secondary flex-shrink-0 mt-1" />
+                  <span className="text-gov-text-muted">{benefit}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section - Government Style */}
+        <section className="gov-section">
+          <div className="gov-container text-center max-w-3xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-gov-primary mb-4">
+                Your Voice Belongs Here
+              </h2>
+              <p className="text-lg text-gov-text-muted mb-8">
+                Start shaping your community's decisions today.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/auth?mode=register">
+                  <Button size="lg" variant="primary" className="text-lg px-8 py-3">
+                    Start Now
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Link to="/why">
+                  <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
+                    Learn More
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      </main>
 
       {/* Government Footer */}
       <footer className="gov-footer">

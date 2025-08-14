@@ -91,7 +91,7 @@ export default function ContentList({
                     {item.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-block px-2 py-1 text-xs bg-gov-secondary text-white rounded"
+                        className="inline-block px-2 py-1 text-xs bg-gov-secondary text-gov-primary rounded"
                       >
                         {tag}
                       </span>

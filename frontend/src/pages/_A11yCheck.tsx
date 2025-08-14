@@ -4,9 +4,9 @@ import Badge from '../components/ui/Badge';
 
 export default function A11yCheck() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-h1 font-bold text-neutral-900 mb-8">Accessibility Design Check</h1>
-      
+
       {/* Typography */}
       <section className="mb-12">
         <h2 className="text-h2 font-bold text-neutral-900 mb-6">Typography</h2>
@@ -160,9 +160,9 @@ export default function A11yCheck() {
           <div className="flex flex-wrap gap-4">
             <Button variant="primary" className="focus-ring">Focusable Button</Button>
             <a href="#" className="focus-ring inline-block px-4 py-2 bg-white border border-neutral-300 rounded-lg text-neutral-900">Focusable Link</a>
-            <input 
-              type="text" 
-              placeholder="Focusable input" 
+            <input
+              type="text"
+              placeholder="Focusable input"
               className="px-3 py-2 border border-neutral-300 rounded-lg focus-ring"
             />
           </div>
@@ -185,6 +185,6 @@ export default function A11yCheck() {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
