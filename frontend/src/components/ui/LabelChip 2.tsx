@@ -5,7 +5,7 @@ interface LabelChipProps {
   label: Label;
   onClick?: (slug: string) => void;
   className?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg';
   active?: boolean;
 }
 
@@ -19,8 +19,7 @@ export const LabelChip: React.FC<LabelChipProps> = ({
   const sizeClasses = {
     sm: 'px-2 py-1 text-xs',
     md: 'px-3 py-1.5 text-sm',
-    lg: 'px-4 py-2 text-base',
-    xl: 'px-6 py-3 text-lg'
+    lg: 'px-4 py-2 text-base'
   };
 
   const baseClasses = `

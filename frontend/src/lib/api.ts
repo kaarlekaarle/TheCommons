@@ -102,7 +102,7 @@ export const getPoll = async (id: string): Promise<Poll> => {
 };
 
 // Label API functions
-export const listLabels = async (includeInactive: boolean = false): Promise<Label[]> => {
+export const listLabels = async (includeInactive: boolean = false, signal?: AbortSignal): Promise<Label[]> => {
   try {
     const queryParams = new URLSearchParams();
     if (includeInactive) {
@@ -110,7 +110,7 @@ export const listLabels = async (includeInactive: boolean = false): Promise<Labe
     }
     
     const url = queryParams.toString() ? `/api/labels/?${queryParams.toString()}` : '/api/labels/';
-    const response = await api.get(url);
+    const response = await api.get(url, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -549,7 +549,8 @@ export async function getLabelOverview(
     page?: number;
     per_page?: number;
     sort?: 'newest' | 'oldest';
-  }
+  },
+  signal?: AbortSignal
 ): Promise<LabelOverview> {
   try {
     const queryParams = new URLSearchParams();
@@ -567,7 +568,7 @@ export async function getLabelOverview(
     }
     
     const url = queryParams.toString() ? `/api/labels/${slug}/overview?${queryParams.toString()}` : `/api/labels/${slug}/overview`;
-    const response = await api.get(url);
+    const response = await api.get(url, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -578,9 +579,9 @@ export async function getLabelOverview(
   }
 }
 
-export async function getPopularLabels(limit: number = 8): Promise<PopularLabel[]> {
+export async function getPopularLabels(limit: number = 8, signal?: AbortSignal): Promise<PopularLabel[]> {
   try {
-    const response = await api.get(`/api/labels/popular/public?limit=${limit}`);
+    const response = await api.get(`/api/labels/popular/public?limit=${limit}`, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;

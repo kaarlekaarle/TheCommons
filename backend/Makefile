@@ -1,4 +1,4 @@
-.PHONY: test test-fast clean-testdb cov auto-tag auto-tag-dry labels-smoke
+.PHONY: test test-fast clean-testdb cov auto-tag auto-tag-dry labels-smoke db-invariants
 
 # Activate virtual environment if it exists
 VENV_ACTIVATE = source ../venv/bin/activate || true
@@ -27,3 +27,7 @@ auto-tag-dry:
 labels-smoke:
 	$(VENV_ACTIVATE) && \
 	PYTHONPATH=.. LABELS_ENABLED=true SECRET_KEY="auto-tag-secret-key" DATABASE_URL="sqlite+aiosqlite:///../test.db" python -m backend.scripts.labels_smoke
+
+db-invariants:
+	$(VENV_ACTIVATE) && \
+	PYTHONPATH=.. LABELS_ENABLED=true SECRET_KEY="db-invariants-secret-key" DATABASE_URL="sqlite+aiosqlite:///../test.db" python -m backend.scripts.check_db_invariants

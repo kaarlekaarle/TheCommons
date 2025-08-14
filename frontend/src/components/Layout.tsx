@@ -9,13 +9,15 @@ import {
   Menu,
   X,
   Search,
-  ChevronDown
+  ChevronDown,
+  Hash
 } from 'lucide-react';
 import clsx from 'clsx';
 import Button from './ui/Button';
 import { listLabels } from '../lib/api';
 import type { Label } from '../types';
 import { flags } from '../config/flags';
+import TopicsAutocomplete from './TopicsAutocomplete';
 
 
 interface LayoutProps {
@@ -26,7 +28,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [labels, setLabels] = useState<Label[]>([]);
-  const [topicsDropdownOpen, setTopicsDropdownOpen] = useState(false);
+  const [topicsAutocompleteOpen, setTopicsAutocompleteOpen] = useState(false);
 
 
   const handleLogout = () => {
@@ -54,19 +56,20 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (topicsDropdownOpen && !(event.target as Element).closest('.topics-dropdown')) {
-        setTopicsDropdownOpen(false);
+      if (topicsAutocompleteOpen && !(event.target as Element).closest('.topics-dropdown')) {
+        setTopicsAutocompleteOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [topicsDropdownOpen]);
+  }, [topicsAutocompleteOpen]);
 
   const navigation = [
     { name: 'Principles', href: '/principles', icon: ListChecks },
     { name: 'Actions', href: '/actions', icon: ListChecks },
     { name: 'Share Your Idea', href: '/proposals/new', icon: FilePlus2 },
+    ...(flags.labelsEnabled ? [{ name: 'Topics', href: '/topics', icon: Hash }] : []),
   ];
 
   const isActive = (href: string) => {
@@ -77,6 +80,9 @@ export default function Layout({ children }: LayoutProps) {
       return true;
     }
     if (href === '/actions' && location.pathname === '/actions') {
+      return true;
+    }
+    if (href === '/topics' && (location.pathname === '/topics' || location.pathname.startsWith('/t/'))) {
       return true;
     }
     return location.pathname === href;
@@ -128,48 +134,28 @@ export default function Layout({ children }: LayoutProps) {
                 );
               })}
               
-              {/* Topics Dropdown */}
-              {flags.labelsEnabled && labels.length > 0 && (
+              {/* Topics Autocomplete */}
+              {flags.labelsEnabled && (
                 <div className="relative topics-dropdown">
                   <button
                     onClick={() => {
-                      console.log('Topics dropdown clicked, current state:', topicsDropdownOpen);
-                      setTopicsDropdownOpen(!topicsDropdownOpen);
+                      setTopicsAutocompleteOpen(!topicsAutocompleteOpen);
                     }}
                     className={clsx(
                       'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md',
-                      (topicsDropdownOpen || isTopicPage()) && 'text-primary-700 border-b-2 border-primary-700'
+                      (topicsAutocompleteOpen || isTopicPage()) && 'text-primary-700 border-b-2 border-primary-700'
                     )}
                   >
                     <span>Topics</span>
                     <ChevronDown className="w-4 h-4 ml-1" />
                   </button>
                   
-                  {topicsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-xl z-50">
-                      <div className="py-1">
-                        <div className="px-4 py-2 text-xs text-neutral-500 border-b border-neutral-100">
-                          Available Topics ({labels.length})
-                        </div>
-                        {labels.slice(0, 6).map((label) => (
-                          <Link
-                            key={label.id}
-                            to={`/t/${label.slug}`}
-                            className="block px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
-                            onClick={() => {
-                              console.log('Topic clicked:', label.slug);
-                              setTopicsDropdownOpen(false);
-                            }}
-                          >
-                            {label.name}
-                          </Link>
-                        ))}
-                        {labels.length > 6 && (
-                          <div className="px-4 py-2 text-xs text-neutral-500 border-t border-neutral-100">
-                            +{labels.length - 6} more topics
-                          </div>
-                        )}
-                      </div>
+                  {topicsAutocompleteOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-80 z-50">
+                      <TopicsAutocomplete
+                        isOpen={topicsAutocompleteOpen}
+                        onClose={() => setTopicsAutocompleteOpen(false)}
+                      />
                     </div>
                   )}
                 </div>

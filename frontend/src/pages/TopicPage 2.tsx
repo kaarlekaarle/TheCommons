@@ -27,11 +27,7 @@ function logSet(tag: string, arr: PollSummary[]) {
   if (import.meta.env.DEV) {
     const ids = arr.map(p => String(p.id));
     const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
-    if (dupes.length) {
-      console.warn(`[TopicPage] ${tag} dupes`, { dupes: Array.from(new Set(dupes)), ids });
-      // Dev telemetry guard: log compact message for monitoring
-      console.warn(`[TopicPage] DUPLICATE_DETECTED: ${dupes.length} dupes in ${tag} for ${window.location.pathname}`);
-    }
+    if (dupes.length) console.warn(`[TopicPage] ${tag} dupes`, { dupes: Array.from(new Set(dupes)), ids });
     console.debug(`[TopicPage] ${tag} size=${arr.length}`);
   }
 }
@@ -53,8 +49,6 @@ export default function TopicPage() {
   const { error: showError } = useToast();
   const showErrorRef = useRef(showError);
   const isLoadingRef = useRef(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   showErrorRef.current = showError;
 
   // URL state management
@@ -96,14 +90,6 @@ export default function TopicPage() {
   const fetchData = useCallback(async () => {
     if (!slug) return;
     
-    // Abort previous request if it exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Create new AbortController for this request
-    abortControllerRef.current = new AbortController();
-    
     // Prevent multiple simultaneous fetches
     if (isLoadingRef.current) {
       console.log('[TopicPage] Skipping fetch - already loading');
@@ -127,7 +113,7 @@ export default function TopicPage() {
           page: currentPage,
           per_page: perPage,
           sort: sortOrder
-        }, abortControllerRef.current?.signal));
+        }));
         
         // Log the raw data from API
         if (overviewData.items) {
@@ -156,30 +142,19 @@ export default function TopicPage() {
       }
       
       try {
-        popularData = await retryWithBackoff(() => getPopularLabels(8, abortControllerRef.current?.signal));
+        popularData = await retryWithBackoff(() => getPopularLabels(8));
       } catch (popularErr) {
         console.error('Failed to fetch popular labels:', popularErr);
         // Don't set error for popular labels - it's not critical
       }
       
-      // Ensure idempotent merge using Map and stable sort
+      // Ensure idempotent merge using Map
       if (overviewData) {
         const byId = new Map<string, PollSummary>();
         for (const poll of overviewData.items) {
           byId.set(String(poll.id), poll);
         }
         const finalItems = Array.from(byId.values());
-        
-        // Stable sort by created_at DESC, then id DESC
-        finalItems.sort((a, b) => {
-          const timeA = new Date(a.created_at).getTime();
-          const timeB = new Date(b.created_at).getTime();
-          if (timeA !== timeB) {
-            return timeB - timeA; // DESC
-          }
-          return String(b.id).localeCompare(String(a.id)); // DESC by ID
-        });
-        
         overviewData.items = finalItems;
         logSet("overview:afterMerge", finalItems);
       }
@@ -192,12 +167,6 @@ export default function TopicPage() {
         setFallbackData(overviewData);
       }
     } catch (err: unknown) {
-      // Don't set error if request was aborted
-      if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
-        console.log('[TopicPage] Request was aborted');
-        return;
-      }
-      
       console.error('Failed to fetch topic data:', err);
       let errorMessage = 'Failed to load topic data';
       
@@ -219,24 +188,9 @@ export default function TopicPage() {
     }
   }, [slug, activeTab, currentPage, perPage, sortOrder, retryWithBackoff]);
 
-  // Fetch data when URL parameters change with debounce
+  // Fetch data when URL parameters change
   useEffect(() => {
-    // Clear existing debounce timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    
-    // Set new debounce timeout (200ms)
-    debounceTimeoutRef.current = setTimeout(() => {
-      fetchData();
-    }, 200);
-    
-    // Cleanup function
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
+    fetchData();
   }, [fetchData]);
 
   const handleLabelClick = useCallback((labelSlug: string) => {
@@ -369,7 +323,7 @@ export default function TopicPage() {
             <ChevronDown className="w-4 h-4 rotate-[-90deg] text-gray-600" />
           </li>
           <li>
-            <Link to="/topics" className="hover:text-gray-800 transition-colors">
+            <Link to="/dashboard" className="hover:text-gray-800 transition-colors">
               Topics
             </Link>
           </li>

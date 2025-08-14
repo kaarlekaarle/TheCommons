@@ -3,7 +3,7 @@ from uuid import UUID
 import hashlib
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Response
-from sqlalchemy import select, and_, func, desc
+from sqlalchemy import select, and_, func, desc, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -354,11 +354,11 @@ async def get_label_overview(
         base_query = base_query.where(Poll.decision_type == "level_b")
     # "all" tab includes all decision types
     
-    # Apply sorting
+    # Apply sorting with stable secondary sort by ID
     if sort == "newest":
-        base_query = base_query.order_by(desc(Poll.created_at))
+        base_query = base_query.order_by(desc(Poll.created_at), desc(Poll.id))
     else:  # oldest
-        base_query = base_query.order_by(Poll.created_at)
+        base_query = base_query.order_by(Poll.created_at, Poll.id)
     
     # Debug logging for SQL query
     if settings.DEBUG or settings.TESTING:
@@ -515,6 +515,79 @@ async def get_label_overview(
         }
     
     return response_data
+
+@router.get("/dev/labels/{slug}/health")
+async def get_label_health_debug(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Dev endpoint to check label health and detect duplicates."""
+    if not settings.DEBUG and not settings.TESTING:
+        raise ResourceNotFoundError("Dev endpoint not available in production")
+    
+    # Get the label
+    label_result = await db.execute(
+        select(Label).where(
+            and_(
+                Label.slug == slug,
+                Label.is_active == True,
+                Label.is_deleted == False
+            )
+        )
+    )
+    label = label_result.scalar_one_or_none()
+    
+    if not label:
+        raise ResourceNotFoundError(f"Label with slug '{slug}' not found")
+    
+    # Get poll counts
+    label_subq = select(poll_labels.c.poll_id).join(Label).where(Label.id == label.id)
+    
+    total_count_result = await db.execute(
+        select(func.count(func.distinct(Poll.id))).where(
+            and_(
+                Poll.id.in_(label_subq),
+                Poll.is_deleted == False
+            )
+        )
+    )
+    total_count = total_count_result.scalar()
+    
+    # Check for duplicates in poll_labels
+    duplicate_check_result = await db.execute(
+        text("""
+            SELECT 
+                COUNT(*) as total_relationships,
+                COUNT(DISTINCT poll_id || ':' || label_id) as unique_relationships
+            FROM poll_labels 
+            WHERE label_id = :label_id
+        """),
+        {"label_id": str(label.id)}
+    )
+    duplicate_check = duplicate_check_result.fetchone()
+    
+    total_relationships = duplicate_check.total_relationships if duplicate_check else 0
+    unique_relationships = duplicate_check.unique_relationships if duplicate_check else 0
+    has_duplicates = total_relationships != unique_relationships
+    
+    return {
+        "label": {
+            "id": str(label.id),
+            "name": label.name,
+            "slug": label.slug
+        },
+        "counts": {
+            "total_polls": total_count,
+            "total_relationships": total_relationships,
+            "unique_relationships": unique_relationships
+        },
+        "health": {
+            "has_duplicates": has_duplicates,
+            "duplicate_count": total_relationships - unique_relationships if has_duplicates else 0
+        }
+    }
+
 
 @router.get("/dev/labels/{slug}/raw")
 async def get_label_raw_debug(

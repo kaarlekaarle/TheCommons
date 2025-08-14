@@ -11,8 +11,10 @@ import ProposalNew from './pages/ProposalNew';
 import PrinciplesList from './pages/PrinciplesList';
 import ActionsList from './pages/ActionsList';
 import TopicPage from './pages/TopicPage';
+import TopicsRouteWrapper from './components/TopicsRouteWrapper';
 import ActivityFeed from './components/ActivityFeed';
 import DebugOverlay from './components/DebugOverlay';
+import { flags } from './config/flags';
 
 // Lazy load the WhyTwoLevels page
 const WhyTwoLevels = React.lazy(() => import('./pages/WhyTwoLevels'));
@@ -159,6 +161,8 @@ export default function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/activity" element={<ActivityFeed />} />
                     <Route path="/t/:slug" element={<TopicPage />} />
+                    <Route path="/topics" element={<TopicsRouteWrapper />} />
+                    <Route path="/topics/disabled" element={<TopicsRouteWrapper />} />
                   </Routes>
                 </Layout>
               ) : (
