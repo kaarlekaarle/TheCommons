@@ -72,22 +72,23 @@ export default function ProposalDetail() {
       setLoading(true);
       console.log('[DEBUG] Fetching proposal data for ID:', id);
       console.log('[DEBUG] Current token:', localStorage.getItem('token') ? 'Present' : 'Missing');
-      
+
       // Fetch core data (poll and options) first
       const [pollData, optionsData] = await Promise.all([
         getPoll(id!),
         getPollOptions(id!)
       ]);
-      
+
       // Redirect level_a polls to compass page when feature flag is enabled
       if (pollData.decision_type === 'level_a' && flags.compassEnabled) {
+        console.debug('[compass-redirect]', flags.compassEnabled, pollData.decision_type, pollData.id);
         navigate(`/compass/${id}`, { replace: true });
         return;
       }
-      
+
       setPoll(pollData);
       setOptions(optionsData);
-      
+
       // Fetch optional data (vote, results, and delegation) - these can fail without breaking the page
       try {
         const voteData = await getMyVoteForPoll(id!);
@@ -96,7 +97,7 @@ export default function ProposalDetail() {
         console.log('[DEBUG] Could not fetch vote data:', voteError);
         setMyVote(null);
       }
-      
+
       try {
         const resultsData = await getResults(id!);
         setResults(resultsData);
@@ -124,12 +125,12 @@ export default function ProposalDetail() {
           setDelegationSummary(null);
         }
       }
-      
+
       console.log('[DEBUG] Proposal data loaded successfully');
     } catch (err: unknown) {
       const error = err as { message: string; status?: number };
       console.error('[DEBUG] Failed to load proposal:', error.message, 'Status:', error.status);
-      
+
       // Check if it's an authentication error
       if (error.status === 401) {
         showError('Please log in to view this proposal');
@@ -202,24 +203,24 @@ export default function ProposalDetail() {
         <div className="flex items-center gap-3 mb-4">
           <h1 className="text-3xl font-bold text-strong">{poll.title}</h1>
           <span className={`px-3 py-1.5 text-xs font-medium rounded-full flex items-center gap-1 ${
-            poll.decision_type === 'level_a' 
-              ? 'badge-level-a' 
+            poll.decision_type === 'level_a'
+              ? 'badge-level-a'
               : 'badge-level-b'
           }`}>
             {poll.decision_type === 'level_a' ? (
               <>
                 <Compass className="w-3 h-3" />
-                Principle (Level A)
+                Principle
               </>
             ) : (
               <>
                 <Target className="w-3 h-3" />
-                Action (Level B)
+                Action
               </>
             )}
           </span>
         </div>
-        
+
         {/* Labels */}
         {flags.labelsEnabled && poll.labels && poll.labels.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
@@ -237,7 +238,7 @@ export default function ProposalDetail() {
           </div>
         )}
 
-        {/* Linked Principles Card - Only for Level B proposals */}
+        {/* Linked Principles Card - Only for actions */}
         {flags.labelsEnabled && poll.decision_type === 'level_b' && poll.labels && poll.labels.length > 0 && (
           <div className="banner-info rounded-lg mb-6">
             <div className="flex items-start gap-3">
@@ -263,11 +264,11 @@ export default function ProposalDetail() {
             </div>
           </div>
         )}
-        
+
         {/* Level Context Banner */}
         <div className={`banner-info rounded-lg mb-6 ${
-          poll.decision_type === 'level_a' 
-            ? '' 
+          poll.decision_type === 'level_a'
+            ? ''
             : 'banner-ok'
         }`}>
           <div className="flex items-start gap-3">
@@ -281,7 +282,7 @@ export default function ProposalDetail() {
                 {poll.decision_type === 'level_a' ? 'Long-Term Direction' : 'Short-Term Action'}
               </p>
               <p className={`text-sm text-body`}>
-                {poll.decision_type === 'level_a' 
+                {poll.decision_type === 'level_a'
                   ? 'This principle sets the compass and guides all other decisions.'
                   : 'This action moves us forward now and can be adjusted as needed.'
                 }
@@ -289,7 +290,7 @@ export default function ProposalDetail() {
             </div>
           </div>
         </div>
-        
+
         <p className="text-body leading-relaxed mb-4">{poll.description}</p>
         {poll.decision_type === 'level_a' && poll.direction_choice && (
           <div className="banner-info rounded-lg mb-6">
@@ -327,7 +328,7 @@ export default function ProposalDetail() {
             </div>
           </section>
 
-          {/* Direction Section - Only show for Level A proposals */}
+          {/* Direction Section - Only show for principles */}
           {poll.decision_type === 'level_a' && poll.direction_choice && (
             <section>
               <div className="flex items-center gap-3 mb-6">
@@ -397,9 +398,9 @@ export default function ProposalDetail() {
                 delegationSummary={delegationSummary}
                 currentUserId={user?.id}
               />
-              
+
                               <h3 className="font-semibold text-strong">Vote</h3>
-              
+
                       {/* Delegation Banner */}
                       {(() => {
                         const allowed = canUseDelegation(user?.email);
@@ -410,7 +411,7 @@ export default function ProposalDetail() {
                               <div className="flex-1">
                                 <p className="text-sm text-strong font-medium">
                                   {delegationCopy.poll_banner_title.replace(
-                                    '{name}', 
+                                    '{name}',
                                     delegationInfo.poll.to_user_name || delegationInfo.poll.to_user_id.slice(0, 8)
                                   )}
                                 </p>
@@ -422,13 +423,13 @@ export default function ProposalDetail() {
                           </div>
                         ) : null;
                       })()}
-              
+
               {(() => {
                 const allowed = canUseDelegation(user?.email);
                 return allowed ? (
                   <div className="mb-4 p-3 bg-surface/50 border border-border rounded-lg">
-                    <DelegationStatus 
-                      pollId={poll.id} 
+                    <DelegationStatus
+                      pollId={poll.id}
                       onOpenModal={() => setDelegationModalOpen(true)}
                     />
                   </div>

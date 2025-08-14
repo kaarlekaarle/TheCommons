@@ -6,6 +6,7 @@ import type { Poll, Label } from '../types';
 import { flags } from '../config/flags';
 import LabelChip from './ui/LabelChip';
 import Button from './ui/Button';
+import { getProposalHrefById } from '../utils/navigation';
 
 interface LinkedPrinciplesDrawerProps {
   isOpen: boolean;
@@ -29,13 +30,13 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const linkedPolls = await listPolls({
         decision_type: 'level_a',
         label: label.slug,
         limit: 3
       });
-      
+
       // Filter out the current poll if it's somehow included
       const filteredPolls = linkedPolls.filter(poll => poll.id !== currentPollId);
       setPrinciples(filteredPolls);
@@ -60,7 +61,7 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
   };
 
   const handlePrincipleClick = (pollId: string) => {
-    navigate(`/proposals/${pollId}`);
+    navigate(getProposalHrefById(pollId, 'level_a'));
     onClose();
   };
 
@@ -69,11 +70,11 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
         onClick={onClose}
       />
-      
+
       {/* Drawer */}
       <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
         <div className="flex flex-col h-full">
@@ -114,7 +115,7 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
                   No linked principles yet
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  This topic doesn't have any Level A principles yet. Be the first to create one!
+                  This topic doesn't have any principles yet. Be the first to create one!
                 </p>
                 <Button onClick={handleExploreAll} variant="primary">
                   Create First Principle
@@ -123,9 +124,9 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600 mb-4">
-                  These Level A principles guide decisions in <strong>{label.name}</strong>:
+                  These principles guide decisions in <strong>{label.name}</strong>:
                 </p>
-                
+
                 {principles.map((principle) => (
                   <div
                     key={principle.id}
@@ -158,7 +159,7 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
 
           {/* Footer */}
           <div className="p-4 border-t border-gray-200">
-            <Button 
+            <Button
               onClick={handleExploreAll}
               variant="primary"
               className="w-full"

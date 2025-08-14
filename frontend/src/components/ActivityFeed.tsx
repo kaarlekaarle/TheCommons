@@ -26,7 +26,7 @@ export default function ActivityFeed() {
     } catch (err: unknown) {
       const error = err as { message: string; status?: number; response?: { status?: number } };
       console.log('Activity feed error:', error);
-      
+
       // Handle different error response structures
       const status = error.status || error.response?.status;
       if (status === 404) {
@@ -57,15 +57,15 @@ export default function ActivityFeed() {
       return true;
     });
 
-    const levelAActivities = filtered.filter(item => 
-      item.details.toLowerCase().includes('principle') || 
+    const levelAActivities = filtered.filter(item =>
+      item.details.toLowerCase().includes('principle') ||
       item.details.toLowerCase().includes('level a')
     );
-    const levelBActivities = filtered.filter(item => 
-      item.details.toLowerCase().includes('action') || 
+    const levelBActivities = filtered.filter(item =>
+      item.details.toLowerCase().includes('action') ||
       item.details.toLowerCase().includes('level b')
     );
-    const otherActivities = filtered.filter(item => 
+    const otherActivities = filtered.filter(item =>
       !levelAActivities.includes(item) && !levelBActivities.includes(item)
     );
 
@@ -90,7 +90,7 @@ export default function ActivityFeed() {
             <span className="text-xs font-medium text-muted capitalize bg-gray-700 px-2 py-0.5 rounded">{activity.type}</span>
           </div>
           <p className="text-sm text-body leading-relaxed">{activity.details}</p>
-          
+
           {/* Labels */}
           {flags.labelsEnabled && activity.labels && activity.labels.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
@@ -111,7 +111,7 @@ export default function ActivityFeed() {
               ))}
             </div>
           )}
-          
+
                       <time className="text-xs text-subtle mt-2 block">
             {new Date(activity.timestamp).toLocaleString()}
           </time>
@@ -179,8 +179,8 @@ export default function ActivityFeed() {
 
       {/* Level Filter */}
       <div className="mb-8">
-        <LevelFilter 
-          activeFilter={activeFilter} 
+        <LevelFilter
+          activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
           className="mb-6"
         />
@@ -197,7 +197,7 @@ export default function ActivityFeed() {
           {(() => {
             return (
               <>
-                {/* Level A Activities */}
+                {/* Principle Activities */}
                 {filteredActivities.levelAActivities.length > 0 && (activeFilter === 'all' || activeFilter === 'level_a') && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">
@@ -210,7 +210,7 @@ export default function ActivityFeed() {
                   </div>
                 )}
 
-                {/* Level B Activities */}
+                {/* Action Activities */}
                 {filteredActivities.levelBActivities.length > 0 && (activeFilter === 'all' || activeFilter === 'level_b') && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">

@@ -6,6 +6,7 @@ import type { Comment } from '../types';
 import Button from './ui/Button';
 import Empty from './ui/Empty';
 import { useToast } from './ui/useToast';
+import { compassCopy } from '../copy/compass';
 
 interface ProposalCommentsProps {
   pollId: string;
@@ -17,6 +18,12 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
   const [posting, setPosting] = useState(false);
   const [newComment, setNewComment] = useState('');
   const { success, error: showError } = useToast();
+
+  const parseStance = (text: string) => {
+    if (text.startsWith('[support]')) return { stance: 'support' as const, clean: text.replace('[support]', '').trim() };
+    if (text.startsWith('[concern]')) return { stance: 'concern' as const, clean: text.replace('[concern]', '').trim() };
+    return { stance: null, clean: text };
+  };
 
   const fetchComments = async () => {
     try {
@@ -85,7 +92,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
             // Set new reaction
             if (currentReaction === 'up') newUpCount--;
             else if (currentReaction === 'down') newDownCount--;
-            
+
             if (type === 'up') newUpCount++;
             else newDownCount++;
             newMyReaction = type;
@@ -103,7 +110,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
 
       // API call
       const response = await setCommentReaction(commentId, type);
-      
+
       // Update with server response
       setComments(prev => prev.map(comment => {
         if (comment.id === commentId) {
@@ -118,10 +125,10 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
       }));
     } catch (err: unknown) {
       const error = err as { status: number; message: string };
-      
+
       // Revert optimistic update
       fetchComments();
-      
+
       if (error.status === 401) {
         showError('Login to react to comments');
       } else {
@@ -203,25 +210,42 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
       ) : (
         <div className="space-y-4">
           <AnimatePresence>
-            {comments.map((comment) => (
-              <motion.div
-                key={comment.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                className="p-4 bg-surface border border-border rounded-lg"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-white">{comment.user.username}</span>
-                      <time className="text-xs text-muted">
-                        {new Date(comment.created_at).toLocaleString()}
-                      </time>
-                    </div>
-                    <p className="text-sm text-muted whitespace-pre-wrap">{comment.body}</p>
-                    
+            {comments.map((comment) => {
+              const { stance, clean } = parseStance(comment.body);
+
+              return (
+                <motion.div
+                  key={comment.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="p-4 bg-surface border border-border rounded-lg"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-medium text-white">{comment.user.username}</span>
+                        <time className="text-xs text-muted">
+                          {new Date(comment.created_at).toLocaleString()}
+                        </time>
+                      </div>
+
+                      {/* Stance chip */}
+                      {stance && (
+                        <div className="mb-2">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            stance === 'support'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {stance === 'support' ? compassCopy.stanceSupport : compassCopy.stanceConcern}
+                          </span>
+                        </div>
+                      )}
+
+                      <p className="text-sm text-muted whitespace-pre-wrap">{clean}</p>
+
                     {/* Reaction Bar */}
                     <div className="flex items-center gap-2 mt-3">
                       <button
@@ -237,7 +261,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
                         <ThumbsUp className="w-3 h-3" />
                         <span>{comment.up_count}</span>
                       </button>
-                      
+
                       <button
                         onClick={() => handleReaction(comment.id, 'down')}
                         className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${

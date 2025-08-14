@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  Vote, 
-  MessageCircle, 
-  TrendingUp, 
-  Shield, 
+import {
+  Users,
+  Vote,
+  MessageCircle,
+  TrendingUp,
+  Shield,
   Globe,
   ArrowRight,
   BarChart3,
@@ -123,9 +123,9 @@ export default function Dashboard() {
   };
 
   // DelegationForm Component
-  const DelegationForm = ({ onSubmit, loading, placeholder }: { 
-    onSubmit: (username: string) => void; 
-    loading: boolean; 
+  const DelegationForm = ({ onSubmit, loading, placeholder }: {
+    onSubmit: (username: string) => void;
+    loading: boolean;
     placeholder: string;
   }) => {
     const [username, setUsername] = useState('');
@@ -274,7 +274,7 @@ export default function Dashboard() {
                 The Commons is an open space for making community decisions.
               </p>
               <p className="text-gov-text-muted leading-relaxed">
-                We keep principles (Level A) separate from immediate actions (Level B), so we don't confuse long-term direction with short-term steps.
+                We keep principles separate from immediate actions, so we don't confuse long-term direction with short-term steps.
               </p>
               <p className="text-gov-text-muted leading-relaxed">
                 You can propose, discuss, vote, or delegate. Everything is transparent and reversible.
@@ -397,7 +397,7 @@ export default function Dashboard() {
                   Your Delegations by Topic
                 </h3>
               </div>
-              
+
               <div className="space-y-4">
                 {/* Global Delegation */}
                 {delegationSummary.global_delegate && (

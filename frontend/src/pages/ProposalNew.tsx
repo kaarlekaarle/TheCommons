@@ -7,6 +7,7 @@ import { LEVEL_A_CHOICES } from "../config/levelA";
 import type { Label } from "../types";
 import LabelSelector from "../components/ui/LabelSelector";
 import { flags } from "../config/flags";
+import { getProposalHrefById } from "../utils/navigation";
 
 // Feature flag for Level A decisions
 const LEVEL_A_ENABLED = import.meta.env.VITE_LEVEL_A_ENABLED !== "false";
@@ -52,7 +53,7 @@ export default function ProposalNew() {
         labels: selectedLabels.map(label => label.slug),
       };
       const created = await createProposal(payload);
-      navigate(`/proposals/${created.id}`);
+      navigate(getProposalHrefById(created.id, decisionType));
     } catch (err: unknown) {
       const error = err as { message?: string; response?: { data?: { message?: string } } };
       setError(error?.message || error?.response?.data?.message || "Could not create proposal.");
@@ -86,7 +87,7 @@ export default function ProposalNew() {
                 This helps the community understand the scope and impact of your proposal.
               </p>
             </div>
-            
+
             <div className={`grid gap-4 ${LEVEL_A_ENABLED ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
               {LEVEL_A_ENABLED && (
                 <button
@@ -106,11 +107,11 @@ export default function ProposalNew() {
                     </div>
                     <div>
                       <div className="font-semibold text-gov-primary">Long-Term Direction</div>
-                      <div className="text-xs text-gov-text-muted font-medium">Level A Principle</div>
+                      <div className="text-xs text-gov-text-muted font-medium">Principle</div>
                     </div>
                   </div>
                   <div className="text-sm text-gov-text leading-relaxed">
-                    A foundational value or principle that will guide many future decisions. 
+                    A foundational value or principle that will guide many future decisions.
                     Sets the compass for the community.
                   </div>
                 </button>
@@ -133,18 +134,18 @@ export default function ProposalNew() {
                   </div>
                   <div>
                     <div className="font-semibold text-gov-primary">Immediate Action</div>
-                    <div className="text-xs text-gov-text-muted">Level B Decision</div>
+                                          <div className="text-xs text-gov-text-muted">Action</div>
                   </div>
                 </div>
                 <div className="text-sm text-gov-text leading-relaxed">
-                  A specific decision about what to do right now. 
+                  A specific decision about what to do right now.
                   Can be adjusted as circumstances change.
                 </div>
               </button>
             </div>
           </div>
 
-          {/* Level A choices */}
+          {/* Principle choices */}
           {decisionType === "level_a" && (
             <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2 mb-3">

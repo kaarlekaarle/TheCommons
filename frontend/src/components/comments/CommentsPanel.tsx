@@ -7,6 +7,7 @@ import Button from '../ui/Button';
 import Empty from '../ui/Empty';
 import { useToast } from '../ui/useToast';
 import { Skeleton } from '../ui/Skeleton';
+import { compassCopy } from '../../copy/compass';
 
 interface CommentsPanelProps {
   proposalId: string;
@@ -21,6 +22,12 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
   const isFetchingRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
   const { success, error: showError } = useToast();
+
+  const parseStance = (text: string) => {
+    if (text.startsWith('[support]')) return { stance: 'support' as const, clean: text.replace('[support]', '').trim() };
+    if (text.startsWith('[concern]')) return { stance: 'concern' as const, clean: text.replace('[concern]', '').trim() };
+    return { stance: null, clean: text };
+  };
 
   const load = useCallback(async () => {
     if (isFetchingRef.current) return;
@@ -118,7 +125,7 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
             // Set new reaction
             if (currentReaction === 'up') newUpCount--;
             else if (currentReaction === 'down') newDownCount--;
-            
+
             if (type === 'up') newUpCount++;
             else newDownCount++;
             newMyReaction = type;
@@ -136,7 +143,7 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
 
       // API call
       const response = await setCommentReaction(commentId, type);
-      
+
       // Update with server response
       setItems(prev => prev ? prev.map(comment => {
         if (comment.id === commentId) {
@@ -151,10 +158,10 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
       }) : null);
     } catch (err: unknown) {
       const error = err as { status: number; message: string };
-      
+
       // Revert optimistic update
       load();
-      
+
       if (error.status === 401) {
         showError('Login to react to comments');
       } else {
@@ -174,7 +181,7 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
           <MessageCircle className="w-5 h-5 text-primary" />
           <h2 className="text-gray-900 font-semibold text-lg md:text-xl leading-tight">Discussion</h2>
         </div>
-        
+
         {/* Comment Form */}
         <form onSubmit={handleSubmit} className="space-y-3 mb-6">
           <textarea
@@ -251,67 +258,85 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
           ) : (
             <div className="space-y-4">
               <AnimatePresence>
-                {items?.map((comment) => (
-                  <motion.div
-                    key={comment.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="p-4 bg-surface border border-border rounded-lg"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-gray-900">{comment.user.username}</span>
-                          <time className="text-xs text-gray-600">
-                            {new Date(comment.created_at).toLocaleString()}
-                          </time>
+                {items?.map((comment) => {
+                  const { stance, clean } = parseStance(comment.body);
+
+                  return (
+                    <motion.div
+                      key={comment.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="p-4 bg-surface border border-border rounded-lg"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium text-gray-900">{comment.user.username}</span>
+                            <time className="text-xs text-gray-600">
+                              {new Date(comment.created_at).toLocaleString()}
+                            </time>
+                          </div>
+
+                          {/* Stance chip */}
+                          {stance && (
+                            <div className="mb-2">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                stance === 'support'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-orange-100 text-orange-800'
+                              }`}>
+                                {stance === 'support' ? compassCopy.stanceSupport : compassCopy.stanceConcern}
+                              </span>
+                            </div>
+                          )}
+
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{clean}</p>
+
+                          {/* Reaction Bar */}
+                          <div className="flex items-center gap-2 mt-3">
+                            <button
+                              onClick={() => handleReaction(comment.id, 'up')}
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                                comment.my_reaction === 'up'
+                                  ? 'text-primary bg-primary/10'
+                                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                              }`}
+                              title="Thumbs up"
+                              aria-pressed={comment.my_reaction === 'up'}
+                            >
+                              <ThumbsUp className="w-3 h-3" />
+                              <span>{comment.up_count}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleReaction(comment.id, 'down')}
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                                comment.my_reaction === 'down'
+                                  ? 'text-primary bg-primary/10'
+                                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                              }`}
+                              title="Thumbs down"
+                              aria-pressed={comment.my_reaction === 'down'}
+                            >
+                              <ThumbsDown className="w-3 h-3" />
+                              <span>{comment.down_count}</span>
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.body}</p>
-                        
-                        {/* Reaction Bar */}
-                        <div className="flex items-center gap-2 mt-3">
-                          <button
-                            onClick={() => handleReaction(comment.id, 'up')}
-                            className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
-                              comment.my_reaction === 'up'
-                                ? 'text-primary bg-primary/10'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
-                            title="Thumbs up"
-                            aria-pressed={comment.my_reaction === 'up'}
-                          >
-                            <ThumbsUp className="w-3 h-3" />
-                            <span>{comment.up_count}</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => handleReaction(comment.id, 'down')}
-                            className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
-                              comment.my_reaction === 'down'
-                                ? 'text-primary bg-primary/10'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
-                            title="Thumbs down"
-                            aria-pressed={comment.my_reaction === 'down'}
-                          >
-                            <ThumbsDown className="w-3 h-3" />
-                            <span>{comment.down_count}</span>
-                          </button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(comment.id)}
+                          className="flex-shrink-0 text-gray-600 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(comment.id)}
-                        className="flex-shrink-0 text-gray-600 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           )}

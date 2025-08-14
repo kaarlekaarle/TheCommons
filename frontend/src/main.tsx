@@ -27,10 +27,12 @@ if (sentryDsn) {
 // Dev-time a11y checker
 if (import.meta.env.DEV) {
   import('@axe-core/react').then(({ default: axe }) => {
-    const React = require('react');
-    const ReactDOM = require('react-dom/client');
-    // run axe after first paint
-    setTimeout(() => axe(React, ReactDOM), 1000);
+    import('react').then((React) => {
+      import('react-dom/client').then((ReactDOM) => {
+        // run axe after first paint
+        setTimeout(() => axe(React, ReactDOM, 1000), 1000);
+      });
+    });
   });
 }
 

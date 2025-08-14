@@ -41,7 +41,7 @@ api.interceptors.response.use(
         status: error.response?.status || 0,
       }
     }));
-    
+
     if (error.response?.status === 401) {
       console.log('[AUTH DEBUG] 401 Unauthorized response - Removing token');
       localStorage.removeItem('token');
@@ -58,7 +58,7 @@ export const listPolls = async (params?: { decision_type?: DecisionType; label?:
     console.log('API: Making request to /api/polls/');
     console.log('API: Token in localStorage:', !!localStorage.getItem('token'));
     console.log('API: Params:', params);
-    
+
     const queryParams = new URLSearchParams();
     if (params?.decision_type) {
       queryParams.append('decision_type', params.decision_type);
@@ -72,7 +72,7 @@ export const listPolls = async (params?: { decision_type?: DecisionType; label?:
     if (params?.offset) {
       queryParams.append('offset', params.offset.toString());
     }
-    
+
     const url = queryParams.toString() ? `/api/polls/?${queryParams.toString()}` : '/api/polls/';
     const response = await api.get(url);
     console.log('API: Response received:', response.status, response.data.length, 'polls');
@@ -108,6 +108,27 @@ export const createProposal = async (pollData: {
 };
 
 export const getPoll = async (id: string, signal?: AbortSignal): Promise<Poll> => {
+  // Check if we should use hardcoded data
+  const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+
+  if (useHardcodedData) {
+    // Import hardcoded data utilities
+    const { getHardcodedPoll, isHardcodedPoll } = await import('../utils/hardcodedData');
+
+    if (isHardcodedPoll(id)) {
+      const poll = getHardcodedPoll(id);
+      if (poll) {
+        return poll;
+      }
+    }
+
+    // If not found in hardcoded data, throw error
+    throw {
+      status: 404,
+      message: 'Poll not found in hardcoded data'
+    };
+  }
+
   try {
     const response = await api.get(`/api/polls/${id}`, { signal });
     return response.data;
@@ -128,7 +149,7 @@ export const listLabels = async (includeInactive: boolean = false, signal?: Abor
     if (includeInactive) {
       queryParams.append('include_inactive', '1');
     }
-    
+
     const url = queryParams.toString() ? `/api/labels/?${queryParams.toString()}` : '/api/labels/';
     const response = await api.get(url, { signal });
     return response.data;
@@ -170,6 +191,22 @@ export const getLabelBySlug = async (slug: string): Promise<Label> => {
 
 
 export const getPollOptions = async (pollId: string, signal?: AbortSignal): Promise<PollOption[]> => {
+  // Check if we should use hardcoded data
+  const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+
+  if (useHardcodedData) {
+    // Import hardcoded data utilities
+    const { getHardcodedPollOptions, isHardcodedPoll } = await import('../utils/hardcodedData');
+
+    if (isHardcodedPoll(pollId)) {
+      const options = getHardcodedPollOptions(pollId);
+      return options;
+    }
+
+    // If not found in hardcoded data, return empty array
+    return [];
+  }
+
   try {
     const response = await api.get(`/api/options/poll/${pollId}`, { signal });
     return response.data;
@@ -181,6 +218,8 @@ export const getPollOptions = async (pollId: string, signal?: AbortSignal): Prom
     };
   }
 };
+
+
 
 export const createOption = async (pollId: string, text: string): Promise<PollOption> => {
   try {
@@ -196,6 +235,20 @@ export const createOption = async (pollId: string, text: string): Promise<PollOp
 };
 
 export const getMyVoteForPoll = async (pollId: string, signal?: AbortSignal): Promise<Vote | null> => {
+  // Check if we should use hardcoded data
+  const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+
+  if (useHardcodedData) {
+    // Import hardcoded data utilities
+    const { getHardcodedVote, isHardcodedPoll } = await import('../utils/hardcodedData');
+
+    if (isHardcodedPoll(pollId)) {
+      return getHardcodedVote(pollId);
+    }
+
+    return null;
+  }
+
   try {
     const response = await api.get(`/api/votes/poll/${pollId}/my-vote`, { signal });
     return response.data;
@@ -214,10 +267,22 @@ export const getMyVoteForPoll = async (pollId: string, signal?: AbortSignal): Pr
 };
 
 export const castVote = async (pollId: string, optionId: string): Promise<Vote> => {
+  // Check if we should use hardcoded data
+  const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+
+  if (useHardcodedData) {
+    // Import hardcoded data utilities
+    const { createHardcodedVote, isHardcodedPoll } = await import('../utils/hardcodedData');
+
+    if (isHardcodedPoll(pollId)) {
+      return createHardcodedVote(pollId, optionId);
+    }
+  }
+
   try {
-    const response = await api.post('/api/votes/', { 
-      poll_id: pollId, 
-      option_id: optionId 
+    const response = await api.post('/api/votes/', {
+      poll_id: pollId,
+      option_id: optionId
     });
     return response.data;
   } catch (error: unknown) {
@@ -231,8 +296,8 @@ export const castVote = async (pollId: string, optionId: string): Promise<Vote> 
 
 export const updateVote = async (voteId: string, optionId: string): Promise<Vote> => {
   try {
-    const response = await api.put(`/api/votes/${voteId}`, { 
-      option_id: optionId 
+    const response = await api.put(`/api/votes/${voteId}`, {
+      option_id: optionId
     });
     return response.data;
   } catch (error: unknown) {
@@ -245,6 +310,30 @@ export const updateVote = async (voteId: string, optionId: string): Promise<Vote
 };
 
 export const getResults = async (pollId: string, signal?: AbortSignal): Promise<PollResults> => {
+  // Check if we should use hardcoded data
+  const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+
+  if (useHardcodedData) {
+    // Import hardcoded data utilities
+    const { getHardcodedPollOptions, isHardcodedPoll } = await import('../utils/hardcodedData');
+
+    if (isHardcodedPoll(pollId)) {
+      const options = getHardcodedPollOptions(pollId);
+      const totalVotes = 15; // Mock total votes
+
+      return {
+        poll_id: pollId,
+        total_votes: totalVotes,
+        options: options.map((option, index) => ({
+          option_id: option.id,
+          text: option.text,
+          votes: Math.floor(totalVotes * (0.3 + index * 0.2)), // Mock vote distribution
+          percentage: Math.floor((0.3 + index * 0.2) * 100)
+        }))
+      };
+    }
+  }
+
   try {
     const response = await api.get(`/api/polls/${pollId}/results`, { signal });
     return response.data;
@@ -344,7 +433,7 @@ export const setDelegation = async (delegateId: string, labelSlug?: string): Pro
     if (labelSlug) {
       payload.label_slug = labelSlug;
     }
-    
+
     const response = await api.post('/api/delegations/', payload);
     return response.data;
   } catch (error: unknown) {
@@ -374,6 +463,38 @@ export const getActivityFeed = async (limit: number = 20): Promise<ActivityItem[
 
 // Comment API functions
 export async function listComments(pollId: string, params?: { limit?: number; offset?: number }, signal?: AbortSignal): Promise<CommentList> {
+  // Check if we should use hardcoded data
+  const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+
+  if (useHardcodedData) {
+    // Import hardcoded data utilities
+    const { getHardcodedComments, isHardcodedPoll } = await import('../utils/hardcodedData');
+
+    if (isHardcodedPoll(pollId)) {
+      const comments = getHardcodedComments(pollId);
+      const limit = params?.limit || 20;
+      const offset = params?.offset || 0;
+      const paginatedComments = comments.slice(offset, offset + limit);
+
+      return {
+        comments: paginatedComments,
+        total: comments.length,
+        limit,
+        offset,
+        has_more: offset + limit < comments.length
+      };
+    }
+
+    // If not found in hardcoded data, return empty list
+    return {
+      comments: [],
+      total: 0,
+      limit: params?.limit || 20,
+      offset: params?.offset || 0,
+      has_more: false
+    };
+  }
+
   try {
     const queryParams = new URLSearchParams();
     if (params?.limit) {
@@ -382,7 +503,7 @@ export async function listComments(pollId: string, params?: { limit?: number; of
     if (params?.offset) {
       queryParams.append('offset', params.offset.toString());
     }
-    
+
     const url = queryParams.toString() ? `/api/polls/${pollId}/comments?${queryParams.toString()}` : `/api/polls/${pollId}/comments`;
     const response = await api.get(url, { signal });
     return response.data;
@@ -396,6 +517,33 @@ export async function listComments(pollId: string, params?: { limit?: number; of
 }
 
 export async function createComment(pollId: string, input: { body: string; option_id?: string }): Promise<Comment> {
+  // Check if we should use hardcoded data
+  const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+
+  if (useHardcodedData) {
+    // Import hardcoded data utilities
+    const { isHardcodedPoll } = await import('../utils/hardcodedData');
+
+    if (isHardcodedPoll(pollId)) {
+      // Create a mock comment for hardcoded data
+      const mockComment: Comment = {
+        id: `comment-${Date.now()}`,
+        poll_id: pollId,
+        user: {
+          id: 'hardcoded-user-current',
+          username: 'current-user'
+        },
+        body: input.body,
+        created_at: new Date().toISOString(),
+        up_count: 0,
+        down_count: 0,
+        my_reaction: null
+      };
+
+      return mockComment;
+    }
+  }
+
   try {
     const response = await api.post(`/api/polls/${pollId}/comments`, input);
     return response.data;
@@ -543,7 +691,7 @@ export async function getLabelOverview(
     if (params?.sort) {
       queryParams.append('sort', params.sort);
     }
-    
+
     const url = queryParams.toString() ? `/api/labels/${slug}/overview?${queryParams.toString()}` : `/api/labels/${slug}/overview`;
     const response = await api.get(url, { signal });
     return response.data;
@@ -568,5 +716,7 @@ export async function getPopularLabels(limit: number = 8, signal?: AbortSignal):
     };
   }
 }
+
+
 
 export default api;

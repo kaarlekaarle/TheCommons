@@ -259,8 +259,8 @@ export default function ProposalList() {
 
       {/* Level Filter */}
       <div className="mb-8">
-        <LevelFilter 
-          activeFilter={activeFilter} 
+        <LevelFilter
+          activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
           className="mb-6"
         />
@@ -282,7 +282,7 @@ export default function ProposalList() {
         />
       ) : (
         <div className="space-y-12">
-          {/* Level A Section */}
+          {/* Principles Section */}
           {levelAPolls.length > 0 && (activeFilter === 'all' || activeFilter === 'level_a') && (
             <LevelSection level="a" title="Long-Term Direction">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -301,7 +301,7 @@ export default function ProposalList() {
             </LevelSection>
           )}
 
-          {/* Level B Section */}
+          {/* Actions Section */}
           {levelBPolls.length > 0 && (activeFilter === 'all' || activeFilter === 'level_b') && (
             <LevelSection level="b" title="Short-Term Decisions">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
