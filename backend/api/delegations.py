@@ -26,7 +26,7 @@ from backend.schemas.delegation import (
     DelegationSummary,
 )
 from backend.services.delegation import DelegationService
-from backend.config import settings
+from backend.config import get_settings
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["delegations"])
@@ -445,6 +445,7 @@ async def get_my_delegation_summary(
     Returns:
         DelegationSummary: User's delegation summary
     """
+    settings = get_settings()
     logger.info(
         "Getting user delegation summary",
         extra={"user_id": current_user.id},

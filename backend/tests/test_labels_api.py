@@ -321,120 +321,103 @@ async def test_labels_disabled_returns_404(client: AsyncClient, db_session: Asyn
 @pytest.mark.asyncio
 async def test_etag_support_overview(client: AsyncClient, db_session: AsyncSession, monkeypatch):
     """Test ETag support for overview endpoint."""
-    # Import settings and patch TESTING directly
-    from backend.config import settings
-    monkeypatch.setattr(settings, "TESTING", False)
-    
-    user = await seed_minimal_user(db_session)
-    label = await seed_minimal_label(db_session, "Test Label", "test-label")
-    poll = await seed_minimal_poll(db_session, owner_id=str(user.id), decision_type="level_b")
-    
-    # Add label to poll
-    await db_session.execute(
-        text("INSERT INTO poll_labels (poll_id, label_id) VALUES (:poll_id, :label_id)"),
-        {"poll_id": str(poll.id), "label_id": str(label.id)}
-    )
-    await db_session.commit()
-    
-    # First request should return 200 with ETag
-    resp = await client.get(f"/api/labels/{label.slug}/overview")
-    assert resp.status_code == 200
-    etag = resp.headers.get("ETag")
-    assert etag is not None
-    assert etag.startswith('W/"')
-    
-    # Second request with same ETag should return 304
-    resp = await client.get(
-        f"/api/labels/{label.slug}/overview",
-        headers={"If-None-Match": etag}
-    )
-    assert resp.status_code == 304
+    from backend.tests.conftest import settings_env
+    with settings_env(monkeypatch, TESTING="false"):
+        user = await seed_minimal_user(db_session)
+        label = await seed_minimal_label(db_session, "Test Label", "test-label")
+        poll = await seed_minimal_poll(db_session, owner_id=str(user.id), decision_type="level_b")
+        
+        # Add label to poll
+        await db_session.execute(
+            text("INSERT INTO poll_labels (poll_id, label_id) VALUES (:poll_id, :label_id)"),
+            {"poll_id": str(poll.id), "label_id": str(label.id)}
+        )
+        await db_session.commit()
+        
+        # First request should return 200 with ETag
+        resp = await client.get(f"/api/labels/{label.slug}/overview")
+        assert resp.status_code == 200
+        etag = resp.headers.get("ETag")
+        assert etag is not None
+        assert etag.startswith('W/"')
+        
+        # Second request with same ETag should return 304
+        resp = await client.get(
+            f"/api/labels/{label.slug}/overview",
+            headers={"If-None-Match": etag}
+        )
+        assert resp.status_code == 304
 
 
 @pytest.mark.asyncio
 async def test_etag_support_popular(client: AsyncClient, db_session: AsyncSession, monkeypatch):
     """Test ETag support for popular labels endpoint."""
-    # Skip ETag in testing
-    monkeypatch.setenv("TESTING", "false")
-    
-    user = await seed_minimal_user(db_session)
-    label = await seed_minimal_label(db_session, "Test Label", "test-label")
-    poll = await seed_minimal_poll(db_session, owner_id=str(user.id))
-    
-    # Add label to poll
-    await db_session.execute(
-        text("INSERT INTO poll_labels (poll_id, label_id) VALUES (:poll_id, :label_id)"),
-        {"poll_id": str(poll.id), "label_id": str(label.id)}
-    )
-    await db_session.commit()
-    
-    # First request should return 401 (auth required) but with ETag
-    resp = await client.get("/api/labels/popular")
-    assert resp.status_code == 401
-    # Note: ETag won't be set on 401 responses, but the logic is tested above
+    from backend.tests.conftest import settings_env
+    with settings_env(monkeypatch, TESTING="false"):
+        user = await seed_minimal_user(db_session)
+        label = await seed_minimal_label(db_session, "Test Label", "test-label")
+        poll = await seed_minimal_poll(db_session, owner_id=str(user.id))
+        
+        # Add label to poll
+        await db_session.execute(
+            text("INSERT INTO poll_labels (poll_id, label_id) VALUES (:poll_id, :label_id)"),
+            {"poll_id": str(poll.id), "label_id": str(label.id)}
+        )
+        await db_session.commit()
+        
+        # First request should return 401 (auth required) but with ETag
+        resp = await client.get("/api/labels/popular")
+        assert resp.status_code == 401
+        # Note: ETag won't be set on 401 responses, but the logic is tested above
 
 
 @pytest.mark.asyncio
 async def test_get_label_health_debug(client: AsyncClient, db_session: AsyncSession, monkeypatch):
     """Test the dev health debug endpoint."""
-    # Import and patch settings directly
-    from backend.config import get_settings, settings
-    
-    # Clear the cache to force reload
-    get_settings.cache_clear()
-    
-    # Enable debug mode
-    monkeypatch.setenv("DEBUG", "true")
-    monkeypatch.setenv("TESTING", "true")
-    
-    # Patch the settings instance directly
-    monkeypatch.setattr(settings, "DEBUG", True)
-    monkeypatch.setattr(settings, "TESTING", True)
-    
-    user = await seed_minimal_user(db_session)
-    label = await seed_minimal_label(db_session, "Test Label", "test-label")
-    poll = await seed_minimal_poll(db_session, owner_id=str(user.id), decision_type="level_b")
-    
-    # Add label to poll
-    await db_session.execute(
-        text("INSERT INTO poll_labels (poll_id, label_id) VALUES (:poll_id, :label_id)"),
-        {"poll_id": str(poll.id), "label_id": str(label.id)}
-    )
-    await db_session.commit()
-    
-    resp = await client.get(f"/api/labels/dev/labels/{label.slug}/health")
-    assert resp.status_code == 200
-    data = resp.json()
-    
-    # Check structure
-    assert "label" in data
-    assert "counts" in data
-    assert "health" in data
-    
-    # Check label info
-    assert data["label"]["id"] == str(label.id)
-    assert data["label"]["name"] == label.name
-    assert data["label"]["slug"] == label.slug
-    
-    # Check counts
-    assert data["counts"]["total_polls"] == 1
-    assert data["counts"]["total_relationships"] == 1
-    assert data["counts"]["unique_relationships"] == 1
-    
-    # Check health
-    assert data["health"]["has_duplicates"] == False
-    assert data["health"]["duplicate_count"] == 0
+    from backend.tests.conftest import settings_env
+    with settings_env(monkeypatch, DEBUG="true", ENVIRONMENT="development"):
+        user = await seed_minimal_user(db_session)
+        label = await seed_minimal_label(db_session, "Test Label", "test-label")
+        poll = await seed_minimal_poll(db_session, owner_id=str(user.id), decision_type="level_b")
+        
+        # Add label to poll
+        await db_session.execute(
+            text("INSERT INTO poll_labels (poll_id, label_id) VALUES (:poll_id, :label_id)"),
+            {"poll_id": str(poll.id), "label_id": str(label.id)}
+        )
+        await db_session.commit()
+        
+        resp = await client.get(f"/api/labels/dev/labels/{label.slug}/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        
+        # Check structure
+        assert "label" in data
+        assert "counts" in data
+        assert "health" in data
+        
+        # Check label info
+        assert data["label"]["id"] == str(label.id)
+        assert data["label"]["name"] == label.name
+        assert data["label"]["slug"] == label.slug
+        
+        # Check counts
+        assert data["counts"]["total_polls"] == 1
+        assert data["counts"]["total_relationships"] == 1
+        assert data["counts"]["unique_relationships"] == 1
+        
+        # Check health
+        assert data["health"]["has_duplicates"] == False
+        assert data["health"]["duplicate_count"] == 0
 
 
 @pytest.mark.asyncio
 async def test_get_label_health_debug_production_disabled(client: AsyncClient, db_session, monkeypatch):
     """Test that health debug endpoint is disabled in production."""
-    # Disable debug mode
-    monkeypatch.setenv("DEBUG", "false")
-    monkeypatch.setenv("TESTING", "false")
-    
-    user = await seed_minimal_user(db_session)
-    label = await seed_minimal_label(db_session, "Test Label", "test-label")
-    
-    resp = await client.get(f"/api/labels/dev/labels/{label.slug}/health")
-    assert resp.status_code == 404
+    from backend.tests.conftest import settings_env
+    with settings_env(monkeypatch, DEBUG="false", ENVIRONMENT="production"):
+        user = await seed_minimal_user(db_session)
+        label = await seed_minimal_label(db_session, "Test Label", "test-label")
+        
+        resp = await client.get(f"/api/labels/dev/labels/{label.slug}/health")
+        assert resp.status_code == 404

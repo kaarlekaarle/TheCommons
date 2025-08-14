@@ -36,8 +36,22 @@ jobs:
         SECRET_KEY: "test-secret-key-for-testing-only"
         USE_DEMO_CONTENT: false
         CONTENT_DATA_DIR: "../data/real_content"
+        LABELS_ENABLED: true
+        ENVIRONMENT: development
       run: |
         pytest -v
+    
+    - name: Run labels API tests explicitly
+      working-directory: ./backend
+      env:
+        TESTING: true
+        SECRET_KEY: "test-secret-key-for-testing-only"
+        USE_DEMO_CONTENT: false
+        CONTENT_DATA_DIR: "../data/real_content"
+        LABELS_ENABLED: true
+        ENVIRONMENT: development
+      run: |
+        pytest -q backend/tests/test_labels_api.py
     
     - name: Check database invariants
       working-directory: ./backend

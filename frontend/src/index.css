@@ -389,7 +389,13 @@ a:focus {
 
 /* Animation Classes */
 .fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  opacity: 0;
+  will-change: opacity;
+  transition: opacity 180ms ease-out;
+}
+
+.fade-in[data-ready="true"] {
+  opacity: 1;
 }
 
 .slide-up {

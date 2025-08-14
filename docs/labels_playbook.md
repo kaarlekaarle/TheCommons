@@ -293,3 +293,47 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/delegations/me 
    - Test with various label combinations
    - Verify delegation precedence with label-specific delegates
    - Test edge cases (no labels, many labels, etc.)
+
+## Testing Environment Flags
+
+### Using the settings_env Fixture
+
+When testing endpoints that depend on environment variables (like debug endpoints), use the `settings_env` fixture to safely toggle environment flags:
+
+```python
+@pytest.mark.asyncio
+async def test_debug_endpoint(client, settings_env_fixture):
+    """Test debug endpoint with different environment settings."""
+    
+    # Test debug mode enabled
+    with settings_env_fixture(DEBUG="true", ENVIRONMENT="development"):
+        resp = await client.get("/api/labels/dev/labels/test/health")
+        assert resp.status_code == 200
+    
+    # Test production mode (debug disabled)
+    with settings_env_fixture(DEBUG="false", ENVIRONMENT="production"):
+        resp = await client.get("/api/labels/dev/labels/test/health")
+        assert resp.status_code == 404
+```
+
+### Why Cache Clearing is Necessary
+
+The `backend.config.get_settings()` function uses `@lru_cache()` to cache the settings instance. This means:
+
+1. **First call**: Settings are loaded from environment variables and cached
+2. **Subsequent calls**: Return the cached instance, ignoring environment changes
+3. **Solution**: Clear the cache before and after environment changes
+
+The `settings_env` fixture handles this automatically:
+- Clears cache before setting environment variables
+- Sets the new environment variables
+- Clears cache again to ensure fresh settings
+- Restores original environment on cleanup
+- Clears cache one final time
+
+### Best Practices for Environment Testing
+
+1. **Always use the fixture**: Never manually set environment variables in tests
+2. **Test both positive and negative cases**: Verify endpoints work in debug mode and are properly gated in production
+3. **Use context managers**: The `with settings_env_fixture(...):` pattern ensures proper cleanup
+4. **Test production environments**: Always test that debug endpoints return 404 in production

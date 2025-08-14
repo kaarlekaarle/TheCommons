@@ -13,6 +13,7 @@ from uuid import uuid4
 
 import backend.models
 import time
+from contextlib import contextmanager
 from backend.core.auth import create_access_token, get_password_hash
 from backend.core.security import get_password_hash as core_get_password_hash
 from backend.database import Base, SQLAlchemyBase, get_db
@@ -283,3 +284,75 @@ async def async_client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 def app() -> FastAPI:
     from backend.main import app as fastapi_app
     return fastapi_app
+
+
+@contextmanager
+def settings_env(monkeypatch, **env_vars):
+    """
+    Context manager to safely flip environment variables and reset settings cache.
+    
+    This fixture ensures that when environment variables are changed, the settings
+    cache is properly cleared and a fresh settings instance is used. This is necessary
+    because backend.config.get_settings uses @lru_cache() which caches the settings
+    instance, so changes to environment variables won't be reflected without clearing
+    the cache.
+    
+    Args:
+        monkeypatch: pytest monkeypatch fixture
+        **env_vars: Environment variables to set temporarily
+        
+    Example:
+        with settings_env(monkeypatch, DEBUG="true", ENVIRONMENT="development"):
+            # Settings will reflect DEBUG=true and ENVIRONMENT=development
+            pass
+        # Settings will be restored to original values
+    """
+    import os
+    from backend.config import get_settings
+    
+    print(f"DEBUG: settings_env called with {env_vars}")
+    
+    # Clear the settings cache before making changes
+    get_settings.cache_clear()
+    
+    # Store original values
+    original_values = {}
+    for key in env_vars:
+        original_values[key] = os.environ.get(key)
+        print(f"DEBUG: Original {key} = {original_values[key]}")
+    
+    # Set new values
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
+        print(f"DEBUG: Set {key} = {value}")
+    
+    # Clear cache again after setting env vars
+    get_settings.cache_clear()
+    
+    # Verify the settings are updated
+    settings = get_settings()
+    print(f"DEBUG: After setting env vars - settings.DEBUG = {settings.DEBUG}, settings.ENVIRONMENT = {settings.ENVIRONMENT}")
+    
+    try:
+        yield
+    finally:
+        # Restore original values
+        for key, value in original_values.items():
+            if value is None:
+                monkeypatch.delenv(key, raising=False)
+            else:
+                monkeypatch.setenv(key, value)
+        
+        # Clear cache one more time to ensure fresh settings
+        get_settings.cache_clear()
+
+
+@pytest.fixture
+def settings_env_fixture(monkeypatch):
+    """
+    Pytest fixture that provides the settings_env context manager.
+    
+    This allows tests to use the settings_env context manager with proper
+    cleanup and cache management.
+    """
+    return lambda **env_vars: settings_env(monkeypatch, **env_vars)

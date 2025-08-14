@@ -8,6 +8,11 @@ export interface User {
   updated_at: string;
 }
 
+export interface UserSearchResult {
+  id: string;
+  name: string;
+}
+
 // Decision types
 export type DecisionType = "level_a" | "level_b" | "level_c";
 

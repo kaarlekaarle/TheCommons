@@ -19,6 +19,8 @@ export const flags = {
       : (import.meta.env.VITE_LABELS_ENABLED === 'true'),
       
   allowPublicLabels: import.meta.env.VITE_ALLOW_PUBLIC_LABELS === 'true',
+  
+  compassEnabled: import.meta.env.VITE_COMPASS_ENABLED === 'true',
 };
 
 // Legacy export for backward compatibility

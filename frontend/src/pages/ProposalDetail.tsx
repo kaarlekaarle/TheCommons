@@ -6,7 +6,7 @@ import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults, getMyD
 import type { Poll, PollOption, Vote, PollResults, Label, DelegationSummary } from '../types';
 import type { DelegationInfo } from '../types/delegation';
 import Button from '../components/ui/Button';
-import ProposalComments from '../components/ProposalComments';
+import CommentsPanel from '../components/comments/CommentsPanel';
 import { useToast } from '../components/ui/useToast';
 import DelegationStatus from '../components/delegation/DelegationStatus';
 import ManageDelegationModal from '../components/delegation/ManageDelegationModal';
@@ -17,9 +17,11 @@ import LabelChip from '../components/ui/LabelChip';
 import LinkedPrinciplesDrawer from '../components/LinkedPrinciplesDrawer';
 import DelegationPath from '../components/DelegationPath';
 import { flags } from '../config/flags';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProposalDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
@@ -76,6 +78,13 @@ export default function ProposalDetail() {
         getPoll(id!),
         getPollOptions(id!)
       ]);
+      
+      // Redirect level_a polls to compass page when feature flag is enabled
+      if (pollData.decision_type === 'level_a' && flags.compassEnabled) {
+        navigate(`/compass/${id}`, { replace: true });
+        return;
+      }
+      
       setPoll(pollData);
       setOptions(optionsData);
       
@@ -186,12 +195,12 @@ export default function ProposalDetail() {
     <div className="container mx-auto px-4 pb-20 sm:pb-8">
       {/* Header */}
       <div className="mb-8">
-        <Link to="/proposals" className="inline-flex items-center gap-2 text-muted hover:text-white transition-colors mb-4">
+        <Link to="/proposals" className="inline-flex items-center gap-2 text-body hover:text-strong transition-colors mb-4">
           <ArrowLeft className="w-4 h-4" />
           Back to Proposals
         </Link>
         <div className="flex items-center gap-3 mb-4">
-          <h1 className="text-3xl font-bold text-white">{poll.title}</h1>
+          <h1 className="text-3xl font-bold text-strong">{poll.title}</h1>
           <span className={`px-3 py-1.5 text-xs font-medium rounded-full flex items-center gap-1 ${
             poll.decision_type === 'level_a' 
               ? 'badge-level-a' 
@@ -230,14 +239,14 @@ export default function ProposalDetail() {
 
         {/* Linked Principles Card - Only for Level B proposals */}
         {flags.labelsEnabled && poll.decision_type === 'level_b' && poll.labels && poll.labels.length > 0 && (
-          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-6">
+          <div className="banner-info rounded-lg mb-6">
             <div className="flex items-start gap-3">
               <LinkIcon className="w-5 h-5 text-blue-300 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h3 className="text-blue-200 font-medium mb-2">Linked Principles</h3>
-                <p className="text-sm text-blue-300/80 mb-3">
-                  This action connects to these long-term principles:
-                </p>
+                <h3 className="text-strong font-medium mb-2">Linked Principles</h3>
+                        <p className="text-sm text-blue-700 mb-3">
+          This action connects to these long-term principles:
+        </p>
                 <div className="flex flex-wrap gap-2">
                   {poll.labels.map(label => (
                     <button
@@ -256,10 +265,10 @@ export default function ProposalDetail() {
         )}
         
         {/* Level Context Banner */}
-        <div className={`p-4 rounded-lg mb-6 ${
+        <div className={`banner-info rounded-lg mb-6 ${
           poll.decision_type === 'level_a' 
-            ? 'bg-blue-500/10 border border-blue-500/20' 
-            : 'bg-emerald-500/10 border border-emerald-500/20'
+            ? '' 
+            : 'banner-ok'
         }`}>
           <div className="flex items-start gap-3">
             {poll.decision_type === 'level_a' ? (
@@ -268,14 +277,10 @@ export default function ProposalDetail() {
               <Target className="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" />
             )}
             <div>
-              <p className={`font-medium mb-1 ${
-                poll.decision_type === 'level_a' ? 'text-blue-200' : 'text-emerald-200'
-              }`}>
+              <p className={`font-medium mb-1 text-strong`}>
                 {poll.decision_type === 'level_a' ? 'Long-Term Direction' : 'Short-Term Action'}
               </p>
-              <p className={`text-sm ${
-                poll.decision_type === 'level_a' ? 'text-blue-300/80' : 'text-emerald-300/80'
-              }`}>
+              <p className={`text-sm text-body`}>
                 {poll.decision_type === 'level_a' 
                   ? 'This principle sets the compass and guides all other decisions.'
                   : 'This action moves us forward now and can be adjusted as needed.'
@@ -285,14 +290,14 @@ export default function ProposalDetail() {
           </div>
         </div>
         
-        <p className="text-muted leading-relaxed mb-4">{poll.description}</p>
+        <p className="text-body leading-relaxed mb-4">{poll.description}</p>
         {poll.decision_type === 'level_a' && poll.direction_choice && (
-          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-6">
+          <div className="banner-info rounded-lg mb-6">
             <div className="flex items-start gap-3">
               <Compass className="w-4 h-4 text-blue-300 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-blue-300 font-medium text-sm mb-1">Direction Choice:</p>
-                <p className="text-white">{poll.direction_choice}</p>
+                <p className="text-strong font-medium text-sm mb-1">Direction Choice:</p>
+                <p className="text-gray-900">{poll.direction_choice}</p>
               </div>
             </div>
           </div>
@@ -306,17 +311,17 @@ export default function ProposalDetail() {
           <section>
             <div className="flex items-center gap-3 mb-6">
               <FileText className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">Details</h2>
+              <h2 className="text-xl font-semibold text-strong">Details</h2>
             </div>
             <div className="p-6 bg-surface border border-border rounded-lg">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <span className="text-sm text-muted">Created</span>
-                  <p className="font-medium text-white">{new Date(poll.created_at).toLocaleDateString()}</p>
+                  <span className="text-sm text-subtle">Created</span>
+                  <p className="font-medium text-strong">{new Date(poll.created_at).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted">Updated</span>
-                  <p className="font-medium text-white">{new Date(poll.updated_at).toLocaleDateString()}</p>
+                  <span className="text-sm text-subtle">Updated</span>
+                  <p className="font-medium text-strong">{new Date(poll.updated_at).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
@@ -326,12 +331,12 @@ export default function ProposalDetail() {
           {poll.decision_type === 'level_a' && poll.direction_choice && (
             <section>
               <div className="flex items-center gap-3 mb-6">
-                <FileText className="w-5 h-5 text-blue-400" />
-                <h2 className="text-xl font-semibold text-white">Direction</h2>
+                <FileText className="w-5 h-5 text-blue-600" />
+                <h2 className="text-xl font-semibold text-strong">Direction</h2>
               </div>
-              <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <p className="text-white font-medium">{poll.direction_choice}</p>
-                <p className="text-sm text-blue-300 mt-2">
+              <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-strong font-medium">{poll.direction_choice}</p>
+                <p className="text-sm text-body mt-2">
                   This baseline policy establishes the direction for future decisions in this area.
                 </p>
               </div>
@@ -343,7 +348,7 @@ export default function ProposalDetail() {
             <section>
               <div className="flex items-center gap-3 mb-6">
                 <BarChart3 className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-white">Results</h2>
+                <h2 className="text-xl font-semibold text-strong">Results</h2>
               </div>
               <div className="p-6 bg-surface border border-border rounded-lg space-y-4">
                 {results && results.total_votes > 0 ? (
@@ -352,8 +357,8 @@ export default function ProposalDetail() {
                     return (
                       <div key={option.id} className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-white">{option.text}</span>
-                          <span className="text-sm text-muted">{percentage.toFixed(1)}%</span>
+                          <span className="font-medium text-strong">{option.text}</span>
+                                                      <span className="text-sm text-subtle">{percentage.toFixed(1)}%</span>
                         </div>
                         <div className="w-full bg-border rounded-full h-2 overflow-hidden">
                           <motion.div
@@ -363,14 +368,14 @@ export default function ProposalDetail() {
                             transition={{ duration: 0.8, ease: "easeOut" }}
                           />
                         </div>
-                        <div className="text-xs text-muted">
+                                                  <div className="text-xs text-subtle">
                           {results.options.find(o => o.option_id === option.id)?.votes || 0} votes
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <p className="text-muted text-center py-4">No votes yet</p>
+                                      <p className="text-subtle text-center py-4">No votes yet</p>
                 )}
               </div>
             </section>
@@ -378,11 +383,7 @@ export default function ProposalDetail() {
 
           {/* Discussion Section */}
           <section>
-            <div className="flex items-center gap-3 mb-6">
-              <MessageCircle className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">Discussion</h2>
-            </div>
-            <ProposalComments pollId={poll.id} />
+            <CommentsPanel proposalId={poll.id} />
           </section>
         </div>
 
@@ -397,23 +398,23 @@ export default function ProposalDetail() {
                 currentUserId={user?.id}
               />
               
-              <h3 className="font-semibold text-white">Vote</h3>
+                              <h3 className="font-semibold text-strong">Vote</h3>
               
                       {/* Delegation Banner */}
                       {(() => {
                         const allowed = canUseDelegation(user?.email);
                         return allowed && delegationInfo?.poll?.active ? (
-                          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                          <div className="mb-4 banner-info rounded-lg">
                             <div className="flex items-start gap-2">
                               <Users className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
-                                <p className="text-sm text-blue-300 font-medium">
+                                <p className="text-sm text-strong font-medium">
                                   {delegationCopy.poll_banner_title.replace(
                                     '{name}', 
                                     delegationInfo.poll.to_user_name || delegationInfo.poll.to_user_id.slice(0, 8)
                                   )}
                                 </p>
-                                <p className="text-xs text-blue-300/80 mt-1">
+                                <p className="text-xs text-body mt-1">
                                   {delegationCopy.poll_banner_subtitle}
                                 </p>
                               </div>
@@ -436,7 +437,7 @@ export default function ProposalDetail() {
               {isVoted ? (
                 <div className="text-center py-4">
                   <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-sm text-muted">You've voted</p>
+                  <p className="text-sm text-body">You've voted</p>
                 </div>
               ) : options.length > 0 ? (
                 <div className="space-y-3">
@@ -458,13 +459,13 @@ export default function ProposalDetail() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-sm text-muted mb-2">No voting options available</p>
-                  <p className="text-xs text-muted">This proposal doesn't have voting options set up yet.</p>
+                  <p className="text-sm text-body mb-2">No voting options available</p>
+                  <p className="text-xs text-subtle">This proposal doesn't have voting options set up yet.</p>
                 </div>
               )}
               {isClosed && (
                 <div className="text-center py-2">
-                  <span className="text-xs text-muted bg-muted px-2 py-1 rounded">Voting closed</span>
+                  <span className="text-xs text-subtle bg-surface-muted px-2 py-1 rounded">Voting closed</span>
                 </div>
               )}
             </div>
@@ -479,7 +480,7 @@ export default function ProposalDetail() {
             {isVoted ? (
               <div className="flex-1 text-center py-2">
                 <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                <p className="text-xs text-muted">You've voted</p>
+                <p className="text-xs text-body">You've voted</p>
               </div>
             ) : (
               options.map((option) => (

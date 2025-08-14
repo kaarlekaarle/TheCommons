@@ -87,9 +87,29 @@ export const listPolls = async (params?: { decision_type?: DecisionType; label?:
   }
 };
 
-export const getPoll = async (id: string): Promise<Poll> => {
+export const createProposal = async (pollData: {
+  title: string;
+  description: string;
+  decision_type: "level_a" | "level_b";
+  direction_choice?: string | null;
+  labels?: string[];
+}): Promise<Poll> => {
   try {
-    const response = await api.get(`/api/polls/${id}`);
+    const response = await api.post('/api/polls/', pollData);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    console.error('API Error in createProposal:', err.response?.status, err.response?.data);
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to create proposal'
+    };
+  }
+};
+
+export const getPoll = async (id: string, signal?: AbortSignal): Promise<Poll> => {
+  try {
+    const response = await api.get(`/api/polls/${id}`, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -149,9 +169,9 @@ export const getLabelBySlug = async (slug: string): Promise<Label> => {
 
 
 
-export const getPollOptions = async (pollId: string): Promise<PollOption[]> => {
+export const getPollOptions = async (pollId: string, signal?: AbortSignal): Promise<PollOption[]> => {
   try {
-    const response = await api.get(`/api/options/poll/${pollId}`);
+    const response = await api.get(`/api/options/poll/${pollId}`, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -175,9 +195,9 @@ export const createOption = async (pollId: string, text: string): Promise<PollOp
   }
 };
 
-export const getMyVoteForPoll = async (pollId: string): Promise<Vote | null> => {
+export const getMyVoteForPoll = async (pollId: string, signal?: AbortSignal): Promise<Vote | null> => {
   try {
-    const response = await api.get(`/api/votes/poll/${pollId}/my-vote`);
+    const response = await api.get(`/api/votes/poll/${pollId}/my-vote`, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -224,9 +244,9 @@ export const updateVote = async (voteId: string, optionId: string): Promise<Vote
   }
 };
 
-export const getResults = async (pollId: string): Promise<PollResults> => {
+export const getResults = async (pollId: string, signal?: AbortSignal): Promise<PollResults> => {
   try {
-    const response = await api.get(`/api/polls/${pollId}/results`);
+    const response = await api.get(`/api/polls/${pollId}/results`, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -237,7 +257,9 @@ export const getResults = async (pollId: string): Promise<PollResults> => {
   }
 };
 
-// User search function
+
+
+// User search functions
 export const searchUserByUsername = async (username: string): Promise<User> => {
   try {
     const response = await api.get(`/api/users/search/${username}`);
@@ -247,6 +269,19 @@ export const searchUserByUsername = async (username: string): Promise<User> => {
     throw {
       status: err.response?.status || 500,
       message: err.response?.data?.detail || err.message || 'Failed to search user'
+    };
+  }
+};
+
+export const searchUsers = async (query: string): Promise<{ id: string; name: string }[]> => {
+  try {
+    const response = await api.get(`/api/users/search?query=${encodeURIComponent(query)}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to search users'
     };
   }
 };
@@ -338,9 +373,18 @@ export const getActivityFeed = async (limit: number = 20): Promise<ActivityItem[
 };
 
 // Comment API functions
-export const listComments = async (pollId: string, limit: number = 20, offset: number = 0): Promise<CommentList> => {
+export async function listComments(pollId: string, params?: { limit?: number; offset?: number }, signal?: AbortSignal): Promise<CommentList> {
   try {
-    const response = await api.get(`/api/polls/${pollId}/comments?limit=${limit}&offset=${offset}`);
+    const queryParams = new URLSearchParams();
+    if (params?.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+    if (params?.offset) {
+      queryParams.append('offset', params.offset.toString());
+    }
+    
+    const url = queryParams.toString() ? `/api/polls/${pollId}/comments?${queryParams.toString()}` : `/api/polls/${pollId}/comments`;
+    const response = await api.get(url, { signal });
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -349,11 +393,11 @@ export const listComments = async (pollId: string, limit: number = 20, offset: n
       message: err.response?.data?.detail || err.message || 'Failed to fetch comments'
     };
   }
-};
+}
 
-export const createComment = async (pollId: string, body: string): Promise<Comment> => {
+export async function createComment(pollId: string, input: { body: string; option_id?: string }): Promise<Comment> {
   try {
-    const response = await api.post(`/api/polls/${pollId}/comments`, { body });
+    const response = await api.post(`/api/polls/${pollId}/comments`, input);
     return response.data;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
@@ -362,11 +406,11 @@ export const createComment = async (pollId: string, body: string): Promise<Comme
       message: err.response?.data?.detail || err.message || 'Failed to create comment'
     };
   }
-};
+}
 
-export const deleteComment = async (commentId: string): Promise<void> => {
+export async function deleteComment(commentId: string): Promise<void> {
   try {
-    await api.delete(`/api/polls/comments/${commentId}`);
+    await api.delete(`/api/comments/${commentId}`);
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
     throw {
@@ -374,10 +418,9 @@ export const deleteComment = async (commentId: string): Promise<void> => {
       message: err.response?.data?.detail || err.message || 'Failed to delete comment'
     };
   }
-};
+}
 
-// Reaction API functions
-export const setCommentReaction = async (commentId: string, type: 'up' | 'down'): Promise<ReactionResponse> => {
+export async function setCommentReaction(commentId: string, type: 'up' | 'down'): Promise<ReactionResponse> {
   try {
     const response = await api.post(`/api/comments/${commentId}/reactions`, { type });
     return response.data;
@@ -386,86 +429,6 @@ export const setCommentReaction = async (commentId: string, type: 'up' | 'down')
     throw {
       status: err.response?.status || 500,
       message: err.response?.data?.detail || err.message || 'Failed to set reaction'
-    };
-  }
-};
-
-export const clearCommentReaction = async (commentId: string): Promise<ReactionResponse> => {
-  try {
-    const response = await api.delete(`/api/comments/${commentId}/reactions`);
-    return response.data;
-  } catch (error: unknown) {
-    const err = error as AxiosErrorResponse;
-    throw {
-      status: err.response?.status || 500,
-      message: err.response?.data?.detail || err.message || 'Failed to clear reaction'
-    };
-  }
-};
-
-export const getCommentReactionSummary = async (commentId: string): Promise<ReactionSummary> => {
-  try {
-    const response = await api.get(`/api/comments/${commentId}/reactions/summary`);
-    return response.data;
-  } catch (error: unknown) {
-    const err = error as AxiosErrorResponse;
-    throw {
-      status: err.response?.status || 500,
-      message: err.response?.data?.detail || err.message || 'Failed to get reaction summary'
-    };
-  }
-};
-
-// Proposal creation API function
-export async function createProposal(input: {
-  title: string;
-  description: string;
-  decision_type: DecisionType;
-  direction_choice?: string | null;
-}): Promise<Poll> {
-  try {
-    const response = await api.post('/api/polls/', input);
-    return response.data;
-  } catch (error: unknown) {
-    const err = error as AxiosErrorResponse;
-    throw {
-      status: err.response?.status || 500,
-      message: err.response?.data?.detail || err.message || 'Failed to create proposal'
-    };
-  }
-}
-
-// User search types
-export type UserSearchResult = { id: string; name: string; avatar_url?: string };
-
-// User search API function
-export async function searchUsers(query: string, signal?: AbortSignal): Promise<UserSearchResult[]> {
-  try {
-    const response = await api.get(`/api/users/search?q=${encodeURIComponent(query)}&limit=10`, { signal });
-    return response.data;
-  } catch (error: unknown) {
-    const err = error as AxiosErrorResponse;
-    // Return empty array for 429/5xx errors as specified
-    if (err.response?.status === 429 || (err.response?.status && err.response.status >= 500)) {
-      return [];
-    }
-    throw {
-      status: err.response?.status || 500,
-      message: err.response?.data?.detail || err.message || 'Failed to search users'
-    };
-  }
-}
-
-// User API functions
-export async function getCurrentUser(): Promise<User> {
-  try {
-    const response = await api.get('/api/users/me');
-    return response.data;
-  } catch (error: unknown) {
-    const err = error as AxiosErrorResponse;
-    throw {
-      status: err.response?.status || 500,
-      message: err.response?.data?.detail || err.message || 'Failed to fetch current user'
     };
   }
 }
@@ -504,6 +467,20 @@ export async function removeDelegation(payload: RemoveDelegationRequest): Promis
     throw {
       status: err.response?.status || 500,
       message: err.response?.data?.detail || err.message || 'Failed to remove delegation'
+    };
+  }
+}
+
+// User API functions
+export async function getCurrentUser(): Promise<User> {
+  try {
+    const response = await api.get('/api/users/me');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    throw {
+      status: err.response?.status || 500,
+      message: err.response?.data?.detail || err.message || 'Failed to fetch current user'
     };
   }
 }

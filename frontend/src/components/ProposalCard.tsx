@@ -40,12 +40,12 @@ export default function ProposalCard({ poll, index = 0 }: ProposalCardProps) {
         <div className={classes.header}></div>
         <div className="p-4">
           <div className="mb-3">
-            <h3 className="text-2xl font-semibold text-neutral-900 line-clamp-2">
+            <h3 className="text-2xl font-semibold text-strong line-clamp-2">
               {poll.title}
             </h3>
           </div>
           
-          <p className="text-base text-neutral-700 line-clamp-3 mb-4 leading-relaxed">
+          <p className="text-base text-body line-clamp-3 mb-4 leading-relaxed">
             {poll.description}
           </p>
           
@@ -66,7 +66,7 @@ export default function ProposalCard({ poll, index = 0 }: ProposalCardProps) {
             </div>
           )}
           
-          <div className="flex items-center text-sm text-neutral-600">
+          <div className="flex items-center text-sm text-subtle">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {new Date(poll.created_at).toLocaleDateString()}

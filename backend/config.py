@@ -61,7 +61,6 @@ class Settings(BaseSettings):
 
     # Observability
     SENTRY_DSN: Optional[str] = None
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "dev")
     SENTRY_TRACES_SAMPLE_RATE: float = 0.1
 
     # Security

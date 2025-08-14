@@ -2,6 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react'
 import './index.css'
+import './styles/tokens.css'
+import './styles/a11y.css'
 import App from './App.tsx'
 
 // Initialize Sentry if DSN is provided
@@ -20,6 +22,16 @@ if (sentryDsn) {
     // ],
     tracesSampleRate: parseFloat(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE || '0.1'),
   })
+}
+
+// Dev-time a11y checker
+if (import.meta.env.DEV) {
+  import('@axe-core/react').then(({ default: axe }) => {
+    const React = require('react');
+    const ReactDOM = require('react-dom/client');
+    // run axe after first paint
+    setTimeout(() => axe(React, ReactDOM), 1000);
+  });
 }
 
 createRoot(document.getElementById('root')!).render(

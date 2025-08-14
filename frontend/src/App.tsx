@@ -19,6 +19,9 @@ import { flags } from './config/flags';
 // Lazy load the WhyTwoLevels page
 const WhyTwoLevels = React.lazy(() => import('./pages/WhyTwoLevels'));
 
+// Lazy load the CompassPage
+const CompassPage = React.lazy(() => import('./pages/CompassPage'));
+
 // Dev-only accessibility check page
 const A11yCheck = React.lazy(() => import('./pages/_A11yCheck'));
 
@@ -163,6 +166,12 @@ export default function App() {
                     <Route path="/t/:slug" element={<TopicPage />} />
                     <Route path="/topics" element={<TopicsRouteWrapper />} />
                     <Route path="/topics/disabled" element={<TopicsRouteWrapper />} />
+                    {flags.compassEnabled && (
+                      <Route path="/compass/:id" element={<CompassPage />} />
+                    )}
+                    {!flags.compassEnabled && (
+                      <Route path="/compass/:id" element={<Navigate to="/proposals" replace />} />
+                    )}
                   </Routes>
                 </Layout>
               ) : (

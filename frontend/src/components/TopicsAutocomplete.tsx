@@ -173,15 +173,15 @@ export const TopicsAutocomplete: React.FC<TopicsAutocompleteProps> = ({
   return (
     <div className={`relative ${className}`}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-subtle w-4 h-4" />
         <input
           ref={inputRef}
           type="text"
           value={searchTerm}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Search topics..."
-          className="w-full px-3 py-2 pl-10 pr-10 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:border-blue-500"
+                          placeholder="Search topics..."
+                className="w-full px-3 py-2 pl-10 pr-10 border border-aa rounded-lg bg-surface text-strong placeholder-aa focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:border-blue-500"
           aria-label="Search topics"
           aria-expanded={isOpen}
           aria-controls="topics-autocomplete-list"
@@ -190,13 +190,13 @@ export const TopicsAutocomplete: React.FC<TopicsAutocompleteProps> = ({
           aria-autocomplete="list"
           aria-haspopup="listbox"
         />
-        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-subtle w-4 h-4" />
       </div>
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-64 overflow-hidden">
           {isLoading ? (
-            <div className="px-4 py-3 text-sm text-gray-600">
+            <div className="px-4 py-3 text-sm text-subtle">
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
                 <span>Loading topics...</span>
@@ -207,7 +207,7 @@ export const TopicsAutocomplete: React.FC<TopicsAutocompleteProps> = ({
               {error}
             </div>
           ) : filteredLabels.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-gray-600">
+            <div className="px-4 py-3 text-sm text-subtle">
               {searchTerm ? 'No topics found' : 'Type to search topics'}
             </div>
           ) : (
@@ -225,7 +225,7 @@ export const TopicsAutocomplete: React.FC<TopicsAutocompleteProps> = ({
                     px-4 py-2 text-sm cursor-pointer transition-colors
                     ${index === selectedIndex 
                       ? 'bg-blue-50 text-blue-900' 
-                      : 'text-gray-700 hover:bg-gray-50'
+                      : 'text-body hover:bg-surface-muted'
                     }
                   `}
                   onClick={() => handleLabelSelect(label)}

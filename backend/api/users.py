@@ -244,6 +244,57 @@ async def search_user_by_username(
         raise ServerError("Failed to search user")
 
 
+@router.get("/search", response_model=List[Dict[str, str]])
+async def search_users(
+    query: str,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> List[Dict[str, str]]:
+    """Search for users by username or email (partial match).
+    
+    Args:
+        query: Search query string
+        limit: Maximum number of results to return
+        db: Database session
+        current_user: Currently authenticated user
+        
+    Returns:
+        List of user search results with id and name (username)
+    """
+    try:
+        if not query.strip():
+            return []
+            
+        # Search for users whose username or email contains the query
+        result = await db.execute(
+            select(User).where(
+                and_(
+                    User.is_deleted == False,
+                    User.is_active == True,
+                    User.id != current_user.id,  # Exclude current user
+                    func.lower(User.username).contains(func.lower(query))
+                )
+            ).limit(limit)
+        )
+        users = result.scalars().all()
+        
+        return [
+            {
+                "id": str(user.id),
+                "name": user.username
+            }
+            for user in users
+        ]
+    except Exception as e:
+        logger.error(
+            "Failed to search users",
+            extra={"query": query, "error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to search users")
+
+
 @router.get("/me/export")
 async def export_user_data(
     request: Request,

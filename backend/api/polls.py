@@ -25,7 +25,7 @@ from backend.schemas.poll import Poll as PollSchema
 from backend.schemas.poll import PollCreate, PollUpdate, VoteStatus, PollResult
 from backend.services.delegation import DelegationService
 from backend.services.poll import get_poll_results
-from backend.config import settings
+from backend.config import get_settings
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -52,6 +52,7 @@ async def create_poll(
         ValidationError: If poll data is invalid
         ServerError: If an unexpected error occurs
     """
+    settings = get_settings()
     try:
         # Check if Level A is enabled when trying to create Level A proposals
         if poll_data.decision_type == "level_a" and not settings.LEVEL_A_ENABLED:
@@ -172,6 +173,7 @@ async def list_polls(
     Returns:
         List[Poll]: List of polls
     """
+    settings = get_settings()
     query = select(Poll).options(selectinload(Poll.labels))
     
     # Apply decision_type filter
@@ -221,7 +223,7 @@ async def get_poll(
     Raises:
         ResourceNotFoundError: If poll not found
     """
-    from backend.config import settings
+    settings = get_settings()
     import traceback
     
     logger.info(

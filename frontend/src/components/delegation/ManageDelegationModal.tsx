@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Search, Users, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
-import { searchUsers, createDelegation, removeDelegation, getMyDelegation, type UserSearchResult } from '../../lib/api';
+import { searchUsers, createDelegation, removeDelegation, getMyDelegation } from '../../lib/api';
+import type { UserSearchResult } from '../../types';
 import type { DelegationInfo } from '../../types/delegation';
 import { delegationCopy } from '../../i18n/en/delegation';
 import Button from '../ui/Button';
@@ -320,13 +321,9 @@ export default function ManageDelegationModal({
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                          {searchUser.avatar_url ? (
-                            <img src={searchUser.avatar_url} alt="" className="w-8 h-8 rounded-full" />
-                          ) : (
-                            <span className="text-sm font-medium text-primary">
-                              {searchUser.name.charAt(0).toUpperCase()}
-                            </span>
-                          )}
+                          <span className="text-sm font-medium text-primary">
+                            {searchUser.name.charAt(0).toUpperCase()}
+                          </span>
                         </div>
                         <div className="flex-1">
                           <div className="text-sm font-medium text-white">{searchUser.name}</div>

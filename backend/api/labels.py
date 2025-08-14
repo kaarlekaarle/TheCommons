@@ -8,8 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.core.auth import get_current_active_user, get_current_user_optional
-from fastapi import Depends, HTTPException, status
-from typing import Optional
 
 # Custom dependency that bypasses authentication for public endpoints
 async def bypass_auth():
@@ -30,7 +28,7 @@ from backend.models.delegation import Delegation
 from backend.models.poll_label import poll_labels
 from backend.schemas.label import Label as LabelSchema, LabelCreate, LabelUpdate, generate_slug
 from backend.schemas.poll import PollSummary
-from backend.config import settings
+from backend.config import get_settings
 
 router = APIRouter()
 public_router = APIRouter()
@@ -44,6 +42,7 @@ async def list_labels(
     current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> List[Label]:
     """List all labels."""
+    settings = get_settings()
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     
@@ -67,6 +66,7 @@ async def create_label(
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not authorized")
     """Create a new label (admin only)."""
+    settings = get_settings()
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     
@@ -109,6 +109,7 @@ async def get_label(
     current_user: User = Depends(get_current_active_user),
 ) -> Label:
     """Get a specific label by ID."""
+    settings = get_settings()
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     
@@ -135,6 +136,7 @@ async def get_label_by_slug(
     current_user: User = Depends(get_current_active_user),
 ) -> Label:
     """Get a specific label by slug."""
+    settings = get_settings()
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     
@@ -166,6 +168,7 @@ async def update_label(
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not authorized")
     """Update a label (admin only)."""
+    settings = get_settings()
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     
@@ -212,6 +215,7 @@ async def delete_label(
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not authorized")
     """Soft delete a label (admin only)."""
+    settings = get_settings()
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     
@@ -252,6 +256,7 @@ async def get_label_overview(
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
+    settings = get_settings()
     # Debug logging for duplicate investigation
     if settings.DEBUG or settings.TESTING:
         logger.info(f"Label overview request: slug={slug}, tab={tab}, page={page}, per_page={per_page}, sort={sort}")
@@ -523,7 +528,12 @@ async def get_label_health_debug(
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """Dev endpoint to check label health and detect duplicates."""
-    if not settings.DEBUG and not settings.TESTING:
+    # Get fresh settings to ensure environment variables are reflected
+    from backend.config import get_settings
+    current_settings = get_settings()
+    
+    # Early return 404 unless DEBUG is True and not in production
+    if not current_settings.DEBUG or current_settings.ENVIRONMENT in {'production', 'prod'}:
         raise ResourceNotFoundError("Dev endpoint not available in production")
     
     # Get the label
@@ -596,10 +606,14 @@ async def get_label_raw_debug(
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """Debug endpoint to get raw label data (dev only)."""
-    if not (settings.DEBUG or settings.TESTING or (current_user and current_user.is_superuser)):
+    # Get fresh settings to ensure environment variables are reflected
+    from backend.config import get_settings
+    current_settings = get_settings()
+    
+    if not (current_settings.DEBUG or current_settings.TESTING or (current_user and current_user.is_superuser)):
         raise HTTPException(status_code=403, detail="Debug endpoint requires DEBUG/TESTING or superuser")
     
-    if not settings.LABELS_ENABLED:
+    if not current_settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     
     # Get the label
@@ -686,6 +700,7 @@ async def get_popular_labels(
     db: AsyncSession = Depends(get_db),
 ):
     """Get popular labels by attached poll count."""
+    settings = get_settings()
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
     

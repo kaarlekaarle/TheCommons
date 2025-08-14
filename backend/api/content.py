@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
-from backend.config import settings
+from backend.config import get_settings
 from backend.schemas.content import PrincipleItem, ActionItem, StoryItem, ContentResponse
 from backend.services.content_loader import content_loader
 
@@ -95,6 +95,7 @@ def get_demo_stories() -> List[StoryItem]:
 @router.get("/principles", response_model=ContentResponse)
 async def get_principles() -> ContentResponse:
     """Get Level A principles (baseline policies)."""
+    settings = get_settings()
     if settings.USE_DEMO_CONTENT:
         principles = get_demo_principles()
         source = "demo"
@@ -112,6 +113,7 @@ async def get_principles() -> ContentResponse:
 @router.get("/actions", response_model=ContentResponse)
 async def get_actions() -> ContentResponse:
     """Get Level B actions (specific proposals)."""
+    settings = get_settings()
     if settings.USE_DEMO_CONTENT:
         actions = get_demo_actions()
         source = "demo"
@@ -129,6 +131,7 @@ async def get_actions() -> ContentResponse:
 @router.get("/stories", response_model=ContentResponse)
 async def get_stories() -> ContentResponse:
     """Get case studies and success stories."""
+    settings = get_settings()
     if settings.USE_DEMO_CONTENT:
         stories = get_demo_stories()
         source = "demo"

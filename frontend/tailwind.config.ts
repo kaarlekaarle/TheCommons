@@ -5,6 +5,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -222,6 +223,8 @@ export default {
         'h1': ['clamp(2.25rem, 2.2vw + 1.5rem, 3rem)', { lineHeight: '1.2' }],
         'h2': ['2rem', { lineHeight: '1.3' }],
         'h3': ['1.5rem', { lineHeight: '1.4' }],
+        'title': ['1.75rem', { lineHeight: '1.2' }],
+        'eyebrow': ['0.8125rem', { lineHeight: '1.1' }],
       },
       spacing: {
         '18': '4.5rem',
