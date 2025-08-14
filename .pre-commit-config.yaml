@@ -40,4 +40,11 @@ repos:
         - types-redis==4.6.0.20240106
         - types-python-jose==3.3.4.0
         - types-passlib==1.7.4.0
-        args: [--python-version=3.9, --strict] 
+        args: [--python-version=3.9, --strict]
+
+-   repo: local
+    hooks:
+    -   id: forbid-module-settings-in-endpoints
+        name: Forbid module-level `settings` import in endpoints
+        entry: bash -c "! grep -R \"from backend.config import settings\" backend/api"
+        language: system 
