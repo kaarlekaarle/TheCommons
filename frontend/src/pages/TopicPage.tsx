@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -22,6 +22,16 @@ import Empty from '../components/ui/Empty';
 import { SkeletonGrid, Skeleton } from '../components/ui/Skeleton';
 import { Pagination } from '../components/ui/Pagination';
 
+// Dev logger for array transitions
+function logSet(tag: string, arr: PollSummary[]) {
+  if (import.meta.env.DEV) {
+    const ids = arr.map(p => String(p.id));
+    const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+    if (dupes.length) console.warn(`[TopicPage] ${tag} dupes`, { dupes: Array.from(new Set(dupes)), ids });
+    console.debug(`[TopicPage] ${tag} size=${arr.length}`);
+  }
+}
+
 type TabType = 'all' | 'principles' | 'actions';
 type SortType = 'newest' | 'oldest';
 
@@ -34,7 +44,12 @@ export default function TopicPage() {
   const [popularLabels, setPopularLabels] = useState<PopularLabel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [fallbackData, setFallbackData] = useState<LabelOverview | null>(null);
   const { error: showError } = useToast();
+  const showErrorRef = useRef(showError);
+  const isLoadingRef = useRef(false);
+  showErrorRef.current = showError;
 
   // URL state management
   const activeTab = (searchParams.get('tab') as TabType) || 'all';
@@ -55,78 +70,156 @@ export default function TopicPage() {
     }
   }, [overview]);
 
+  // Retry logic with exponential backoff
+  const retryWithBackoff = useCallback(async (fn: () => Promise<any>, maxRetries = 3) => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }, []);
+
+  // Fetch data function - defined outside useEffect to prevent recreation
+  const fetchData = useCallback(async () => {
+    if (!slug) return;
+    
+    // Prevent multiple simultaneous fetches
+    if (isLoadingRef.current) {
+      console.log('[TopicPage] Skipping fetch - already loading');
+      return;
+    }
+    
+    console.log('[TopicPage] Fetching data for slug:', slug);
+    
+    try {
+      isLoadingRef.current = true;
+      setLoading(true);
+      setError(null);
+      
+      // Try to fetch both endpoints independently
+      let overviewData = null;
+      let popularData = [];
+      
+      try {
+        overviewData = await retryWithBackoff(() => getLabelOverview(slug, {
+          tab: activeTab,
+          page: currentPage,
+          per_page: perPage,
+          sort: sortOrder
+        }));
+        
+        // Log the raw data from API
+        if (overviewData.items) {
+          logSet("overview:afterFetch", overviewData.items);
+          
+          // Deduplicate polls by ID to prevent duplicate key issues (safety net)
+          const uniquePolls = overviewData.items.filter((poll, index, self) => 
+            index === self.findIndex(p => p.id === poll.id)
+          );
+          
+          // Log if duplicates were found (dev only)
+          if (process.env.NODE_ENV === 'development' && uniquePolls.length !== overviewData.items.length) {
+            console.warn(`[TopicPage] Found ${overviewData.items.length - uniquePolls.length} duplicate polls in topic data for slug=${slug}`);
+          }
+          
+          overviewData.items = uniquePolls;
+        }
+      } catch (overviewErr) {
+        console.error('Failed to fetch overview data:', overviewErr);
+        setError('Failed to load topic overview');
+        
+        // Set fallback data if we have it
+        if (fallbackData) {
+          setOverview(fallbackData);
+        }
+      }
+      
+      try {
+        popularData = await retryWithBackoff(() => getPopularLabels(8));
+      } catch (popularErr) {
+        console.error('Failed to fetch popular labels:', popularErr);
+        // Don't set error for popular labels - it's not critical
+      }
+      
+      // Ensure idempotent merge using Map
+      if (overviewData) {
+        const byId = new Map<string, PollSummary>();
+        for (const poll of overviewData.items) {
+          byId.set(String(poll.id), poll);
+        }
+        const finalItems = Array.from(byId.values());
+        overviewData.items = finalItems;
+        logSet("overview:afterMerge", finalItems);
+      }
+      
+      setOverview(overviewData);
+      setPopularLabels(popularData);
+      
+      // Cache successful data as fallback
+      if (overviewData) {
+        setFallbackData(overviewData);
+      }
+    } catch (err: unknown) {
+      console.error('Failed to fetch topic data:', err);
+      let errorMessage = 'Failed to load topic data';
+      
+      if (err && typeof err === 'object') {
+        if ('message' in err && typeof err.message === 'string') {
+          errorMessage = err.message;
+        } else if ('detail' in err && typeof err.detail === 'string') {
+          errorMessage = err.detail;
+        } else if ('status' in err && typeof err.status === 'number') {
+          errorMessage = `Error ${err.status}: Failed to load topic data`;
+        }
+      }
+      
+      setError(errorMessage);
+      showErrorRef.current(errorMessage);
+    } finally {
+      setLoading(false);
+      isLoadingRef.current = false;
+    }
+  }, [slug, activeTab, currentPage, perPage, sortOrder, retryWithBackoff]);
+
   // Fetch data when URL parameters change
   useEffect(() => {
-    if (!slug) return;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const [overviewData, popularData] = await Promise.all([
-          getLabelOverview(slug, {
-            tab: activeTab,
-            page: currentPage,
-            per_page: perPage,
-            sort: sortOrder
-          }),
-          getPopularLabels(8)
-        ]);
-        
-        setOverview(overviewData);
-        setPopularLabels(popularData);
-      } catch (err: unknown) {
-        console.error('Failed to fetch topic data:', err);
-        let errorMessage = 'Failed to load topic data';
-        
-        if (err && typeof err === 'object') {
-          if ('message' in err && typeof err.message === 'string') {
-            errorMessage = err.message;
-          } else if ('detail' in err && typeof err.detail === 'string') {
-            errorMessage = err.detail;
-          } else if ('status' in err && typeof err.status === 'number') {
-            errorMessage = `Error ${err.status}: Failed to load topic data`;
-          }
-        }
-        
-        setError(errorMessage);
-        showError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, [slug, activeTab, currentPage, perPage, sortOrder, showError]);
+  }, [fetchData]);
 
-  const handleLabelClick = (labelSlug: string) => {
+  const handleLabelClick = useCallback((labelSlug: string) => {
     // Preserve existing query params except page (reset to 1)
     const newParams = new URLSearchParams(searchParams);
     newParams.set('page', '1');
     navigate(`/t/${labelSlug}?${newParams.toString()}`);
-  };
+  }, [searchParams, navigate]);
 
-  const handleTabChange = (tab: TabType) => {
+  const handleTabChange = useCallback((tab: TabType) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('tab', tab);
     newParams.set('page', '1'); // Reset to page 1 when changing tabs
     setSearchParams(newParams);
-  };
+  }, [searchParams, setSearchParams]);
 
-  const handleSortChange = (sort: SortType) => {
+  const handleSortChange = useCallback((sort: SortType) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('sort', sort);
     setSearchParams(newParams);
-  };
+  }, [searchParams, setSearchParams]);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('page', page.toString());
     setSearchParams(newParams);
-  };
+  }, [searchParams, setSearchParams]);
 
-  const getTabTitle = () => {
+  const getTabTitle = useCallback(() => {
     switch (activeTab) {
       case 'principles':
         return 'Principles';
@@ -135,9 +228,9 @@ export default function TopicPage() {
       default:
         return 'All';
     }
-  };
+  }, [activeTab]);
 
-  const getTabCount = () => {
+  const getTabCount = useCallback(() => {
     if (!overview) return 0;
     
     switch (activeTab) {
@@ -148,7 +241,7 @@ export default function TopicPage() {
       default:
         return overview.counts.total;
     }
-  };
+  }, [activeTab, overview]);
 
   if (loading) {
     return (
@@ -198,6 +291,19 @@ export default function TopicPage() {
           icon={<Target className="w-8 h-8" />}
           title="Topic not found"
           subtitle={error || "The topic you're looking for doesn't exist."}
+          action={
+            error && (
+              <Button 
+                onClick={() => {
+                  setRetryCount(prev => prev + 1);
+                  fetchData();
+                }}
+                variant="primary"
+              >
+                Try Again
+              </Button>
+            )
+          }
         />
       </div>
     );
@@ -207,24 +313,24 @@ export default function TopicPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumbs */}
       <nav className="mb-8" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2 text-sm text-gray-400">
+        <ol className="flex items-center gap-2 text-sm text-gray-600">
           <li>
-            <Link to="/dashboard" className="hover:text-white transition-colors">
+            <Link to="/dashboard" className="hover:text-gray-800 transition-colors">
               Home
             </Link>
           </li>
           <li>
-            <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
+            <ChevronDown className="w-4 h-4 rotate-[-90deg] text-gray-600" />
           </li>
           <li>
-            <Link to="/dashboard" className="hover:text-white transition-colors">
+            <Link to="/dashboard" className="hover:text-gray-800 transition-colors">
               Topics
             </Link>
           </li>
           <li>
-            <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
+            <ChevronDown className="w-4 h-4 rotate-[-90deg] text-gray-600" />
           </li>
-          <li className="text-white font-medium">
+          <li className="text-gray-800 font-medium">
             {overview.label.name}
           </li>
         </ol>
@@ -233,7 +339,7 @@ export default function TopicPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <h1 className="text-3xl font-bold text-white">{overview.label.name}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{overview.label.name}</h1>
           <LabelChip 
             label={{ 
               id: overview.label.id, 
@@ -336,14 +442,14 @@ export default function TopicPage() {
         </div>
         
         <div className="flex items-center gap-2">
-          <label htmlFor="sort-select" className="text-sm text-gray-400">
+          <label htmlFor="sort-select" className="text-sm text-gray-600">
             Sort by:
           </label>
           <select
             id="sort-select"
             value={sortOrder}
             onChange={(e) => handleSortChange(e.target.value as SortType)}
-            className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-white border border-gray-300 rounded px-3 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
@@ -361,59 +467,63 @@ export default function TopicPage() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {overview.items.map((poll) => (
-              <motion.div
-                key={poll.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-white line-clamp-2">
-                    {poll.title}
-                  </h3>
-                  <Link
-                    to={`/proposals/${poll.id}`}
-                    className="text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </Link>
-                </div>
-                
-                <div className="flex items-center gap-2 mb-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    poll.decision_type === 'level_a' ? 'bg-blue-900 text-blue-200' :
-                    poll.decision_type === 'level_b' ? 'bg-green-900 text-green-200' :
-                    'bg-red-900 text-red-200'
-                  }`}>
-                    {poll.decision_type === 'level_a' ? 'Principle' :
-                     poll.decision_type === 'level_b' ? 'Action' : 'Problem'}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(poll.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                
-                <div className="flex flex-wrap gap-1">
-                  {poll.labels.map((label) => (
-                    <LabelChip
-                      key={`poll-${poll.id}-label-${label.slug}`}
-                      label={{
-                        id: '',
-                        name: label.name,
-                        slug: label.slug,
-                        is_active: true,
-                        created_at: '',
-                        updated_at: ''
-                      }}
-                      size="sm"
-                      onClick={() => handleLabelClick(label.slug)}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+            {(() => {
+              // Log final rendered array
+              logSet("render:final", overview.items);
+              return overview.items.map((poll, pollIndex) => (
+                <motion.div
+                  key={poll.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-white line-clamp-2">
+                      {poll.title}
+                    </h3>
+                    <Link
+                      to={`/proposals/${poll.id}`}
+                      className="text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Link>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      poll.decision_type === 'level_a' ? 'bg-blue-900 text-blue-200' :
+                      poll.decision_type === 'level_b' ? 'bg-green-900 text-green-200' :
+                      'bg-red-900 text-red-200'
+                    }`}>
+                      {poll.decision_type === 'level_a' ? 'Principle' :
+                       poll.decision_type === 'level_b' ? 'Action' : 'Problem'}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(poll.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1">
+                    {poll.labels.map((label, labelIndex) => (
+                      <LabelChip
+                        key={`${poll.id}:${label.slug}`}
+                        label={{
+                          id: '',
+                          name: label.name,
+                          slug: label.slug,
+                          is_active: true,
+                          created_at: '',
+                          updated_at: ''
+                        }}
+                        size="sm"
+                        onClick={() => handleLabelClick(label.slug)}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              ));
+            })()}
           </div>
         )}
       </div>
@@ -433,7 +543,7 @@ export default function TopicPage() {
       {/* Popular Topics */}
       {popularLabels.length > 0 && (
         <div className="mt-12">
-          <h2 className="text-xl font-semibold text-white mb-4">Popular Topics</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Popular Topics</h2>
           <div className="flex flex-wrap gap-2">
             {popularLabels.map((label) => (
               <LabelChip

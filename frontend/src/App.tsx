@@ -103,7 +103,7 @@ export default function App() {
               <WhyTwoLevels />
             </Suspense>
           } />
-          <Route path="/t/:slug" element={<TopicPage />} />
+
           
           {/* Dev-only accessibility check route */}
           {import.meta.env.DEV && (
@@ -158,6 +158,7 @@ export default function App() {
                     <Route path="/proposals/new" element={<ProposalNew />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/activity" element={<ActivityFeed />} />
+                    <Route path="/t/:slug" element={<TopicPage />} />
                   </Routes>
                 </Layout>
               ) : (

@@ -252,6 +252,9 @@ async def get_label_overview(
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
+    # Debug logging for duplicate investigation
+    if settings.DEBUG or settings.TESTING:
+        logger.info(f"Label overview request: slug={slug}, tab={tab}, page={page}, per_page={per_page}, sort={sort}")
     """Get overview for a specific label including counts, recent polls, and delegation info."""
     if not settings.LABELS_ENABLED:
         raise UnavailableFeatureError("Labels feature is disabled")
@@ -298,11 +301,13 @@ async def get_label_overview(
         if response:
             response.headers["ETag"] = etag
     
-    # Get counts (unchanged - still include full totals)
+    # Get counts using EXISTS to avoid row multiplication
+    label_subq = select(poll_labels.c.poll_id).join(Label).where(Label.id == label.id)
+    
     level_a_count_result = await db.execute(
-        select(func.count(Poll.id)).join(Poll.labels).where(
+        select(func.count(Poll.id)).where(
             and_(
-                Poll.labels.any(id=label.id),
+                Poll.id.in_(label_subq),
                 Poll.decision_type == "level_a",
                 Poll.is_deleted == False
             )
@@ -311,9 +316,9 @@ async def get_label_overview(
     level_a_count = level_a_count_result.scalar()
     
     level_b_count_result = await db.execute(
-        select(func.count(Poll.id)).join(Poll.labels).where(
+        select(func.count(Poll.id)).where(
             and_(
-                Poll.labels.any(id=label.id),
+                Poll.id.in_(label_subq),
                 Poll.decision_type == "level_b",
                 Poll.is_deleted == False
             )
@@ -322,9 +327,9 @@ async def get_label_overview(
     level_b_count = level_b_count_result.scalar()
     
     level_c_count_result = await db.execute(
-        select(func.count(Poll.id)).join(Poll.labels).where(
+        select(func.count(Poll.id)).where(
             and_(
-                Poll.labels.any(id=label.id),
+                Poll.id.in_(label_subq),
                 Poll.decision_type == "level_c",
                 Poll.is_deleted == False
             )
@@ -334,10 +339,10 @@ async def get_label_overview(
     
     total_count = level_a_count + level_b_count + level_c_count
     
-    # Build query based on tab and sort
-    base_query = select(Poll).options(selectinload(Poll.labels)).join(Poll.labels).where(
+    # Build query using EXISTS to avoid row multiplication
+    base_query = select(Poll).options(selectinload(Poll.labels)).where(
         and_(
-            Poll.labels.any(id=label.id),
+            Poll.id.in_(label_subq),
             Poll.is_deleted == False
         )
     )
@@ -355,10 +360,15 @@ async def get_label_overview(
     else:  # oldest
         base_query = base_query.order_by(Poll.created_at)
     
-    # Get total count for the current tab
-    count_query = select(func.count(Poll.id)).join(Poll.labels).where(
+    # Debug logging for SQL query
+    if settings.DEBUG or settings.TESTING:
+        compiled_query = base_query.compile(compile_kwargs={"literal_binds": True})
+        logger.info(f"Base query SQL: {compiled_query}")
+    
+    # Get total count for the current tab using DISTINCT
+    count_query = select(func.count(func.distinct(Poll.id))).where(
         and_(
-            Poll.labels.any(id=label.id),
+            Poll.id.in_(label_subq),
             Poll.is_deleted == False
         )
     )
@@ -371,6 +381,10 @@ async def get_label_overview(
     tab_total_result = await db.execute(count_query)
     tab_total = tab_total_result.scalar()
     
+    # Debug logging for row counts
+    if settings.DEBUG or settings.TESTING:
+        logger.info(f"Tab total count: {tab_total}")
+    
     # Apply pagination
     offset = (page - 1) * per_page
     paginated_query = base_query.offset(offset).limit(per_page)
@@ -378,6 +392,12 @@ async def get_label_overview(
     # Execute the query
     polls_result = await db.execute(paginated_query)
     polls = polls_result.scalars().all()
+    
+    # Debug logging for result count
+    if settings.DEBUG or settings.TESTING:
+        logger.info(f"Returned polls count: {len(polls)}")
+        poll_ids = [str(poll.id) for poll in polls]
+        logger.info(f"Poll IDs: {poll_ids}")
     
     # Calculate pagination info
     total_pages = (tab_total + per_page - 1) // per_page  # Ceiling division
@@ -440,7 +460,31 @@ async def get_label_overview(
             ]
         }
     
-    return {
+    # API contract guard: verify uniqueness before returning
+    seen_poll_ids = set()
+    dedup_items = []
+    for poll in polls:
+        if poll.id not in seen_poll_ids:
+            seen_poll_ids.add(poll.id)
+            dedup_items.append(poll)
+    
+    # DEV/TESTING gated assertion and log for uniqueness at the wire
+    ids = [str(p.id) for p in polls]
+    dupes = {x for x in ids if ids.count(x) > 1}
+    if (settings.DEBUG or settings.TESTING) and dupes:
+        logger.warning("TOPIC_OVERVIEW_DUPES slug=%s dupes=%s sample_ids=%s",
+                      slug, sorted(list(dupes))[:10], ids[:50])
+    
+    if len(dedup_items) != len(polls) and (settings.DEBUG or settings.TESTING):
+        logger.warning(f"Duplicate polls detected in response for slug={slug}: "
+                      f"returned {len(polls)} items, unique {len(dedup_items)} items")
+        duplicate_ids = [str(poll.id) for poll in polls if str(poll.id) in seen_poll_ids]
+        logger.warning(f"Duplicate poll IDs: {duplicate_ids}")
+    
+    # Use deduplicated items for response
+    final_polls = dedup_items
+    
+    response_data = {
         "label": {
             "id": str(label.id),
             "name": label.name,
@@ -458,9 +502,108 @@ async def get_label_overview(
             "total": tab_total,
             "total_pages": total_pages
         },
-        "items": [convert_to_poll_summary(poll) for poll in polls],
+        "items": [convert_to_poll_summary(poll) for poll in final_polls],
         "delegation_summary": delegation_summary
     }
+    
+    # Add debug info in development
+    if settings.DEBUG or settings.TESTING:
+        response_data["_debug"] = {
+            "ids": [str(p.id) for p in final_polls],
+            "total_returned": len(final_polls),
+            "total_before_dedup": len(polls)
+        }
+    
+    return response_data
+
+@router.get("/dev/labels/{slug}/raw")
+async def get_label_raw_debug(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Debug endpoint to get raw label data (dev only)."""
+    if not (settings.DEBUG or settings.TESTING or (current_user and current_user.is_superuser)):
+        raise HTTPException(status_code=403, detail="Debug endpoint requires DEBUG/TESTING or superuser")
+    
+    if not settings.LABELS_ENABLED:
+        raise UnavailableFeatureError("Labels feature is disabled")
+    
+    # Get the label
+    label_result = await db.execute(
+        select(Label).where(
+            and_(
+                Label.slug == slug,
+                Label.is_active == True,
+                Label.is_deleted == False
+            )
+        )
+    )
+    label = label_result.scalar_one_or_none()
+    
+    if not label:
+        raise ResourceNotFoundError(f"Label with slug '{slug}' not found")
+    
+    # Get raw data for each tab
+    label_subq = select(poll_labels.c.poll_id).join(Label).where(Label.id == label.id)
+    
+    # Level A (principles)
+    level_a_result = await db.execute(
+        select(Poll.id).where(
+            and_(
+                Poll.id.in_(label_subq),
+                Poll.decision_type == "level_a",
+                Poll.is_deleted == False
+            )
+        ).order_by(desc(Poll.created_at))
+    )
+    level_a_ids = [str(row[0]) for row in level_a_result.fetchall()]
+    
+    # Level B (actions)
+    level_b_result = await db.execute(
+        select(Poll.id).where(
+            and_(
+                Poll.id.in_(label_subq),
+                Poll.decision_type == "level_b",
+                Poll.is_deleted == False
+            )
+        ).order_by(desc(Poll.created_at))
+    )
+    level_b_ids = [str(row[0]) for row in level_b_result.fetchall()]
+    
+    # All polls
+    all_result = await db.execute(
+        select(Poll.id).where(
+            and_(
+                Poll.id.in_(label_subq),
+                Poll.is_deleted == False
+            )
+        ).order_by(desc(Poll.created_at))
+    )
+    all_ids = [str(row[0]) for row in all_result.fetchall()]
+    
+    # Check for duplicates in each array
+    def find_dupes(ids):
+        return {x for x in ids if ids.count(x) > 1}
+    
+    return {
+        "ids": {
+            "level_a": level_a_ids,
+            "level_b": level_b_ids,
+            "all": all_ids
+        },
+        "counts": {
+            "level_a": len(level_a_ids),
+            "level_b": len(level_b_ids),
+            "all": len(all_ids)
+        },
+        "duplicates": {
+            "level_a": list(find_dupes(level_a_ids)),
+            "level_b": list(find_dupes(level_b_ids)),
+            "all": list(find_dupes(all_ids))
+        }
+    }
+
 
 @public_router.get("/popular")
 async def get_popular_labels(

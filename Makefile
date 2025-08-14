@@ -43,4 +43,19 @@ wipe-dev:
 		cd backend && source ../venv/bin/activate && python -c "import asyncio; from backend.database import get_db; asyncio.run((lambda: [db.execute('DELETE FROM poll_labels'), db.execute('DELETE FROM polls'), db.execute('DELETE FROM labels')])())"; \
 	else \
 		echo "💡 To actually wipe data, run: make wipe-dev FORCE=1"; \
-	fi 
+	fi
+
+labels-check-dupes:
+	@echo "🔍 Checking for duplicate poll-label relationships..."
+	@source .venv/bin/activate && python -m backend.scripts.find_dup_poll_labels
+
+labels-fix:
+	@echo "🔧 Running migration to remove duplicates and add unique constraint..."
+	@source .venv/bin/activate && alembic upgrade head
+	@echo "✅ Migration complete!"
+	@echo "🔍 Verifying no duplicates remain..."
+	@source .venv/bin/activate && python -m backend.scripts.find_dup_poll_labels
+
+topics-ids:
+	@echo "🔍 Getting raw topic data for slug=$(slug)..."
+	@source .venv/bin/activate && curl -s "http://localhost:8000/api/dev/labels/$(slug)/raw" | python -m json.tool 

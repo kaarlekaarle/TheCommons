@@ -90,7 +90,51 @@ seed-stress: seed-labels
 
 wipe-dev:
 	cd backend && python scripts/wipe_dev_data.py
+
+labels-check-dupes:
+	cd backend && python scripts/find_dup_poll_labels.py
+
+labels-fix:
+	cd backend && alembic upgrade head
 ```
+
+## Database Integrity
+
+### Poll-Label Relationship Invariant
+
+The `poll_labels` table maintains a critical invariant: **no duplicate (poll_id, label_id) pairs**. This prevents:
+- Duplicate polls appearing in topic pages
+- Incorrect count calculations
+- React duplicate key warnings in the frontend
+
+### Checking for Duplicates
+
+```bash
+# Check for duplicate poll-label relationships
+make labels-check-dupes
+
+# This runs: backend/scripts/find_dup_poll_labels.py
+# Exits with code 1 if duplicates found, 0 if clean
+```
+
+### Fixing Duplicates
+
+```bash
+# Remove duplicates and add unique constraint
+make labels-fix
+
+# This runs the migration that:
+# 1. Deletes duplicate rows (keeping first occurrence)
+# 2. Adds UNIQUE(poll_id, label_id) constraint
+# 3. Verifies no duplicates remain
+```
+
+### Prevention
+
+The unique constraint prevents future duplicates at the database level. The API also includes:
+- EXISTS-based queries to avoid row multiplication
+- Frontend deduplication as a safety net
+- Debug logging when duplicates are detected
 
 ## Filtering Lists by Label
 

@@ -38,13 +38,17 @@ export default function Layout({ children }: LayoutProps) {
     if (flags.labelsEnabled) {
       const fetchLabels = async () => {
         try {
+          console.log('Fetching labels...');
           const labelsData = await listLabels();
+          console.log('Labels loaded:', labelsData.length, labelsData);
           setLabels(labelsData);
         } catch (err) {
           console.error('Failed to load labels:', err);
         }
       };
       fetchLabels();
+    } else {
+      console.log('Labels disabled by flag');
     }
   }, []);
 
@@ -76,6 +80,10 @@ export default function Layout({ children }: LayoutProps) {
       return true;
     }
     return location.pathname === href;
+  };
+
+  const isTopicPage = () => {
+    return location.pathname.startsWith('/t/');
   };
 
   return (
@@ -124,10 +132,13 @@ export default function Layout({ children }: LayoutProps) {
               {flags.labelsEnabled && labels.length > 0 && (
                 <div className="relative topics-dropdown">
                   <button
-                    onClick={() => setTopicsDropdownOpen(!topicsDropdownOpen)}
+                    onClick={() => {
+                      console.log('Topics dropdown clicked, current state:', topicsDropdownOpen);
+                      setTopicsDropdownOpen(!topicsDropdownOpen);
+                    }}
                     className={clsx(
                       'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md',
-                      topicsDropdownOpen && 'text-primary-700 border-b-2 border-primary-700'
+                      (topicsDropdownOpen || isTopicPage()) && 'text-primary-700 border-b-2 border-primary-700'
                     )}
                   >
                     <span>Topics</span>
@@ -135,14 +146,20 @@ export default function Layout({ children }: LayoutProps) {
                   </button>
                   
                   {topicsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg z-50">
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-xl z-50">
                       <div className="py-1">
+                        <div className="px-4 py-2 text-xs text-neutral-500 border-b border-neutral-100">
+                          Available Topics ({labels.length})
+                        </div>
                         {labels.slice(0, 6).map((label) => (
                           <Link
                             key={label.id}
                             to={`/t/${label.slug}`}
-                            className="block px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
-                            onClick={() => setTopicsDropdownOpen(false)}
+                            className="block px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                            onClick={() => {
+                              console.log('Topic clicked:', label.slug);
+                              setTopicsDropdownOpen(false);
+                            }}
                           >
                             {label.name}
                           </Link>
@@ -246,6 +263,31 @@ export default function Layout({ children }: LayoutProps) {
                 <Activity className="w-4 h-4 mr-2" />
                 <span>Community Activity</span>
               </Link>
+              
+              {/* Mobile Topics */}
+              {flags.labelsEnabled && labels.length > 0 && (
+                <div className="border-t border-neutral-100 pt-2 mt-2">
+                  <div className="text-xs font-medium text-neutral-500 mb-2 px-3">Topics</div>
+                  {labels.slice(0, 6).map((label) => (
+                    <Link
+                      key={label.id}
+                      to={`/t/${label.slug}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={clsx(
+                        'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md block',
+                        location.pathname === `/t/${label.slug}` && 'text-primary-700 bg-primary-50'
+                      )}
+                    >
+                      <span>{label.name}</span>
+                    </Link>
+                  ))}
+                  {labels.length > 6 && (
+                    <div className="px-3 py-2 text-xs text-neutral-500">
+                      +{labels.length - 6} more topics
+                    </div>
+                  )}
+                </div>
+              )}
               
               <Button
                 onClick={() => {

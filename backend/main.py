@@ -204,6 +204,18 @@ if settings.DEBUG:
     dev_origins = ["http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://localhost:5175"]
     allowed_origins.extend(dev_origins)
 
+# Always add common development ports for local development
+dev_ports = ["5173", "5174", "5175", "3000", "3001"]
+for port in dev_ports:
+    allowed_origins.extend([
+        f"http://localhost:{port}",
+        f"http://127.0.0.1:{port}"
+    ])
+
+# Remove duplicates while preserving order
+seen = set()
+allowed_origins = [x for x in allowed_origins if not (x in seen or seen.add(x))]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, RefreshCw, Compass, Target } from 'lucide-react';
 import { getActivityFeed } from '../lib/api';
@@ -42,11 +42,35 @@ export default function ActivityFeed() {
 
   useEffect(() => {
     fetchActivities();
-  }, [fetchActivities]);
+  }, []);
 
   const handleLabelClick = (slug: string) => {
     window.location.href = `/t/${slug}?tab=all&page=1`;
   };
+
+  // Memoize the filtered activities to prevent unnecessary re-renders
+  const filteredActivities = useMemo(() => {
+    const filtered = activities.filter(() => {
+      if (activeFilter === 'all') return true;
+      // For now, we'll show all activities since the API doesn't provide level info
+      // In a real implementation, activities would have level information
+      return true;
+    });
+
+    const levelAActivities = filtered.filter(item => 
+      item.details.toLowerCase().includes('principle') || 
+      item.details.toLowerCase().includes('level a')
+    );
+    const levelBActivities = filtered.filter(item => 
+      item.details.toLowerCase().includes('action') || 
+      item.details.toLowerCase().includes('level b')
+    );
+    const otherActivities = filtered.filter(item => 
+      !levelAActivities.includes(item) && !levelBActivities.includes(item)
+    );
+
+    return { levelAActivities, levelBActivities, otherActivities, filtered };
+  }, [activities, activeFilter]);
 
   const renderActivityItem = (activity: ActivityItem, index: number, cardClass: string, icon: React.ReactNode, iconColor: string) => (
     <motion.div
@@ -62,10 +86,10 @@ export default function ActivityFeed() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-white">{activity.user.username}</span>
-            <span className="text-xs text-muted capitalize">{activity.type}</span>
+            <span className="font-semibold text-white">{activity.user.username}</span>
+            <span className="text-xs font-medium text-gray-300 capitalize bg-gray-700 px-2 py-0.5 rounded">{activity.type}</span>
           </div>
-          <p className="text-sm text-muted">{activity.details}</p>
+          <p className="text-sm text-gray-200 leading-relaxed">{activity.details}</p>
           
           {/* Labels */}
           {flags.labelsEnabled && activity.labels && activity.labels.length > 0 && (
@@ -88,7 +112,7 @@ export default function ActivityFeed() {
             </div>
           )}
           
-          <time className="text-xs text-muted mt-2 block">
+          <time className="text-xs text-gray-400 mt-2 block">
             {new Date(activity.timestamp).toLocaleString()}
           </time>
         </div>
@@ -102,7 +126,7 @@ export default function ActivityFeed() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Activity className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold text-white">Community Activity</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Community Activity</h1>
           </div>
           <Button variant="ghost" disabled>
             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -121,7 +145,7 @@ export default function ActivityFeed() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Activity className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold text-white">Community Activity</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Community Activity</h1>
           </div>
           <Button onClick={fetchActivities} variant="ghost">
             <RefreshCw className="w-4 h-4" />
@@ -146,7 +170,7 @@ export default function ActivityFeed() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Activity className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold text-white">Community Activity</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Community Activity</h1>
         </div>
         <Button onClick={fetchActivities} variant="ghost">
           <RefreshCw className="w-4 h-4" />
@@ -170,76 +194,50 @@ export default function ActivityFeed() {
         />
       ) : (
         <div className="space-y-6">
-          {/* Filter activities by level */}
           {(() => {
-            const filteredActivities = activities.filter(() => {
-              if (activeFilter === 'all') return true;
-              // For now, we'll show all activities since the API doesn't provide level info
-              // In a real implementation, activities would have level information
-              return true;
-            });
-
-            const levelAActivities = filteredActivities.filter(item => 
-              item.details.toLowerCase().includes('principle') || 
-              item.details.toLowerCase().includes('level a')
-            );
-            const levelBActivities = filteredActivities.filter(item => 
-              item.details.toLowerCase().includes('action') || 
-              item.details.toLowerCase().includes('level b')
-            );
-            const otherActivities = filteredActivities.filter(item => 
-              !levelAActivities.includes(item) && !levelBActivities.includes(item)
-            );
-
             return (
               <>
                 {/* Level A Activities */}
-                {levelAActivities.length > 0 && (activeFilter === 'all' || activeFilter === 'level_a') && (
+                {filteredActivities.levelAActivities.length > 0 && (activeFilter === 'all' || activeFilter === 'level_a') && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <Compass className="w-5 h-5 text-blue-300" />
-                      <h3 className="text-lg font-semibold text-blue-200">Principle Activities</h3>
+                      <Compass className="w-5 h-5 text-blue-400" />
+                      <h3 className="text-lg font-semibold text-blue-300">Principle Activities</h3>
                     </div>
-                    <AnimatePresence>
-                      {levelAActivities.map((activity, index) => (
-                        renderActivityItem(activity, index, "p-4 card-level-a", <Compass className="w-4 h-4 text-blue-300" />, "bg-blue-500/20")
-                      ))}
-                    </AnimatePresence>
+                    {filteredActivities.levelAActivities.map((activity, index) => (
+                      renderActivityItem(activity, index, "p-4 bg-gray-800 border border-gray-700 rounded-lg", <Compass className="w-4 h-4 text-blue-400" />, "bg-blue-500/20")
+                    ))}
                   </div>
                 )}
 
                 {/* Level B Activities */}
-                {levelBActivities.length > 0 && (activeFilter === 'all' || activeFilter === 'level_b') && (
+                {filteredActivities.levelBActivities.length > 0 && (activeFilter === 'all' || activeFilter === 'level_b') && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <Target className="w-5 h-5 text-emerald-300" />
-                      <h3 className="text-lg font-semibold text-emerald-200">Action Activities</h3>
+                      <Target className="w-5 h-5 text-emerald-400" />
+                      <h3 className="text-lg font-semibold text-emerald-300">Action Activities</h3>
                     </div>
-                    <AnimatePresence>
-                      {levelBActivities.map((activity, index) => (
-                        renderActivityItem(activity, index, "p-4 card-level-b", <Target className="w-4 h-4 text-emerald-300" />, "bg-emerald-500/20")
-                      ))}
-                    </AnimatePresence>
+                    {filteredActivities.levelBActivities.map((activity, index) => (
+                      renderActivityItem(activity, index, "p-4 bg-gray-800 border border-gray-700 rounded-lg", <Target className="w-4 h-4 text-emerald-400" />, "bg-emerald-500/20")
+                    ))}
                   </div>
                 )}
 
                 {/* Other Activities */}
-                {otherActivities.length > 0 && activeFilter === 'all' && (
+                {filteredActivities.otherActivities.length > 0 && activeFilter === 'all' && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <Activity className="w-5 h-5 text-primary" />
-                      <h3 className="text-lg font-semibold text-white">Other Activities</h3>
+                      <Activity className="w-5 h-5 text-blue-400" />
+                      <h3 className="text-lg font-semibold text-blue-300">Other Activities</h3>
                     </div>
-                    <AnimatePresence>
-                      {otherActivities.map((activity, index) => (
-                        renderActivityItem(activity, index, "p-4 bg-surface border border-border rounded-lg", <Activity className="w-4 h-4 text-primary" />, "bg-primary/10")
-                      ))}
-                    </AnimatePresence>
+                    {filteredActivities.otherActivities.map((activity, index) => (
+                      renderActivityItem(activity, index, "p-4 bg-gray-800 border border-gray-700 rounded-lg", <Activity className="w-4 h-4 text-blue-400" />, "bg-blue-500/20")
+                    ))}
                   </div>
                 )}
 
                 {/* Empty state for filtered results */}
-                {filteredActivities.length === 0 && activities.length > 0 && (
+                {filteredActivities.filtered.length === 0 && activities.length > 0 && (
                   <div className="text-center py-12">
                     <p className="text-muted mb-4">
                       No {activeFilter === 'level_a' ? 'principle' : 'action'} activities found.
