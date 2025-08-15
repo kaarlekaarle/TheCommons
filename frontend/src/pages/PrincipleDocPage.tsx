@@ -71,7 +71,7 @@ export default function PrincipleDocPage() {
       setPollState('error');
       showError('Failed to load principle');
     }
-  }, [id, showError]);
+  }, [id]);
 
   const fetchComments = useCallback(async () => {
     if (!id) return;
@@ -88,9 +88,11 @@ export default function PrincipleDocPage() {
   }, [id]);
 
   useEffect(() => {
-    fetchPoll();
-    fetchComments();
-  }, [fetchPoll, fetchComments]);
+    if (id) {
+      fetchPoll();
+      fetchComments();
+    }
+  }, [id]);
 
   // Handle revision submission
   const handleRevisionSubmit = async (body: string, target: 'main' | 'counter' | 'neutral') => {
