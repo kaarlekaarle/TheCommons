@@ -309,28 +309,21 @@ export const updateVote = async (voteId: string, optionId: string): Promise<Vote
   }
 };
 
+
+
 export const getResults = async (pollId: string, signal?: AbortSignal): Promise<PollResults> => {
   // Check if we should use hardcoded data
   const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
 
   if (useHardcodedData) {
     // Import hardcoded data utilities
-    const { getHardcodedPollOptions, isHardcodedPoll } = await import('../utils/hardcodedData');
+    const { getHardcodedResults, isHardcodedPoll } = await import('../utils/hardcodedData');
 
     if (isHardcodedPoll(pollId)) {
-      const options = getHardcodedPollOptions(pollId);
-      const totalVotes = 15; // Mock total votes
-
-      return {
-        poll_id: pollId,
-        total_votes: totalVotes,
-        options: options.map((option, index) => ({
-          option_id: option.id,
-          text: option.text,
-          votes: Math.floor(totalVotes * (0.3 + index * 0.2)), // Mock vote distribution
-          percentage: Math.floor((0.3 + index * 0.2) * 100)
-        }))
-      };
+      const results = getHardcodedResults(pollId);
+      if (results) {
+        return results;
+      }
     }
   }
 
@@ -720,5 +713,7 @@ export async function getPopularLabels(limit: number = 8, signal?: AbortSignal):
     };
   }
 }
+
+
 
 export default api;

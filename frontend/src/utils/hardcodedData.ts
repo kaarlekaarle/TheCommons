@@ -1,4 +1,4 @@
-import type { Poll, PollOption, Comment, Vote } from '../types';
+import type { Poll, PollOption, Comment, Vote, PollResults } from '../types';
 
 // Hardcoded poll data for testing
 export const hardcodedPolls: Poll[] = [
@@ -107,6 +107,50 @@ export const hardcodedPollOptions: Record<string, PollOption[]> = {
     }
   ]
 };
+
+// Hardcoded poll results for testing
+export const hardcodedResults: Record<string, PollResults> = {
+  'ai-edu-001': {
+    poll_id: 'ai-edu-001',
+    total_votes: 100,
+    options: [
+      {
+        option_id: 'option-ai-edu-1a',
+        text: 'Support AI in Education',
+        votes: 65,
+        percentage: 65
+      },
+      {
+        option_id: 'option-ai-edu-1b',
+        text: 'Proceed with Caution',
+        votes: 35,
+        percentage: 35
+      }
+    ]
+  },
+  'ai-edu-b-001': {
+    poll_id: 'ai-edu-b-001',
+    total_votes: 50,
+    options: [
+      {
+        option_id: 'option-ai-edu-b-1a',
+        text: 'Approve',
+        votes: 30,
+        percentage: 60
+      },
+      {
+        option_id: 'option-ai-edu-b-1b',
+        text: 'Modify',
+        votes: 20,
+        percentage: 40
+      }
+    ]
+  }
+};
+
+export function getHardcodedResults(pollId: string): PollResults | null {
+  return hardcodedResults[pollId] || null;
+}
 
 // Utility functions for hardcoded data
 export function getHardcodedPoll(id: string): Poll | null {

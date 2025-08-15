@@ -28,7 +28,7 @@ export function computePrimaryOption(
   }
 
   // If no results or no votes, treat as tie
-  if (!results || !results.totalVotes || results.totalVotes === 0) {
+  if (!results || !results.total_votes || results.total_votes === 0) {
     return { 
       primaryId: options[0].id, 
       alternateId: options[1]?.id || '', 
@@ -38,8 +38,9 @@ export function computePrimaryOption(
 
   // Calculate vote shares for each option
   const optionShares = options.map(option => {
-    const voteCount = results.optionResults?.[option.id]?.votes || 0;
-    const share = voteCount / results.totalVotes;
+    const resultOption = results.options.find(r => r.option_id === option.id);
+    const voteCount = resultOption?.votes || 0;
+    const share = voteCount / results.total_votes;
     return { id: option.id, share, votes: voteCount };
   });
 

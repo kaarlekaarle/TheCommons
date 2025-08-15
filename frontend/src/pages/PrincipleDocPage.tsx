@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Share2, Calendar, Tag } from 'lucide-react';
-import { getPoll, listComments, createComment, getResults } from '../lib/api';
+import { getPoll, listComments, createComment, getResults, getPollOptions } from '../lib/api';
 import { useToast } from '../components/ui/useToast';
 import Button from '../components/ui/Button';
 import { principlesCopy } from '../copy/principles';
@@ -22,6 +22,7 @@ export default function PrincipleDocPage() {
 
   // State
   const [poll, setPoll] = useState<Poll | null>(null);
+  const [pollOptions, setPollOptions] = useState<PollOption[]>([]);
   const [results, setResults] = useState<PollResults | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +34,7 @@ export default function PrincipleDocPage() {
 
   // Section states
   const [pollState, setPollState] = useState<SectionState>('idle');
+  const [optionsState, setOptionsState] = useState<SectionState>('idle');
   const [resultsState, setResultsState] = useState<SectionState>('idle');
   const [commentsState, setCommentsState] = useState<SectionState>('idle');
 
@@ -49,6 +51,20 @@ export default function PrincipleDocPage() {
       console.error('Failed to fetch poll:', err);
       setPollState('error');
       showError('Failed to load principle');
+    }
+  }, [id]);
+
+  const fetchPollOptions = useCallback(async () => {
+    if (!id) return;
+
+    setOptionsState('loading');
+    try {
+      const optionsData = await getPollOptions(id);
+      setPollOptions(optionsData);
+      setOptionsState('ready');
+    } catch (err) {
+      console.error('Failed to fetch poll options:', err);
+      setOptionsState('error');
     }
   }, [id]);
 
@@ -83,13 +99,14 @@ export default function PrincipleDocPage() {
   useEffect(() => {
     if (id) {
       fetchPoll();
+      fetchPollOptions();
       fetchResults();
       fetchComments();
     }
   }, [id]);
 
   // Compute primary perspective based on results
-  const primaryOption = poll && results ? computePrimaryOption(poll.options || [], results) : null;
+  const primaryOption = pollOptions.length > 0 && results ? computePrimaryOption(pollOptions, results) : null;
   const isTieResult = primaryOption ? isTie(primaryOption) : true;
 
   // Analytics tracking for primary perspective shown
