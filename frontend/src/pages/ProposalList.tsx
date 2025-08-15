@@ -23,9 +23,9 @@ export default function ProposalList() {
   // Hardcoded fallback data for development
   const hardcodedPolls: Poll[] = [
     {
-      id: 'hardcoded-1',
-              title: 'Principle (Placeholder)',
-              description: 'This is a placeholder example for principles. It demonstrates how a single evolving document could be revised and countered.',
+              id: 'ai-edu-001',
+                      title: 'AI in Education: A Tool for Stronger Learning',
+        description: 'Our community leans toward using AI to support teachers and students—freeing teachers from routine tasks, offering tailored explanations, and improving access—while keeping education human at its core.',
       created_by: 'hardcoded-user-1',
       created_at: '2025-01-10T10:00:00Z',
       updated_at: '2025-01-10T10:00:00Z',

@@ -24,12 +24,12 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useParams: () => ({ id: 'hardcoded-1' })
+    useParams: () => ({ id: 'ai-edu-001' })
   };
 });
 
 const mockPoll = {
-  id: 'hardcoded-1',
+        id: 'ai-edu-001',
   title: 'Test Principle',
   description: 'Test description',
   decision_type: 'level_a' as const,
@@ -63,5 +63,5 @@ test('redirects level_a proposals to compass when enabled', async () => {
   await new Promise(resolve => setTimeout(resolve, 100));
 
   // The redirect should happen after the poll data is loaded
-  expect(mockNavigate).toHaveBeenCalledWith('/compass/hardcoded-1', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/compass/ai-edu-001', { replace: true });
 });
