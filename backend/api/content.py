@@ -12,25 +12,11 @@ def get_demo_principles() -> List[PrincipleItem]:
     """Return demo principles when USE_DEMO_CONTENT is enabled."""
     return [
         PrincipleItem(
-            id="demo-vision-zero",
-            title="Vision Zero Commitment",
-            description="Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.",
-            tags=["safety", "mobility"],
-            source="Demo content"
-        ),
-        PrincipleItem(
-            id="demo-open-government",
-            title="Open Government Policy",
-            description="Make all public records and datasets available online unless specifically exempted by law, with clear processes for requesting information.",
-            tags=["transparency", "governance"],
-            source="Demo content"
-        ),
-        PrincipleItem(
-            id="demo-green-building",
-            title="Green Building Standard",
-            description="All new municipal buildings and major renovations must meet LEED Silver or equivalent green building standards.",
-            tags=["sustainability", "infrastructure"],
-            source="Demo content"
+            id="level-a-placeholder",
+            title="Level A Principle (Placeholder)",
+            description="This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.",
+            tags=["placeholder", "level-a"],
+            source="The Commons MVP"
         )
     ]
 
@@ -39,28 +25,12 @@ def get_demo_actions() -> List[ActionItem]:
     """Return demo actions when USE_DEMO_CONTENT is enabled."""
     return [
         ActionItem(
-            id="demo-bike-lanes",
-            title="Install protected bike lanes on Washington Avenue",
-            description="Add dedicated, protected bicycle lanes along Washington Avenue to improve cyclist safety and encourage active transportation between downtown and the university.",
-            scope="city",
-            tags=["mobility", "safety"],
-            source="Demo content"
-        ),
-        ActionItem(
-            id="demo-composting",
-            title="Launch curbside composting pilot",
-            description="Begin organic waste collection service in Downtown, Westside, Riverside, and Eastside neighborhoods to reduce landfill waste and create compost for city parks.",
-            scope="city",
-            tags=["waste", "sustainability"],
-            source="Demo content"
-        ),
-        ActionItem(
-            id="demo-library-hours",
-            title="Extend public library hours",
-            description="Extend public library hours to 9 PM on weekdays for six-month trial to improve access for working families and students.",
-            scope="city",
-            tags=["education", "accessibility"],
-            source="Demo content"
+            id="level-b-placeholder",
+            title="Level B Principle (Placeholder)",
+            description="This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.",
+            scope="community",
+            tags=["placeholder", "level-b"],
+            source="The Commons MVP"
         )
     ]
 
@@ -69,25 +39,11 @@ def get_demo_stories() -> List[StoryItem]:
     """Return demo stories when USE_DEMO_CONTENT is enabled."""
     return [
         StoryItem(
-            id="demo-vision-zero-success",
-            title="Vision Zero Implementation",
-            summary="Reduced traffic fatalities by 40% through street redesign and safety improvements.",
-            impact="40% reduction in traffic fatalities",
-            source="Demo content"
-        ),
-        StoryItem(
-            id="demo-open-government-success",
-            title="Open Government Initiative",
-            summary="Published 200+ datasets, leading to better-informed community decisions.",
-            impact="200+ datasets published",
-            source="Demo content"
-        ),
-        StoryItem(
-            id="demo-green-building-success",
-            title="Green Building Program",
-            summary="Retrofitted 15 public buildings, cutting energy costs by 30%.",
-            impact="30% reduction in energy costs",
-            source="Demo content"
+            id="demo-placeholder-story",
+            title="Placeholder Story",
+            summary="This is a placeholder story for demonstration purposes.",
+            impact="Placeholder impact metrics",
+            source="The Commons MVP"
         )
     ]
 

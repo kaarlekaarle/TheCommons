@@ -59,208 +59,18 @@ DEMO_USERS = [
 # Level A (baseline policy) proposals - based on actual municipal policy frameworks
 LEVEL_A_PROPOSALS = [
     {
-        'title': 'Complete Streets Policy',
-        'description': 'Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.',
-        'direction_choice': "Transportation Safety"
-    },
-    {
-        'title': 'Public Records Transparency Policy',
-        'description': 'Make all public records and datasets available online unless specifically exempted by law, with clear processes for requesting information.',
-        'direction_choice': "Government Transparency"
-    },
-    {
-        'title': 'Green Building Standards for Municipal Construction',
-        'description': 'Require all new municipal buildings and major renovations to meet LEED Silver certification or equivalent energy efficiency standards.',
-        'direction_choice': "Environmental Policy"
-    },
-    {
-        'title': 'Inclusive Housing Development Policy',
-        'description': 'Ensure 20% of all new residential development includes affordable housing units or equivalent contributions to the housing trust fund.',
-        'direction_choice': "Housing & Development"
-    },
-    {
-        'title': 'Parks and Recreation Access Standards',
-        'description': 'Maintain a minimum of 10 acres of parkland per 1,000 residents and ensure all neighborhoods have access to recreational facilities within a 10-minute walk.',
-        'direction_choice': "Parks & Recreation"
-    },
-    {
-        'title': 'Municipal Climate Action Plan',
-        'description': 'Reduce city government greenhouse gas emissions by 50% by 2030 and achieve carbon neutrality by 2040 through energy efficiency and renewable energy.',
-        'direction_choice': "Climate & Sustainability"
-    },
-    {
-        'title': 'Digital Equity and Broadband Access Policy',
-        'description': 'Ensure all residents have access to affordable high-speed internet and digital literacy training through partnerships with service providers and community organizations.',
-        'direction_choice': "Technology & Innovation"
-    },
-    {
-        'title': 'Local Food System Development Policy',
-        'description': 'Support local food production and distribution by providing incentives for urban agriculture, farmers markets, and food processing facilities.',
-        'direction_choice': "Food Security"
-    },
-    {
-        'title': 'Transit-Oriented Development Framework',
-        'description': 'Prioritize mixed-use development within 1/2 mile of transit stations to reduce car dependency and increase transit ridership.',
-        'direction_choice': "Public Transit"
-    },
-    {
-        'title': 'Zero Waste and Circular Economy Policy',
-        'description': 'Achieve 90% waste diversion from landfills by 2030 through comprehensive recycling, composting, and waste reduction programs.',
-        'direction_choice': "Waste Management"
+        'title': 'Level A Principle (Placeholder)',
+        'description': 'This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.',
+        'direction_choice': "Placeholder"
     }
 ]
 
 # Level B (poll) proposals - based on actual municipal council decisions
 LEVEL_B_PROPOSALS = [
     {
-        'title': 'Install protected bike lanes on Washington Avenue from downtown to university district',
-        'description': 'Add dedicated, protected bicycle lanes along Washington Avenue to improve cyclist safety and encourage active transportation between downtown and the university.',
-        'options': ['Approve', 'Modify plan', 'Reject']
-    },
-    {
-        'title': 'Launch 18-month curbside composting pilot in four residential neighborhoods',
-        'description': 'Begin organic waste collection service in Downtown, Westside, Riverside, and Eastside neighborhoods to reduce landfill waste and create compost for city parks.',
-        'options': ['Approve', 'Reduce scope', 'Reject']
-    },
-    {
-        'title': 'Extend public library hours to 9 PM on weekdays for six-month trial',
-        'description': 'Extend operating hours at the main library to better serve students, working families, and evening library users.',
-        'options': ['Approve', 'Modify hours', 'Reject']
-    },
-    {
-        'title': 'Plant 750 street trees along major transit corridors and in underserved neighborhoods',
-        'description': 'Add urban trees along bus routes and in neighborhoods with low tree canopy to improve air quality, provide shade, and enhance walkability.',
-        'options': ['Approve', 'Reduce number', 'Reject']
-    },
-    {
-        'title': 'Install 25 public water refill stations in parks, schools, and community centers',
-        'description': 'Add drinking water stations to reduce plastic bottle waste, improve public health, and encourage hydration during outdoor activities.',
-        'options': ['Approve', 'Reduce locations', 'Reject']
-    },
-    {
-        'title': 'Retrofit lighting in all municipal buildings with energy-efficient LED systems',
-        'description': 'Replace existing lighting systems in 15 municipal buildings to reduce energy consumption by 40% and lower operating costs.',
-        'options': ['Approve', 'Phase implementation', 'Reject']
-    },
-    {
-        'title': 'Add wheelchair-accessible seating and improved pathways in Central Park',
-        'description': 'Install accessible benches, improve pathway surfaces, and add shade structures to ensure park access for residents of all abilities.',
-        'options': ['Approve', 'Modify scope', 'Reject']
-    },
-    {
-        'title': 'Create monthly "Open Streets" program on Main Street during summer months',
-        'description': 'Close Main Street to vehicle traffic on the first Sunday of each month from June through September for community events and recreation.',
-        'options': ['Approve', 'Reduce frequency', 'Reject']
-    },
-    {
-        'title': 'Launch local food voucher program for 300 low-income households',
-        'description': 'Provide $75 monthly vouchers redeemable at farmers markets and local food co-ops for qualifying households to improve food access.',
-        'options': ['Approve', 'Reduce amount', 'Reject']
-    },
-    {
-        'title': 'Replace diesel buses on Route 8 with electric buses within 24 months',
-        'description': 'Purchase 12 electric buses to replace aging diesel vehicles on the downtown-to-airport route, reducing emissions and noise pollution.',
-        'options': ['Approve', 'Extend timeline', 'Reject']
-    },
-    {
-        'title': 'Start youth apprenticeship program in city maintenance and parks departments',
-        'description': 'Create 20 paid apprenticeship positions for youth aged 16-24 in parks maintenance, street repair, and facilities management.',
-        'options': ['Approve', 'Reduce positions', 'Reject']
-    },
-    {
-        'title': 'Create protected pedestrian crossing at 3rd and Market intersection',
-        'description': 'Install signalized crosswalk with pedestrian refuge island and countdown timers at the busy 3rd and Market intersection.',
-        'options': ['Approve', 'Modify design', 'Reject']
-    },
-    {
-        'title': 'Run public art mural program in underutilized downtown spaces',
-        'description': 'Commission 15 murals on blank walls and underpasses to improve visual appeal, support local artists, and reduce graffiti.',
-        'options': ['Approve', 'Reduce number', 'Reject']
-    },
-    {
-        'title': 'Upgrade stormwater drainage system in flood-prone areas',
-        'description': 'Replace and expand drainage infrastructure in four neighborhoods that experience regular flooding during heavy rain events.',
-        'options': ['Approve', 'Prioritize areas', 'Reject']
-    },
-    {
-        'title': 'Pilot mobile mental health crisis response unit operating five days per week',
-        'description': 'Deploy a mobile crisis intervention team with mental health professionals to provide immediate support in high-need areas.',
-        'options': ['Approve', 'Reduce days', 'Reject']
-    },
-    {
-        'title': 'Offer free Wi-Fi in all public libraries, recreation centers, and community spaces',
-        'description': 'Install and maintain wireless internet access in 12 public facilities to improve digital access and support remote work and learning.',
-        'options': ['Approve', 'Limit locations', 'Reject']
-    },
-    {
-        'title': 'Expand community policing foot patrols to three additional neighborhoods',
-        'description': 'Add walking patrols in Eastside, Southside, and Northside neighborhoods to improve community-police relations and crime prevention.',
-        'options': ['Approve', 'Add one area', 'Reject']
-    },
-    {
-        'title': 'Begin construction of inclusive playground in Westside Recreation Area',
-        'description': 'Build a 20,000 square foot playground with accessible equipment for children of all abilities, including sensory-friendly areas.',
-        'options': ['Approve', 'Reduce size', 'Reject']
-    },
-    {
-        'title': 'Install traffic-calming speed humps on Oak Drive near elementary school',
-        'description': 'Add four speed humps on Oak Drive to reduce vehicle speeds and improve pedestrian safety near the elementary school.',
-        'options': ['Approve', 'Reduce number', 'Reject']
-    },
-    {
-        'title': 'Provide energy-efficiency grants to 25 small businesses for storefront upgrades',
-        'description': 'Offer $7,500 grants to small businesses for lighting, HVAC, insulation, and window improvements to reduce energy costs.',
-        'options': ['Approve', 'Reduce amount', 'Reject']
-    },
-    {
-        'title': 'Introduce on-demand evening bus service for shift workers in industrial district',
-        'description': 'Launch flexible bus service from 7 PM to 3 AM to serve workers at the industrial park and surrounding residential areas.',
-        'options': ['Approve', 'Reduce hours', 'Reject']
-    },
-    {
-        'title': 'Convert vacant lot at 12th and Pine into community garden for three years',
-        'description': 'Transform the 0.75-acre vacant lot into a community garden with 40 plots, shared composting area, and educational programming.',
-        'options': ['Approve', 'Reduce size', 'Reject']
-    },
-    {
-        'title': 'Offer free weekend transit for youth under 18 for 18-month pilot',
-        'description': 'Provide free bus and train rides on Saturdays and Sundays for all youth to encourage independent mobility and reduce family transportation costs.',
-        'options': ['Approve', 'Limit days', 'Reject']
-    },
-    {
-        'title': 'Create citywide tool and equipment lending library',
-        'description': 'Establish a lending library with 300 tools and equipment items available for 14-day borrowing periods to support DIY projects and reduce waste.',
-        'options': ['Approve', 'Reduce inventory', 'Reject']
-    },
-    {
-        'title': 'Add shaded seating areas to four senior housing complexes',
-        'description': 'Install covered benches, tables, and shade structures at senior housing facilities to improve outdoor access and social interaction.',
-        'options': ['Approve', 'Reduce locations', 'Reject']
-    },
-    {
-        'title': 'Implement bilingual signage in all city-owned buildings and facilities',
-        'description': 'Add Spanish-language signs alongside English in all municipal buildings to improve accessibility for Spanish-speaking residents.',
-        'options': ['Approve', 'Phase implementation', 'Reject']
-    },
-    {
-        'title': 'Start bike-share program with 150 bikes at 15 docking stations',
-        'description': 'Launch a public bicycle sharing system with stations throughout downtown and adjacent neighborhoods to provide last-mile transportation.',
-        'options': ['Approve', 'Reduce scale', 'Reject']
-    },
-    {
-        'title': 'Build public charging station hub for electric vehicles in central parking garage',
-        'description': 'Install 20 electric vehicle charging stations in the main downtown parking facility to support EV adoption and reduce emissions.',
-        'options': ['Approve', 'Reduce stations', 'Reject']
-    },
-    {
-        'title': 'Restore historic bandshell in Memorial Park',
-        'description': 'Repair and restore the 1930s bandshell in Memorial Park, including structural repairs, electrical upgrades, and acoustic improvements.',
-        'options': ['Approve', 'Modify scope', 'Reject']
-    },
-    {
-        'title': 'Add three new trash and recycling bins per block in downtown core',
-        'description': 'Install 60 new waste receptacles with separate recycling compartments throughout the downtown area to reduce litter and improve recycling rates.',
-        'options': ['Approve', 'Reduce number', 'Reject']
+        'title': 'Level B Principle (Placeholder)',
+        'description': 'This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.',
+        'options': ['Approve', 'Modify', 'Reject']
     }
 ]
 
@@ -271,7 +81,7 @@ SAMPLE_COMMENTS = {
         {'text': 'CON: Removing street parking will hurt local businesses that depend on customer parking', 'user': 'shop_owner'},
         {'text': 'PRO: Great for students commuting to university - much safer than current conditions', 'user': 'student'},
         {'text': 'CON: Construction will cause traffic delays and the lanes will slow down vehicle traffic permanently', 'user': 'driver'},
-        {'text': 'PRO: This aligns perfectly with our Complete Streets policy and Vision Zero goals', 'user': 'cityplanner'},
+        {'text': 'PRO: This is a placeholder comment for demonstration purposes', 'user': 'cityplanner'},
     ],
     'composting': [
         {'text': 'PRO: Reduces landfill waste by 30% and creates valuable compost for city parks', 'user': 'waste_manager'},
@@ -331,7 +141,7 @@ SAMPLE_COMMENTS = {
     ],
     'pedestrian_crossing': [
         {'text': 'PRO: Improves safety at one of our most dangerous intersections', 'user': 'parent'},
-        {'text': 'PRO: Supports our Complete Streets policy and Vision Zero commitment', 'user': 'cityplanner'},
+        {'text': 'PRO: This is a placeholder comment for demonstration purposes', 'user': 'cityplanner'},
         {'text': 'CON: May slow down vehicle traffic during peak hours', 'user': 'driver'},
         {'text': 'PRO: Better access for elderly residents and people with disabilities', 'user': 'nurse'},
         {'text': 'CON: Construction will cause traffic disruption for several weeks', 'user': 'shop_owner'},
@@ -380,7 +190,7 @@ SAMPLE_COMMENTS = {
     ],
     'speed_humps': [
         {'text': 'PRO: Improves safety near school and reduces vehicle speeds by 40%', 'user': 'parent'},
-        {'text': 'PRO: Supports our Complete Streets policy and protects children', 'user': 'cityplanner'},
+        {'text': 'PRO: This is a placeholder comment for demonstration purposes', 'user': 'cityplanner'},
         {'text': 'CON: May slow down emergency vehicles and cause driver frustration', 'user': 'nurse'},
         {'text': 'PRO: Protects children and families walking to school', 'user': 'teacher'},
         {'text': 'CON: Inconvenience for drivers and potential damage to vehicles', 'user': 'driver'},

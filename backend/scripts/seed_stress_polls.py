@@ -26,87 +26,18 @@ from backend.config import settings
 
 # Sample poll data for stress testing
 SAMPLE_POLLS = [
-    # Level A Principles (60 total)
+    # Level A Principles (1 total)
     {
-        "title": "Sustainable Transportation Policy",
-        "description": "Establish a comprehensive policy framework for sustainable transportation that prioritizes public transit, cycling, and pedestrian infrastructure.",
+        "title": "Level A Principle (Placeholder)",
+        "description": "This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.",
         "decision_type": "level_a",
-        "direction_choice": "Transportation Safety"
-    },
-    {
-        "title": "Environmental Protection Standards",
-        "description": "Set baseline environmental protection standards for all municipal projects and developments.",
-        "decision_type": "level_a",
-        "direction_choice": "Environmental Stewardship"
-    },
-    {
-        "title": "Community Engagement Framework",
-        "description": "Define how the community will be engaged in decision-making processes across all city departments.",
-        "decision_type": "level_a",
-        "direction_choice": "Community Participation"
-    },
-    {
-        "title": "Economic Development Strategy",
-        "description": "Establish principles for economic development that prioritize local businesses and sustainable growth.",
-        "decision_type": "level_a",
-        "direction_choice": "Economic Prosperity"
-    },
-    {
-        "title": "Public Safety Philosophy",
-        "description": "Define the community's approach to public safety, emphasizing prevention and community-based solutions.",
-        "decision_type": "level_a",
-        "direction_choice": "Public Safety"
+        "direction_choice": "Placeholder"
     },
     
-    # Level B Actions (240 total) - Sample templates
+    # Level B Actions (1 total) - Sample templates
     {
-        "title": "Install Solar Panels on City Hall",
-        "description": "Install photovoltaic panels on the roof of City Hall to reduce municipal energy costs and demonstrate renewable energy commitment.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Extend Bike Lane Network",
-        "description": "Add 5 miles of protected bike lanes connecting downtown to residential neighborhoods.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Launch Community Garden Program",
-        "description": "Establish 10 community gardens in underserved neighborhoods to promote food security and community building.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Upgrade Public Library Hours",
-        "description": "Extend library operating hours to 9 PM on weekdays to better serve working families and students.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Implement Curbside Composting",
-        "description": "Begin curbside organic waste collection in four pilot neighborhoods to reduce landfill waste.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Create Youth Employment Program",
-        "description": "Establish a summer employment program for 100 local youth in municipal departments and local businesses.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Upgrade Traffic Signal System",
-        "description": "Install smart traffic signals at 20 major intersections to improve traffic flow and reduce emissions.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Expand Public WiFi Network",
-        "description": "Install free WiFi hotspots in 15 public spaces including parks, libraries, and community centers.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Launch Electric Vehicle Charging Program",
-        "description": "Install 25 electric vehicle charging stations in public parking areas across the city.",
-        "decision_type": "level_b"
-    },
-    {
-        "title": "Create Affordable Housing Trust Fund",
-        "description": "Establish a $2 million fund to support affordable housing development and preservation.",
+        "title": "Level B Principle (Placeholder)",
+        "description": "This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.",
         "decision_type": "level_b"
     }
 ]

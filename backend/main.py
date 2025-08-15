@@ -205,7 +205,7 @@ if settings.DEBUG:
     allowed_origins.extend(dev_origins)
 
 # Always add common development ports for local development
-dev_ports = ["5173", "5174", "5175", "3000", "3001"]
+dev_ports = ["5173", "5174", "5175", "5176", "5177", "3000", "3001"]
 for port in dev_ports:
     allowed_origins.extend([
         f"http://localhost:{port}",
@@ -218,7 +218,7 @@ allowed_origins = [x for x in allowed_origins if not (x in seen or seen.add(x))]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],  # Temporarily allow all origins for testing
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],

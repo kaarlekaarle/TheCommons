@@ -78,40 +78,16 @@ async def create_seed_data():
         # Create proposals with spaced timestamps
         proposals_data = [
             {
-                "title": "Complete Streets Policy",
-                "description": "Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.",
+                "title": "Level A Principle (Placeholder)",
+                "description": "This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.",
                 "created_by": created_users["alex"],
                 "hours_ago": 2  # 2 hours ago
             },
             {
-                "title": "Install protected bike lanes on Washington Avenue from downtown to university district", 
-                "description": "Add dedicated, protected bicycle lanes along Washington Avenue to improve cyclist safety and encourage active transportation between downtown and the university.",
+                "title": "Level B Principle (Placeholder)", 
+                "description": "This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.",
                 "created_by": created_users["jordan"],
                 "hours_ago": 4  # 4 hours ago
-            },
-            {
-                "title": "Launch 18-month curbside composting pilot in four residential neighborhoods",
-                "description": "Begin organic waste collection service in Downtown, Westside, Riverside, and Eastside neighborhoods to reduce landfill waste and create compost for city parks.",
-                "created_by": created_users["maria"], 
-                "hours_ago": 6  # 6 hours ago
-            },
-            {
-                "title": "Public Records Transparency Policy",
-                "description": "Make all public records and datasets available online unless specifically exempted by law, with clear processes for requesting information.",
-                "created_by": created_users["sam"],
-                "hours_ago": 8  # 8 hours ago
-            },
-            {
-                "title": "Extend public library hours to 9 PM on weekdays for six-month trial",
-                "description": "Extend operating hours at the main library to better serve students, working families, and evening library users.",
-                "created_by": created_users["taylor"],
-                "hours_ago": 10  # 10 hours ago
-            },
-            {
-                "title": "Green Building Standards for Municipal Construction",
-                "description": "Require all new municipal buildings and major renovations to meet LEED Silver certification or equivalent energy efficiency standards.",
-                "created_by": created_users["casey"],
-                "hours_ago": 12  # 12 hours ago
             }
         ]
         
@@ -148,22 +124,16 @@ async def create_seed_data():
         # Create votes
         votes_data = [
             {
-                "poll_title": "Complete Streets Policy",
+                "poll_title": "Level A Principle (Placeholder)",
                 "voter": "jordan",
                 "option_text": "Yes",
                 "hours_ago": 1  # 1 hour ago
             },
             {
-                "poll_title": "Municipal Climate Action Plan",
+                "poll_title": "Level B Principle (Placeholder)",
                 "voter": "alex", 
                 "option_text": "Yes",
                 "hours_ago": 3  # 3 hours ago
-            },
-            {
-                "poll_title": "Public Records Transparency Policy",
-                "voter": "jordan",
-                "option_text": "No", 
-                "hours_ago": 5  # 5 hours ago
             }
         ]
         
