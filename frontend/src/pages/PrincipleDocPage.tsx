@@ -135,8 +135,8 @@ export default function PrincipleDocPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-8">
         {/* Header */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -179,11 +179,11 @@ export default function PrincipleDocPage() {
         </div>
 
         {/* Content Grid */}
-        <div className="grid gap-6 lg:grid-cols-12">
-          {/* Main Column */}
-          <div className="lg:col-span-8 space-y-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-3">
+          {/* Left Column (span 2) */}
+          <section className="lg:col-span-2 space-y-6">
             {/* Perspective Cards */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <PerspectiveCard
                 type="primary"
                 title={principlesCopy.primaryPerspective.title}
@@ -224,40 +224,42 @@ export default function PrincipleDocPage() {
               error={commentsState === 'error' ? 'Failed to load conversation' : null}
               onRetry={fetchComments}
             />
-          </div>
+          </section>
 
-          {/* Aside Column */}
-          <div className="lg:col-span-4 space-y-6">
-            <FurtherLearning />
+          {/* Sidebar (right column) */}
+          <aside className="lg:col-span-1" role="complementary">
+            <div className="lg:sticky lg:top-20 space-y-6">
+              <FurtherLearning />
 
-            {/* Meta Card */}
-            <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Meta</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{principlesCopy.created}:</span>
-                  <span className="text-gray-900">
-                    {poll?.created_at ? new Date(poll.created_at).toLocaleDateString() : 'Unknown'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{principlesCopy.updated}:</span>
-                  <span className="text-gray-900">
-                    {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{principlesCopy.labels}:</span>
-                  <span className="text-gray-900">
-                    {poll?.labels && poll.labels.length > 0
-                      ? poll.labels.map(l => l.name).join(', ')
-                      : principlesCopy.noLabels
-                    }
-                  </span>
+              {/* Meta Card */}
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Meta</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{principlesCopy.created}:</span>
+                    <span className="text-gray-900">
+                      {poll?.created_at ? new Date(poll.created_at).toLocaleDateString() : 'Unknown'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{principlesCopy.updated}:</span>
+                    <span className="text-gray-900">
+                      {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{principlesCopy.labels}:</span>
+                    <span className="text-gray-900">
+                      {poll?.labels && poll.labels.length > 0
+                        ? poll.labels.map(l => l.name).join(', ')
+                        : principlesCopy.noLabels
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </div>
