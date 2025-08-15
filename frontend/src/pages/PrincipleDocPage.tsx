@@ -1,61 +1,37 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Share2, Calendar, Tag } from 'lucide-react';
 import { getPoll, listComments, createComment } from '../lib/api';
 import { useToast } from '../components/ui/useToast';
 import Button from '../components/ui/Button';
 import { principlesCopy } from '../copy/principles';
 import { flags } from '../config/flags';
-import CommunityDocument from '../components/principle/CommunityDocument';
-import CounterDocument from '../components/principle/CounterDocument';
-import RevisionComposer from '../components/principle/RevisionComposer';
-import RevisionsList from '../components/principle/RevisionsList';
-import DiscussionList from '../components/principle/DiscussionList';
-import AboutThis from '../components/principle/AboutThis';
-import TabSwitcher from '../components/principle/TabSwitcher';
+import PerspectiveCard from '../components/principle/PerspectiveCard';
+import ConversationSection from '../components/principle/ConversationSection';
+import FurtherLearning from '../components/principle/FurtherLearning';
 import type { Poll, Comment } from '../types';
-
-interface EvidenceItem {
-  id: string;
-  title: string;
-  source: string;
-  year: number;
-  url: string;
-  summary?: string;
-  stance?: 'supports' | 'questions' | 'mixed';
-}
 
 type SectionState = 'idle' | 'loading' | 'ready' | 'error';
 
 export default function PrincipleDocPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { success, error: showError } = useToast();
 
   // State
   const [poll, setPoll] = useState<Poll | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [composerTarget, setComposerTarget] = useState<'main' | 'counter' | 'neutral'>('main');
-  const [composerPlaceholder, setComposerPlaceholder] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'revisions' | 'discussion'>('revisions');
+  const [isAligning, setIsAligning] = useState(false);
+  const [userAlignment, setUserAlignment] = useState<'primary' | 'alternate' | null>(null);
+  const [expandedPerspective, setExpandedPerspective] = useState<'primary' | 'alternate' | null>(
+    searchParams.get('p') as 'primary' | 'alternate' | null
+  );
 
   // Section states
   const [pollState, setPollState] = useState<SectionState>('idle');
   const [commentsState, setCommentsState] = useState<SectionState>('idle');
-
-  // Derived data
-  const mainDoc = poll?.longform_main || poll?.description || poll?.body || '';
-  const counterDoc = poll?.extra?.counter_body || '';
-  const evidence: EvidenceItem[] = (poll?.extra?.evidence || []).map((item, index) => ({
-    id: `evidence-${index}`,
-    title: item.title,
-    source: item.source,
-    year: item.year,
-    url: item.url,
-    summary: (item as any).summary,
-    stance: (item as any).stance
-  }));
 
   // Fetch data
   const fetchPoll = useCallback(async () => {
@@ -94,46 +70,53 @@ export default function PrincipleDocPage() {
     }
   }, [id]);
 
-  // Handle revision submission
-  const handleRevisionSubmit = async (body: string, target: 'main' | 'counter' | 'neutral') => {
+  // Handle conversation submission
+  const handleConversationSubmit = async (body: string, perspective: 'primary' | 'alternate') => {
     if (!id) return;
 
     setIsSubmitting(true);
     try {
       const newComment = await createComment(id, {
         body,
-        kind: 'revision',
-        stance: target
+        perspective // This will be mapped to the appropriate API field
       });
 
       // Optimistic update
       setComments(prev => [newComment, ...prev]);
-      success(principlesCopy.revisionPosted);
+      success('Reasoning posted successfully');
 
       // Analytics tracking
-      console.log('principle.revision.post', { pollId: id, target });
+      console.log('principle.conversation.post', { pollId: id, perspective });
     } catch (err) {
-      console.error('Failed to post revision:', err);
-      showError(principlesCopy.revisionError);
+      console.error('Failed to post reasoning:', err);
+      showError('Failed to post reasoning');
 
       // Analytics tracking
-      console.log('principle.revision.error', { pollId: id, error: err });
+      console.log('principle.conversation.error', { pollId: id, error: err });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle composer focus
-  const handleDevelopView = () => {
-    setComposerTarget('counter');
-    setComposerPlaceholder('Develop the counter-document by proposing an alternative perspective...');
-    // Focus management would go here
-  };
+  // Handle alignment
+  const handleAlign = async (perspective: 'primary' | 'alternate') => {
+    if (!id) return;
 
-  const handleSuggestSource = () => {
-    setComposerTarget('neutral');
-    setComposerPlaceholder('Suggest a source: [Title] - [Source], [Year] - [URL]');
-    // Focus management would go here
+    setIsAligning(true);
+    try {
+      // This would typically call an API to update user alignment
+      // For now, we'll just update local state
+      setUserAlignment(perspective);
+      success(`You're now aligned with the ${perspective} perspective`);
+
+      // Analytics tracking
+      console.log('principle.align', { pollId: id, perspective });
+    } catch (err) {
+      console.error('Failed to align:', err);
+      showError('Failed to update alignment');
+    } finally {
+      setIsAligning(false);
+    }
   };
 
   const handleBack = () => {
@@ -169,25 +152,17 @@ export default function PrincipleDocPage() {
 
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                {poll?.title || 'Loading...'}
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2" data-testid="main-question">
+                {principlesCopy.mainQuestion}
               </h1>
-              <p className="text-gray-600 mb-2">
-                {poll?.description || 'Loading description...'}
+              <p className="text-gray-600 mb-2" data-testid="intro-text">
+                {principlesCopy.introText}
               </p>
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   <span>{principlesCopy.lastUpdated}: {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}</span>
                 </div>
-                {flags.principlesDocEnabled && (
-                  <button
-                    onClick={() => navigate(`/compass/${id}/diff`)}
-                    className="text-blue-600 hover:text-blue-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:ring-offset-2 rounded"
-                  >
-                    Diff view
-                  </button>
-                )}
                 {poll?.labels && poll.labels.length > 0 && (
                   <div className="flex items-center gap-1">
                     <Tag className="w-4 h-4" />
@@ -207,59 +182,53 @@ export default function PrincipleDocPage() {
         <div className="grid gap-6 lg:grid-cols-12">
           {/* Main Column */}
           <div className="lg:col-span-8 space-y-6">
-            <CommunityDocument
-              content={mainDoc}
-              loading={pollState === 'loading'}
-            />
-
-            <RevisionComposer
-              onSubmit={handleRevisionSubmit}
-              isSubmitting={isSubmitting}
-              initialTarget={composerTarget}
-              placeholder={composerPlaceholder}
-            />
-
-            {/* Tab Switcher */}
-            <div>
-              <TabSwitcher
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
+            {/* Perspective Cards */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <PerspectiveCard
+                type="primary"
+                title={principlesCopy.primaryPerspective.title}
+                summary={principlesCopy.primaryPerspective.summary}
+                longBody={principlesCopy.primaryPerspective.longBody}
+                isAligned={userAlignment === 'primary'}
+                isSubmitting={isAligning}
+                onAlign={() => handleAlign('primary')}
+                onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'primary' ? null : 'primary')}
+                isExpanded={expandedPerspective === 'primary'}
+                readMoreText={principlesCopy.primaryPerspective.readMore}
+                readLessText={principlesCopy.primaryPerspective.readLess}
+                alignButtonText={principlesCopy.primaryPerspective.alignButton}
               />
 
-              {/* Tab Content */}
-              <div className="mt-4">
-                {activeTab === 'revisions' ? (
-                  <RevisionsList
-                    revisions={comments}
-                    loading={commentsState === 'loading'}
-                    error={commentsState === 'error' ? 'Failed to load revisions' : null}
-                    onRetry={fetchComments}
-                  />
-                ) : (
-                  <DiscussionList
-                    comments={comments}
-                    loading={commentsState === 'loading'}
-                    error={commentsState === 'error' ? 'Failed to load discussion' : null}
-                    onRetry={fetchComments}
-                  />
-                )}
-              </div>
+              <PerspectiveCard
+                type="alternate"
+                title={principlesCopy.alternatePerspective.title}
+                summary={principlesCopy.alternatePerspective.summary}
+                longBody={principlesCopy.alternatePerspective.longBody}
+                isAligned={userAlignment === 'alternate'}
+                isSubmitting={isAligning}
+                onAlign={() => handleAlign('alternate')}
+                onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'alternate' ? null : 'alternate')}
+                isExpanded={expandedPerspective === 'alternate'}
+                readMoreText={principlesCopy.alternatePerspective.readMore}
+                readLessText={principlesCopy.alternatePerspective.readLess}
+                alignButtonText={principlesCopy.alternatePerspective.alignButton}
+              />
             </div>
+
+            {/* Conversation Section */}
+            <ConversationSection
+              comments={comments}
+              onSubmit={handleConversationSubmit}
+              isSubmitting={isSubmitting}
+              loading={commentsState === 'loading'}
+              error={commentsState === 'error' ? 'Failed to load conversation' : null}
+              onRetry={fetchComments}
+            />
           </div>
 
           {/* Aside Column */}
           <div className="lg:col-span-4 space-y-6">
-            <CounterDocument
-              content={counterDoc}
-              onDevelopView={handleDevelopView}
-              loading={pollState === 'loading'}
-            />
-
-            <AboutThis
-              sources={evidence}
-              onSuggestSource={handleSuggestSource}
-              loading={pollState === 'loading'}
-            />
+            <FurtherLearning />
 
             {/* Meta Card */}
             <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">

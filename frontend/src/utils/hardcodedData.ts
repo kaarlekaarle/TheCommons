@@ -135,7 +135,8 @@ export const hardcodedComments: Record<string, Comment[]> = {
       created_at: '2025-08-01T12:30:00Z',
       up_count: 5,
       down_count: 0,
-      my_reaction: null
+      my_reaction: null,
+      perspective: 'primary'
     },
     {
       id: 'comment-ai-edu-1b',
@@ -148,7 +149,8 @@ export const hardcodedComments: Record<string, Comment[]> = {
       created_at: '2025-08-01T13:00:00Z',
       up_count: 3,
       down_count: 1,
-      my_reaction: null
+      my_reaction: null,
+      perspective: 'alternate'
     }
   ],
   'ai-edu-b-001': [
@@ -163,7 +165,8 @@ export const hardcodedComments: Record<string, Comment[]> = {
       created_at: '2025-08-01T12:30:00Z',
       up_count: 4,
       down_count: 0,
-      my_reaction: null
+      my_reaction: null,
+      perspective: 'primary'
     }
   ]
 };

@@ -519,7 +519,7 @@ export async function listComments(pollId: string, params?: { limit?: number; of
   }
 }
 
-export async function createComment(pollId: string, input: { body: string; option_id?: string; kind?: string; stance?: 'main' | 'counter' | 'neutral' }): Promise<Comment> {
+export async function createComment(pollId: string, input: { body: string; option_id?: string; kind?: string; stance?: 'main' | 'counter' | 'neutral'; perspective?: 'primary' | 'alternate' }): Promise<Comment> {
   // Check if we should use hardcoded data
   const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
 
@@ -540,7 +540,8 @@ export async function createComment(pollId: string, input: { body: string; optio
         created_at: new Date().toISOString(),
         up_count: 0,
         down_count: 0,
-        my_reaction: null
+        my_reaction: null,
+        perspective: input.perspective
       };
 
       return mockComment;
