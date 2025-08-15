@@ -1,8 +1,14 @@
-from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException
+
 from backend.config import get_settings
-from backend.schemas.content import PrincipleItem, ActionItem, StoryItem, ContentResponse
+from backend.schemas.content import (
+    ActionItem,
+    ContentResponse,
+    PrincipleItem,
+    StoryItem,
+)
 from backend.services.content_loader import content_loader
 
 router = APIRouter(prefix="/content", tags=["content"])
@@ -12,11 +18,11 @@ def get_demo_principles() -> List[PrincipleItem]:
     """Return demo principles when USE_DEMO_CONTENT is enabled."""
     return [
         PrincipleItem(
-            id="level-a-placeholder",
-            title="Level A Principle (Placeholder)",
-            description="This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.",
-            tags=["placeholder", "level-a"],
-            source="The Commons MVP"
+            id="ai-edu-001",
+            title="AI in Education: A Tool for Stronger Learning",
+            description="Our community leans toward using AI to support teachers and students—freeing teachers from routine tasks, offering tailored explanations, and improving access—while keeping education human at its core.",
+            tags=["education", "technology", "ai", "governance"],
+            source="The Commons MVP",
         )
     ]
 
@@ -25,12 +31,12 @@ def get_demo_actions() -> List[ActionItem]:
     """Return demo actions when USE_DEMO_CONTENT is enabled."""
     return [
         ActionItem(
-            id="level-b-placeholder",
-            title="Level B Principle (Placeholder)",
-            description="This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.",
+            id="ai-edu-b-001",
+            title="Pilot AI-Assisted Feedback in Grade 9 Writing",
+            description="A small, time-boxed pilot where teachers use AI tools to provide formative, personalized writing feedback, with opt-in families and strict privacy rules.",
             scope="community",
-            tags=["placeholder", "level-b"],
-            source="The Commons MVP"
+            tags=["education", "technology", "ai", "pilot"],
+            source="The Commons MVP",
         )
     ]
 
@@ -43,7 +49,7 @@ def get_demo_stories() -> List[StoryItem]:
             title="Placeholder Story",
             summary="This is a placeholder story for demonstration purposes.",
             impact="Placeholder impact metrics",
-            source="The Commons MVP"
+            source="The Commons MVP",
         )
     ]
 
@@ -58,12 +64,8 @@ async def get_principles() -> ContentResponse:
     else:
         principles = content_loader.load_principles()
         source = "file"
-    
-    return ContentResponse(
-        items=principles,
-        count=len(principles),
-        source=source
-    )
+
+    return ContentResponse(items=principles, count=len(principles), source=source)
 
 
 @router.get("/actions", response_model=ContentResponse)
@@ -76,12 +78,8 @@ async def get_actions() -> ContentResponse:
     else:
         actions = content_loader.load_actions()
         source = "file"
-    
-    return ContentResponse(
-        items=actions,
-        count=len(actions),
-        source=source
-    )
+
+    return ContentResponse(items=actions, count=len(actions), source=source)
 
 
 @router.get("/stories", response_model=ContentResponse)
@@ -94,12 +92,8 @@ async def get_stories() -> ContentResponse:
     else:
         stories = content_loader.load_stories()
         source = "file"
-    
-    return ContentResponse(
-        items=stories,
-        count=len(stories),
-        source=source
-    )
+
+    return ContentResponse(items=stories, count=len(stories), source=source)
 
 
 @router.post("/cache/clear")

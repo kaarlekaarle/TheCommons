@@ -38,7 +38,7 @@ export const principlesCopy = {
     discussion: 'Discussion',
   },
   about: {
-    heading: 'About this',
+    heading: 'Further Learning',
     suggest: 'Suggest a source',
     noSummary: 'No summary yet.',
     stance: {
@@ -60,7 +60,7 @@ export const principlesCopy = {
   targetNeutral: 'Neutral',
   post: 'Post revision',
   minMax: 'Short note. 240–1000 characters.',
-  evidenceTitle: 'About this',
+  evidenceTitle: 'Further Learning',
   evidenceEmpty: 'No sources listed yet.',
   suggestSource: 'Suggest a source',
   reasoningTitle: 'Recent proposals',

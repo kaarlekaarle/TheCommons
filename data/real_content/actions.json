@@ -1,10 +1,22 @@
 [
   {
-    "id": "level-b-placeholder",
-    "title": "Level B Principle (Placeholder)",
-    "description": "This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.",
-    "scope": "community",
-    "tags": ["placeholder", "level-b"],
-    "source": "The Commons MVP"
+    "id": "ai-edu-b-001",
+    "slug": "pilot-ai-feedback-grade9-writing",
+    "decision_type": "level_b",
+    "title": "Pilot AI-Assisted Feedback in Grade 9 Writing",
+    "summary": "A small, time-boxed pilot where teachers use AI tools to provide formative, personalized writing feedback, with opt-in families and strict privacy rules.",
+    "details": "Teachers remain in control. AI suggests formative comments (clarity, structure, examples), teachers edit/approve, and students see both teacher and AI notes. No grades from AI. Opt-in. Clear data policy. Independent evaluation at the end of the term to decide whether to scale, change, or stop.",
+    "rationale": "Tests the 'teacher-first, human-centered' idea from the Living Document in a narrow, low-risk environment.",
+    "guardrails": [
+      "Teacher in the loop; AI recommendations are suggestions only.",
+      "Transparent data policy; no student profiling; data deleted after the pilot.",
+      "Opt-in with parental consent; easy opt-out at any time.",
+      "Independent evaluation covering learning outcomes, workload, equity, and student experience."
+    ],
+    "links": ["ai-edu-001"],
+    "labels": ["education", "technology", "ai", "pilot"],
+    "created_at": "2025-08-01T12:00:00Z",
+    "updated_at": "2025-08-15T12:00:00Z",
+    "status": "active"
   }
 ]
