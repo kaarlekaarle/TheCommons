@@ -64,7 +64,7 @@ export default function RevisionComposer({
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder={placeholder || principlesDocCopy.composerPlaceholder}
-            className="min-h-[120px] resize-none"
+            className="min-h-[120px] resize-none w-full"
             disabled={isSubmitting}
             aria-describedby="char-count"
           />

@@ -36,6 +36,8 @@ export default function ProposalGrid({
 
   // Check if we should use hardcoded data
   const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
+  console.log('[DEBUG] ProposalGrid: useHardcodedData =', useHardcodedData);
+  console.log('[DEBUG] ProposalGrid: VITE_USE_HARDCODED_DATA =', import.meta.env.VITE_USE_HARDCODED_DATA);
 
   // Hardcoded fallback data for development
   const hardcodedPolls: Poll[] = [
