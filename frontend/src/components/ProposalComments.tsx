@@ -49,7 +49,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
 
     try {
       setPosting(true);
-      const comment = await createComment(pollId, newComment.trim());
+      const comment = await createComment(pollId, { body: newComment.trim() });
       setComments(prev => [comment, ...prev]);
       setNewComment('');
       success('Comment posted successfully');

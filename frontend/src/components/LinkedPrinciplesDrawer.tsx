@@ -104,7 +104,7 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
             ) : error ? (
               <div className="text-center py-8">
                 <p className="text-red-600 mb-4">{error}</p>
-                <Button onClick={fetchLinkedPrinciples} variant="outline">
+                <Button onClick={fetchLinkedPrinciples} variant="secondary">
                   Try Again
                 </Button>
               </div>

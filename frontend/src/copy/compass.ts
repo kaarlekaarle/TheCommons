@@ -33,6 +33,8 @@ export const compassCopy = {
   toneLabel: "Tone",
   toneSupport: "Supporting",
   toneConcern: "Raising a concern",
+  stanceSupport: "Supporting",
+  stanceConcern: "Raising a concern",
   hintSupport: "This will be shown as support for this direction.",
   hintConcern: "This will be shown as a constructive concern for this direction.",
 
@@ -55,12 +57,12 @@ export const compassCopy = {
 };
 
 export const completeStreetsCopy = {
-  title: "Level A Principle (Placeholder)",
-  framing: "A placeholder example for Level A principles.",
+      title: "Principle (Placeholder)",
+    framing: "A placeholder example for principles.",
 
   questionHeading: "The Question",
   questionBody:
-    "This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.",
+    "This is a placeholder example for principles. It demonstrates how a single evolving document could be revised and countered.",
 
   dir1: {
     title: "Direction 1 (Placeholder)",
@@ -69,7 +71,7 @@ export const completeStreetsCopy = {
     rationale: [
       "This is a placeholder rationale point.",
       "This demonstrates how rationale points would be structured.",
-      "This shows the format for Level A principle directions."
+      "This shows the format for principle directions."
     ],
     counterHeading: "Counterarguments (raised by the other direction)",
     counters: [
@@ -86,7 +88,7 @@ export const completeStreetsCopy = {
     rationale: [
       "This is a placeholder rationale point.",
       "This demonstrates how rationale points would be structured.",
-      "This shows the format for Level A principle directions."
+      "This shows the format for principle directions."
     ],
     counterHeading: "Counterarguments (raised by the other direction)",
     counters: [

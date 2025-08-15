@@ -1,9 +1,9 @@
-import React from 'react';
+
 import { ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import DirectionCard from '../compass/DirectionCard';
 import { Expandable } from '../compass/Expandable';
-import { principleCopies } from '../../copy/principles';
+import { completeStreetsCopy } from '../../copy/compass';
 import type { Poll, PollOption, Vote } from '../../types';
 
 interface PrincipleProposalProps {
@@ -31,10 +31,10 @@ export default function PrincipleProposal({
 }: PrincipleProposalProps) {
   // Debug logging
   console.log('PrincipleProposal rendered with poll ID:', poll.id);
-  console.log('Available principle copies:', Object.keys(principleCopies));
+  console.log('Available principle copy keys:', Object.keys(completeStreetsCopy));
 
   // Get the principle copy based on poll ID
-  const principleCopy = principleCopies[poll.id as keyof typeof principleCopies];
+  const principleCopy = completeStreetsCopy;
 
   console.log('Found principle copy:', !!principleCopy);
 

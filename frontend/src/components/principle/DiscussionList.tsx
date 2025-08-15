@@ -1,4 +1,4 @@
-import React from 'react';
+
 import Card from '../ui/Card';
 import { principlesCopy } from '../../copy/principles';
 import type { Comment } from '../../types';
@@ -81,10 +81,10 @@ export default function DiscussionList({
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium">
-                  {(comment.user?.name || 'A')[0].toUpperCase()}
+                  {(comment.user?.username || 'A')[0].toUpperCase()}
                 </div>
                 <span className="font-medium text-gray-900">
-                  {comment.user?.name || 'Anonymous'}
+                  {comment.user?.username || 'Anonymous'}
                 </span>
                 <span className="text-gray-500">•</span>
                 <span className="text-gray-500 text-sm">

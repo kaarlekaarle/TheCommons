@@ -104,13 +104,13 @@ export default function RevisionComposer({
                   type="button"
                   onClick={() => handleTargetChange(targetType)}
                   disabled={isSubmitting}
-                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:ring-offset-2 ${
                     isSelected
                       ? 'bg-blue-50 border-blue-200 text-blue-700'
                       : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                   title={config.tooltip}
-                  aria-describedby={`tooltip-${targetType}`}
+                  aria-describedby={`target-help-${targetType}`}
                 >
                   {config.label}
                 </button>
@@ -118,18 +118,18 @@ export default function RevisionComposer({
             })}
           </div>
 
-          {/* Tooltips */}
-          <div className="mt-2 text-xs text-gray-500">
+          {/* Target hints */}
+          <div className="mt-2">
             {(['main', 'counter', 'neutral'] as const).map((targetType) => {
               const config = getTargetConfig(targetType);
               return (
-                <div
+                <p
                   key={targetType}
-                  id={`tooltip-${targetType}`}
-                  className={`${target === targetType ? 'block' : 'hidden'}`}
+                  id={`target-help-${targetType}`}
+                  className={`text-sm text-muted-foreground ${target === targetType ? 'block' : 'hidden'}`}
                 >
                   {config.tooltip}
-                </div>
+                </p>
               );
             })}
           </div>

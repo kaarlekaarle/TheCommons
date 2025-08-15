@@ -1,4 +1,4 @@
-import React from 'react';
+
 import Badge from '../ui/Badge';
 import Card from '../ui/Card';
 import { principlesCopy } from '../../copy/principles';
@@ -77,8 +77,8 @@ export default function RevisionsList({
       target: comment.stance || 'neutral',
       status: 'pending' as RevisionStatus, // Mock status for now
       timestamp: new Date(comment.created_at).toLocaleDateString(),
-      author: comment.user?.name || 'Anonymous',
-      authorInitial: (comment.user?.name || 'A')[0].toUpperCase()
+      author: comment.user?.username || 'Anonymous',
+      authorInitial: (comment.user?.username || 'A')[0].toUpperCase()
     }));
 
   const getStatusBadge = (status: RevisionStatus) => {
@@ -90,7 +90,7 @@ export default function RevisionsList({
     };
 
     return (
-      <Badge variant="outline" className={config[status].className}>
+      <Badge variant="default" className={config[status].className}>
         {config[status].label}
       </Badge>
     );
@@ -104,7 +104,7 @@ export default function RevisionsList({
     };
 
     return (
-      <Badge variant="outline" className={config[target as keyof typeof config]?.className || config.neutral.className}>
+      <Badge variant="default" className={config[target as keyof typeof config]?.className || config.neutral.className}>
         {config[target as keyof typeof config]?.label || 'Neutral'}
       </Badge>
     );
@@ -118,7 +118,76 @@ export default function RevisionsList({
 
       {revisionItems.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-600">No revisions yet.</p>
+          <h4 className="text-lg font-medium text-gray-900 mb-2">No revisions yet.</h4>
+          <p className="text-gray-600 mb-4">Be the first to propose a change to the community or counter document.</p>
+
+          {/* Dev-only sample data */}
+          {import.meta.env.DEV && (
+            <div className="mt-6 space-y-3">
+              <h5 className="text-sm font-medium text-gray-700 mb-3">Sample revisions (dev only):</h5>
+              {[
+                {
+                  id: 'sample-1',
+                  title: 'Propose adding a section about accessibility considerations',
+                  target: 'main' as const,
+                  status: 'pending' as RevisionStatus,
+                  timestamp: '2 hours ago',
+                  author: 'Alex Chen',
+                  authorInitial: 'A'
+                },
+                {
+                  id: 'sample-2',
+                  title: 'Merge into Community doc: Updated language for clarity',
+                  target: 'main' as const,
+                  status: 'merged' as RevisionStatus,
+                  timestamp: '1 day ago',
+                  author: 'Sam Johnson',
+                  authorInitial: 'S'
+                },
+                {
+                  id: 'sample-3',
+                  title: 'Declined with note: This perspective belongs in the counter-document',
+                  target: 'counter' as const,
+                  status: 'declined' as RevisionStatus,
+                  timestamp: '3 days ago',
+                  author: 'Maria Garcia',
+                  authorInitial: 'M'
+                }
+              ].map((revision) => (
+                <div
+                  key={revision.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors bg-gray-50/50"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 line-clamp-2">
+                      {revision.title}
+                    </h4>
+                    <div className="flex items-center gap-2 ml-4">
+                      {getStatusBadge(revision.status)}
+                      {getTargetBadge(revision.target)}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium">
+                        {revision.authorInitial}
+                      </div>
+                      <span>{revision.author}</span>
+                      <span>•</span>
+                      <span>{revision.timestamp}</span>
+                    </div>
+
+                    <button
+                      className="text-blue-600 hover:text-blue-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                    >
+                      View thread
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

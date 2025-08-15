@@ -29,7 +29,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -57,7 +57,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -66,10 +66,10 @@ export const Pagination: React.FC<PaginationProps> = ({
       <div className="text-sm text-gray-400">
         Showing {startItem} to {endItem} of {totalItems} results
       </div>
-      
+
       <div className="flex items-center gap-2">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -78,7 +78,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           <ChevronLeft className="w-4 h-4" />
           Previous
         </Button>
-        
+
         <div className="flex items-center gap-1">
           {getPageNumbers().map((page, index) => (
             <React.Fragment key={index}>
@@ -86,7 +86,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 <span className="px-3 py-2 text-gray-400">...</span>
               ) : (
                 <Button
-                  variant={currentPage === page ? "default" : "outline"}
+                  variant={currentPage === page ? "primary" : "secondary"}
                   size="sm"
                   onClick={() => onPageChange(page as number)}
                   className="w-10 h-10 p-0"
@@ -97,9 +97,9 @@ export const Pagination: React.FC<PaginationProps> = ({
             </React.Fragment>
           ))}
         </div>
-        
+
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}

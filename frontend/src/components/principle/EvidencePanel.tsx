@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { ExternalLink } from 'lucide-react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -46,7 +46,7 @@ export default function EvidencePanel({ evidence, onSuggestSource, loading = fal
             {principlesDocCopy.evidenceEmpty}
           </p>
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={onSuggestSource}
             className="w-full"
           >
@@ -81,7 +81,7 @@ export default function EvidencePanel({ evidence, onSuggestSource, loading = fal
           </div>
 
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={onSuggestSource}
             className="w-full"
           >

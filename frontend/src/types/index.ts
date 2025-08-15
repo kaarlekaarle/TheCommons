@@ -227,6 +227,7 @@ export interface Comment {
   my_reaction?: 'up' | 'down' | null;
   kind?: string;
   stance?: 'main' | 'counter' | 'neutral';
+  option_id?: string;
 }
 
 export interface CommentList {

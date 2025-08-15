@@ -1,4 +1,4 @@
-import React from 'react';
+
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import { principlesDocCopy } from '../../copy/principlesDoc';
@@ -102,7 +102,7 @@ export default function ReasoningList({ comments, loading = false, error = null,
                   <span className="font-medium text-gray-900">
                     {comment.user.username}
                   </span>
-                  <Badge variant="secondary" className={getStanceColor(stance)}>
+                  <Badge variant="default" className={getStanceColor(stance)}>
                     {getStanceLabel(stance)}
                   </Badge>
                   <time className="text-sm text-gray-600">

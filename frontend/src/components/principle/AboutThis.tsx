@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ExternalLink, Plus } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -47,16 +47,20 @@ export default function AboutThis({
     );
   }
 
-  const getStanceBadge = (stance: string) => {
+  const getStanceBadge = (stance?: string) => {
     const config = {
       supports: { label: principlesCopy.about.stance.supports, className: 'bg-green-100 text-green-800 border-green-200' },
       questions: { label: principlesCopy.about.stance.questions, className: 'bg-red-100 text-red-800 border-red-200' },
-      mixed: { label: principlesCopy.about.stance.mixed, className: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
+      mixed: { label: principlesCopy.about.stance.mixed, className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+      unknown: { label: 'Unknown', className: 'bg-gray-100 text-gray-800 border-gray-200' }
     };
 
+    const stanceKey = stance || 'unknown';
+    const badgeConfig = config[stanceKey as keyof typeof config] || config.unknown;
+
     return (
-      <Badge variant="outline" className={config[stance as keyof typeof config]?.className || config.mixed.className}>
-        {config[stance as keyof typeof config]?.label || principlesCopy.about.stance.mixed}
+      <Badge variant="default" className={badgeConfig.className}>
+        {badgeConfig.label}
       </Badge>
     );
   };
@@ -75,7 +79,7 @@ export default function AboutThis({
           {principlesCopy.about.heading}
         </h3>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={handleSuggestSource}
           className="flex items-center gap-1"
@@ -89,7 +93,7 @@ export default function AboutThis({
         <div className="text-center py-8">
           <p className="text-gray-600 mb-4">{principlesCopy.evidenceEmpty}</p>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleSuggestSource}
           >
@@ -113,7 +117,7 @@ export default function AboutThis({
                   {source.title}
                   <ExternalLink className="w-3 h-3 inline ml-1" />
                 </a>
-                {source.stance && getStanceBadge(source.stance)}
+                {getStanceBadge(source.stance)}
               </div>
 
               <div className="text-sm text-gray-600 mb-2">
@@ -154,7 +158,7 @@ export default function AboutThis({
             </p>
             <div className="flex justify-end gap-2">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setIsModalOpen(false)}
               >
                 Close

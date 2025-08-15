@@ -24,8 +24,8 @@ export default function ProposalList() {
   const hardcodedPolls: Poll[] = [
     {
       id: 'hardcoded-1',
-      title: 'Level A Principle (Placeholder)',
-      description: 'This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.',
+              title: 'Principle (Placeholder)',
+              description: 'This is a placeholder example for principles. It demonstrates how a single evolving document could be revised and countered.',
       created_by: 'hardcoded-user-1',
       created_at: '2025-01-10T10:00:00Z',
       updated_at: '2025-01-10T10:00:00Z',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { principlesCopy } from '../../copy/principles';
@@ -18,7 +18,7 @@ export default function CounterDocument({
 
   if (loading) {
     return (
-      <Card className="p-6" data-testid="counter-doc-card">
+      <Card className="p-6 bg-gray-50 border shadow-sm" data-testid="counter-doc-card">
         <div className="animate-pulse space-y-4">
           <div className="h-6 w-32 bg-gray-200 rounded"></div>
           <div className="space-y-2">
@@ -35,7 +35,7 @@ export default function CounterDocument({
   const needsExpansion = content.length > 200;
 
   return (
-    <Card className="p-6" data-testid="counter-doc-card">
+    <Card className="p-6 bg-gray-50 border shadow-sm" data-testid="counter-doc-card">
       <div className="prose prose-gray max-w-none">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {principlesCopy.counterDoc.title}
@@ -58,7 +58,7 @@ export default function CounterDocument({
 
           {onDevelopView && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onDevelopView}
               className="w-full"

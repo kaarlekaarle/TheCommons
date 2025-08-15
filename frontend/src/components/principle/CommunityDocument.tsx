@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Badge from '../ui/Badge';
 import Card from '../ui/Card';
 import { principlesCopy } from '../../copy/principles';

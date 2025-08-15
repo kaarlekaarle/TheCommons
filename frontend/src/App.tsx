@@ -25,6 +25,9 @@ const CompassPage = React.lazy(() => import('./pages/CompassPage'));
 // Lazy load the PrincipleDocPage
 const PrincipleDocPage = React.lazy(() => import('./pages/PrincipleDocPage'));
 
+// Lazy load the PrincipleDiffPage
+const PrincipleDiffPage = React.lazy(() => import('./pages/PrincipleDiffPage'));
+
 // Dev-only accessibility check page
 const A11yCheck = React.lazy(() => import('./pages/_A11yCheck'));
 
@@ -175,7 +178,10 @@ export default function App() {
                     <Route path="/topics/disabled" element={<TopicsRouteWrapper />} />
                     {flags.compassEnabled && (
                       flags.principlesDocMode ? (
-                        <Route path="/compass/:id" element={<PrincipleDocPage />} />
+                        <>
+                          <Route path="/compass/:id" element={<PrincipleDocPage />} />
+                          <Route path="/compass/:id/diff" element={<PrincipleDiffPage />} />
+                        </>
                       ) : (
                         <Route path="/compass/:id" element={<CompassPage />} />
                       )

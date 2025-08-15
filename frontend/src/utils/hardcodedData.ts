@@ -4,9 +4,9 @@ import type { Poll, PollOption, Comment, Vote } from '../types';
 export const hardcodedPolls: Poll[] = [
   {
     id: 'hardcoded-1',
-    title: 'Level A Principle (Placeholder)',
-    description: 'This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.',
-    longform_main: `This is a comprehensive community document that outlines our approach to Level A principles.
+    title: 'Principle (Placeholder)',
+    description: 'This is a placeholder example for principles. It demonstrates how a single evolving document could be revised and countered.',
+    longform_main: `This is a comprehensive community document that outlines our approach to principles.
 
 The document serves as a living, evolving guide that reflects the community's current understanding and consensus. It provides a foundation for decision-making while remaining open to revision and improvement.
 
@@ -18,7 +18,7 @@ Key aspects of this document include:
 
 This document is not static but rather a dynamic expression of our collective wisdom, subject to continuous improvement through community input and deliberation.`,
     extra: {
-      counter_body: `This counter-document presents an alternative perspective on the community's approach to Level A principles.
+      counter_body: `This counter-document presents an alternative perspective on the community's approach to principles.
 
 While the main document emphasizes consensus and gradual evolution, this view suggests that more rapid and decisive changes may be necessary to address pressing community needs.
 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Share2, Calendar, Tag } from 'lucide-react';
 import { getPoll, listComments, createComment } from '../lib/api';
 import { useToast } from '../components/ui/useToast';
@@ -54,8 +53,8 @@ export default function PrincipleDocPage() {
     source: item.source,
     year: item.year,
     url: item.url,
-    summary: item.summary,
-    stance: item.stance
+    summary: (item as any).summary,
+    stance: (item as any).stance
   }));
 
   // Fetch data
@@ -180,7 +179,10 @@ export default function PrincipleDocPage() {
                   <span>{principlesCopy.lastUpdated}: {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}</span>
                 </div>
                 {flags.principlesDocEnabled && (
-                  <button className="text-blue-600 hover:text-blue-800 font-medium">
+                  <button
+                    onClick={() => navigate(`/compass/${id}/diff`)}
+                    className="text-blue-600 hover:text-blue-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:ring-offset-2 rounded"
+                  >
                     Diff view
                   </button>
                 )}
@@ -192,7 +194,7 @@ export default function PrincipleDocPage() {
                 )}
               </div>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="secondary" size="sm">
               <Share2 className="w-4 h-4 mr-2" />
               {principlesCopy.share}
             </Button>

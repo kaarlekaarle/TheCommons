@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Activity, 
-  FilePlus2, 
-  ListChecks, 
+import {
+  Activity,
+  FilePlus2,
+  ListChecks,
   LogOut,
   Menu,
   X,
@@ -73,6 +73,7 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   const isActive = (href: string) => {
+    console.log('[Layout] Checking if active:', href, 'current path:', location.pathname);
     if (href === '/proposals' && location.pathname.startsWith('/proposals/') && !location.pathname.includes('/new')) {
       return true;
     }
@@ -99,7 +100,11 @@ export default function Layout({ children }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center space-x-3">
+            <Link
+              to="/dashboard"
+              onClick={() => console.log('[Layout] Logo clicked, navigating to /dashboard')}
+              className="flex items-center space-x-3"
+            >
               <span className="text-xl font-bold text-neutral-900">The Commons</span>
             </Link>
 
@@ -123,6 +128,7 @@ export default function Layout({ children }: LayoutProps) {
                   <Link
                     key={item.name}
                     to={item.href}
+                    onClick={() => console.log('[Layout] Navigation clicked:', item.name, item.href)}
                     className={clsx(
                       'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md',
                       isActive(item.href) && 'text-primary-700 border-b-2 border-primary-700'
@@ -133,7 +139,7 @@ export default function Layout({ children }: LayoutProps) {
                   </Link>
                 );
               })}
-              
+
               {/* Topics Autocomplete */}
               {flags.labelsEnabled && (
                 <div className="relative topics-dropdown">
@@ -149,7 +155,7 @@ export default function Layout({ children }: LayoutProps) {
                     <span>Topics</span>
                     <ChevronDown className="w-4 h-4 ml-1" />
                   </button>
-                  
+
                   {topicsAutocompleteOpen && (
                     <div className="absolute top-full left-0 mt-1 w-80 z-50">
                       <TopicsAutocomplete
@@ -219,7 +225,7 @@ export default function Layout({ children }: LayoutProps) {
                   className="w-full px-3 py-2 pl-10 border border-neutral-300 rounded-lg bg-white text-neutral-900 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500"
                 />
               </div>
-              
+
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -237,7 +243,7 @@ export default function Layout({ children }: LayoutProps) {
                   </Link>
                 );
               })}
-              
+
               <Link
                 to="/activity"
                 onClick={() => setMobileMenuOpen(false)}
@@ -249,7 +255,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Activity className="w-4 h-4 mr-2" />
                 <span>Community Activity</span>
               </Link>
-              
+
               {/* Mobile Topics */}
               {flags.labelsEnabled && labels.length > 0 && (
                 <div className="border-t border-neutral-100 pt-2 mt-2">
@@ -274,7 +280,7 @@ export default function Layout({ children }: LayoutProps) {
                   )}
                 </div>
               )}
-              
+
               <Button
                 onClick={() => {
                   handleLogout();
