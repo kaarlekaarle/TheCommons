@@ -262,6 +262,6 @@ export default function PrincipleDocPage() {
           </aside>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
