@@ -16,6 +16,9 @@ interface PerspectiveCardProps {
   readMoreText: string;
   readLessText: string;
   alignButtonText: string;
+  showBadge?: boolean;
+  badgeText?: string;
+  isPrimary?: boolean;
 }
 
 export default function PerspectiveCard({
@@ -30,7 +33,10 @@ export default function PerspectiveCard({
   isExpanded,
   readMoreText,
   readLessText,
-  alignButtonText
+  alignButtonText,
+  showBadge = false,
+  badgeText,
+  isPrimary = false
 }: PerspectiveCardProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -44,15 +50,24 @@ export default function PerspectiveCard({
       className={`p-6 bg-white rounded-xl border transition-all duration-200 ${
         isAligned
           ? 'border-green-200 bg-green-50/50 shadow-md'
+          : isPrimary
+          ? 'border-blue-200 bg-blue-50/50 shadow-md ring-1 ring-blue-200'
           : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
       }`}
       data-testid={`perspective-card-${type}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900" data-testid={`perspective-title-${type}`}>
-          {title}
-        </h3>
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-900" data-testid={`perspective-title-${type}`}>
+            {title}
+          </h3>
+          {showBadge && badgeText && (
+            <Badge variant="default" className="mt-2 text-xs" data-testid="community-view-badge">
+              {badgeText}
+            </Badge>
+          )}
+        </div>
         {isAligned && (
           <Badge variant="success" data-testid="aligned-badge">
             <Check className="w-3 h-3 mr-1" />
@@ -91,7 +106,7 @@ export default function PerspectiveCard({
 
       {/* Alignment button */}
       <Button
-        variant={isAligned ? "ghost" : "primary"}
+        variant={isAligned ? "ghost" : isPrimary ? "primary" : "outline"}
         onClick={onAlign}
         disabled={isSubmitting}
         loading={isSubmitting}

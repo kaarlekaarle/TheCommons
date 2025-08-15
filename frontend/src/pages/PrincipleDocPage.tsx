@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Share2, Calendar, Tag } from 'lucide-react';
-import { getPoll, listComments, createComment } from '../lib/api';
+import { getPoll, listComments, createComment, getResults } from '../lib/api';
 import { useToast } from '../components/ui/useToast';
 import Button from '../components/ui/Button';
 import { principlesCopy } from '../copy/principles';
@@ -9,7 +9,8 @@ import { flags } from '../config/flags';
 import PerspectiveCard from '../components/principle/PerspectiveCard';
 import ConversationSection from '../components/principle/ConversationSection';
 import FurtherLearning from '../components/principle/FurtherLearning';
-import type { Poll, Comment } from '../types';
+import { computePrimaryOption, isTie } from '../utils/perspective';
+import type { Poll, Comment, PollResults } from '../types';
 
 type SectionState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -21,6 +22,7 @@ export default function PrincipleDocPage() {
 
   // State
   const [poll, setPoll] = useState<Poll | null>(null);
+  const [results, setResults] = useState<PollResults | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAligning, setIsAligning] = useState(false);
@@ -31,6 +33,7 @@ export default function PrincipleDocPage() {
 
   // Section states
   const [pollState, setPollState] = useState<SectionState>('idle');
+  const [resultsState, setResultsState] = useState<SectionState>('idle');
   const [commentsState, setCommentsState] = useState<SectionState>('idle');
 
   // Fetch data
@@ -46,6 +49,20 @@ export default function PrincipleDocPage() {
       console.error('Failed to fetch poll:', err);
       setPollState('error');
       showError('Failed to load principle');
+    }
+  }, [id]);
+
+  const fetchResults = useCallback(async () => {
+    if (!id) return;
+
+    setResultsState('loading');
+    try {
+      const resultsData = await getResults(id);
+      setResults(resultsData);
+      setResultsState('ready');
+    } catch (err) {
+      console.error('Failed to fetch results:', err);
+      setResultsState('error');
     }
   }, [id]);
 
@@ -66,9 +83,28 @@ export default function PrincipleDocPage() {
   useEffect(() => {
     if (id) {
       fetchPoll();
+      fetchResults();
       fetchComments();
     }
   }, [id]);
+
+  // Compute primary perspective based on results
+  const primaryOption = poll && results ? computePrimaryOption(poll.options || [], results) : null;
+  const isTieResult = primaryOption ? isTie(primaryOption) : true;
+
+  // Analytics tracking for primary perspective shown
+  useEffect(() => {
+    if (primaryOption && !isTieResult && flags.primaryPerspectiveEnabled) {
+      const primaryShare = results?.optionResults?.[primaryOption.primaryId]?.votes || 0;
+      const totalVotes = results?.totalVotes || 1;
+      const share = primaryShare / totalVotes;
+      
+      console.log('perspective.primary_shown', { 
+        primaryId: primaryOption.primaryId, 
+        share: Math.round(share * 100) 
+      });
+    }
+  }, [primaryOption, isTieResult, results]);
 
   // Handle conversation submission
   const handleConversationSubmit = async (body: string, perspective: 'primary' | 'alternate') => {
@@ -184,35 +220,84 @@ export default function PrincipleDocPage() {
           <section className="lg:col-span-2 space-y-6">
             {/* Perspective Cards */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <PerspectiveCard
-                type="primary"
-                title={principlesCopy.primaryPerspective.title}
-                summary={principlesCopy.primaryPerspective.summary}
-                longBody={principlesCopy.primaryPerspective.longBody}
-                isAligned={userAlignment === 'primary'}
-                isSubmitting={isAligning}
-                onAlign={() => handleAlign('primary')}
-                onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'primary' ? null : 'primary')}
-                isExpanded={expandedPerspective === 'primary'}
-                readMoreText={principlesCopy.primaryPerspective.readMore}
-                readLessText={principlesCopy.primaryPerspective.readLess}
-                alignButtonText={principlesCopy.primaryPerspective.alignButton}
-              />
+              {flags.primaryPerspectiveEnabled && primaryOption && !isTieResult ? (
+                // Dynamic primary perspective layout
+                <>
+                  {/* Primary Perspective (majority) */}
+                  <PerspectiveCard
+                    type="primary"
+                    title={principlesCopy.primaryPerspective.title}
+                    summary={principlesCopy.primaryPerspective.summary}
+                    longBody={principlesCopy.primaryPerspective.longBody}
+                    isAligned={userAlignment === 'primary'}
+                    isSubmitting={isAligning}
+                    onAlign={() => handleAlign('primary')}
+                    onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'primary' ? null : 'primary')}
+                    isExpanded={expandedPerspective === 'primary'}
+                    readMoreText={principlesCopy.primaryPerspective.readMore}
+                    readLessText={principlesCopy.primaryPerspective.readLess}
+                    alignButtonText={principlesCopy.primaryPerspective.alignButton}
+                    showBadge={true}
+                    badgeText={principlesCopy.primaryPerspective.badge}
+                    isPrimary={true}
+                  />
 
-              <PerspectiveCard
-                type="alternate"
-                title={principlesCopy.alternatePerspective.title}
-                summary={principlesCopy.alternatePerspective.summary}
-                longBody={principlesCopy.alternatePerspective.longBody}
-                isAligned={userAlignment === 'alternate'}
-                isSubmitting={isAligning}
-                onAlign={() => handleAlign('alternate')}
-                onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'alternate' ? null : 'alternate')}
-                isExpanded={expandedPerspective === 'alternate'}
-                readMoreText={principlesCopy.alternatePerspective.readMore}
-                readLessText={principlesCopy.alternatePerspective.readLess}
-                alignButtonText={principlesCopy.alternatePerspective.alignButton}
-              />
+                  {/* Alternate Perspective (minority) */}
+                  <PerspectiveCard
+                    type="alternate"
+                    title={principlesCopy.alternatePerspective.title}
+                    summary={principlesCopy.alternatePerspective.summary}
+                    longBody={principlesCopy.alternatePerspective.longBody}
+                    isAligned={userAlignment === 'alternate'}
+                    isSubmitting={isAligning}
+                    onAlign={() => handleAlign('alternate')}
+                    onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'alternate' ? null : 'alternate')}
+                    isExpanded={expandedPerspective === 'alternate'}
+                    readMoreText={principlesCopy.alternatePerspective.readMore}
+                    readLessText={principlesCopy.alternatePerspective.readLess}
+                    alignButtonText={principlesCopy.alternatePerspective.alignButton}
+                    showBadge={false}
+                    isPrimary={false}
+                  />
+                </>
+              ) : (
+                // Equal weight layout (tie or feature flag off)
+                <>
+                  <PerspectiveCard
+                    type="primary"
+                    title={principlesCopy.primaryPerspective.title}
+                    summary={principlesCopy.primaryPerspective.summary}
+                    longBody={principlesCopy.primaryPerspective.longBody}
+                    isAligned={userAlignment === 'primary'}
+                    isSubmitting={isAligning}
+                    onAlign={() => handleAlign('primary')}
+                    onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'primary' ? null : 'primary')}
+                    isExpanded={expandedPerspective === 'primary'}
+                    readMoreText={principlesCopy.primaryPerspective.readMore}
+                    readLessText={principlesCopy.primaryPerspective.readLess}
+                    alignButtonText={principlesCopy.primaryPerspective.alignButton}
+                    showBadge={false}
+                    isPrimary={false}
+                  />
+
+                  <PerspectiveCard
+                    type="alternate"
+                    title={principlesCopy.alternatePerspective.title}
+                    summary={principlesCopy.alternatePerspective.summary}
+                    longBody={principlesCopy.alternatePerspective.longBody}
+                    isAligned={userAlignment === 'alternate'}
+                    isSubmitting={isAligning}
+                    onAlign={() => handleAlign('alternate')}
+                    onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'alternate' ? null : 'alternate')}
+                    isExpanded={expandedPerspective === 'alternate'}
+                    readMoreText={principlesCopy.alternatePerspective.readMore}
+                    readLessText={principlesCopy.alternatePerspective.readLess}
+                    alignButtonText={principlesCopy.alternatePerspective.alignButton}
+                    showBadge={false}
+                    isPrimary={false}
+                  />
+                </>
+              )}
             </div>
 
             {/* Conversation Section */}

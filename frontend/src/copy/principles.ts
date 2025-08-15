@@ -6,6 +6,7 @@ export const principlesCopy = {
   // Perspective sections
   primaryPerspective: {
     title: "Primary perspective",
+    badge: "Current community view",
     summary: "We should use AI to extend great teaching, not replace it. That means human-led classrooms, AI as a supportive tool, and clear boundaries around safety, privacy, and fairness. Students learn best when curiosity and relationship stay at the center, and technology makes quality learning more personal, more accessible, and less unequal.",
     readMore: "Read more",
     readLess: "Hide",
