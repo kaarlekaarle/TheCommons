@@ -1,84 +1,73 @@
 import React, { useState } from 'react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
-import { principlesDocCopy } from '../../copy/principlesDoc';
+import { principlesCopy } from '../../copy/principles';
 
 interface CounterDocumentProps {
   content: string;
-  onDevelopView: () => void;
+  onDevelopView?: () => void;
   loading?: boolean;
 }
 
-export default function CounterDocument({ content, onDevelopView, loading = false }: CounterDocumentProps) {
+export default function CounterDocument({
+  content,
+  onDevelopView,
+  loading = false
+}: CounterDocumentProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (loading) {
     return (
-      <Card className="p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
-          <div className="space-y-2 mb-4">
-            <div className="h-4 bg-gray-200 rounded w-full"></div>
+      <Card className="p-6" data-testid="counter-doc-card">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 w-32 bg-gray-200 rounded"></div>
+          <div className="space-y-2">
             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
           </div>
-          <div className="h-9 bg-gray-200 rounded w-32"></div>
         </div>
       </Card>
     );
   }
 
-  const hasContent = content && content.trim().length > 0;
-  const lines = content.split('\n');
-  const shouldShowReadMore = lines.length > 5;
-  const displayContent = isExpanded ? content : lines.slice(0, 5).join('\n');
+  const displayContent = isExpanded ? content : content.slice(0, 200);
+  const needsExpansion = content.length > 200;
 
   return (
-    <Card className="p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">
-        {principlesDocCopy.counterDocTitle}
-      </h3>
+    <Card className="p-6" data-testid="counter-doc-card">
+      <div className="prose prose-gray max-w-none">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {principlesCopy.counterDoc.title}
+        </h3>
 
-      {hasContent ? (
-        <>
-          <div className="prose prose-gray max-w-none mb-4">
-            <div className="whitespace-pre-line text-gray-800">
-              {displayContent}
-            </div>
-          </div>
+        <div className="text-gray-700 leading-relaxed mb-4">
+          {displayContent}
+          {needsExpansion && !isExpanded && '...'}
+        </div>
 
-          {shouldShowReadMore && (
-            <Button
-              variant="ghost"
+        <div className="flex flex-col gap-2">
+          {needsExpansion && (
+            <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="mb-4 px-0 text-blue-600 hover:text-blue-700"
-              aria-expanded={isExpanded}
+              className="text-blue-600 hover:text-blue-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded text-sm"
             >
-              {isExpanded ? principlesDocCopy.readLess : principlesDocCopy.readMore}
-            </Button>
+              {isExpanded ? 'Show less' : principlesCopy.counterDoc.readMore}
+            </button>
           )}
 
-          <Button
-            variant="outline"
-            onClick={onDevelopView}
-            className="w-full"
-          >
-            {principlesDocCopy.developThisView}
-          </Button>
-        </>
-      ) : (
-        <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">
-            No counter-document has been developed yet.
-          </p>
-          <Button
-            variant="outline"
-            onClick={onDevelopView}
-            className="w-full"
-          >
-            {principlesDocCopy.developThisView}
-          </Button>
+          {onDevelopView && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onDevelopView}
+              className="w-full"
+            >
+              {principlesCopy.counterDoc.develop}
+            </Button>
+          )}
         </div>
-      )}
+      </div>
     </Card>
   );
 }

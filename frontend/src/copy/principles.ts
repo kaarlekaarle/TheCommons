@@ -1,70 +1,81 @@
-// Placeholder principle content for The Commons MVP
-// This demonstrates the structure for Level A principles
-
-export const levelAPlaceholderCopy = {
-  title: "Level A Principle (Placeholder)",
-  framing: "A placeholder example for Level A principles.",
-
-  questionHeading: "The Question",
-  questionBody:
-    "This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.",
-
-  dir1: {
-    title: "Direction 1 (Placeholder)",
-    summary: "This is a placeholder direction for demonstration purposes.",
-    readMoreHeading: "Why choose this direction?",
-    rationale: [
-      "This is a placeholder rationale point.",
-      "This demonstrates how rationale points would be structured.",
-      "This shows the format for Level A principle directions."
-    ],
-    counterHeading: "Counterarguments (raised by the other direction)",
-    counters: [
-      "This is a placeholder counterargument.",
-      "This demonstrates how counterarguments would be structured.",
-      "This shows the format for balanced discussion."
-    ],
+export const principlesCopy = {
+  livingLabel: 'Living document',
+  communityDoc: {
+    title: 'Community document',
+    readMore: 'Read more',
   },
-
-  dir2: {
-    title: "Direction 2 (Placeholder)",
-    summary: "This is a placeholder direction for demonstration purposes.",
-    readMoreHeading: "Why choose this direction?",
-    rationale: [
-      "This is a placeholder rationale point.",
-      "This demonstrates how rationale points would be structured.",
-      "This shows the format for Level A principle directions."
-    ],
-    counterHeading: "Counterarguments (raised by the other direction)",
-    counters: [
-      "This is a placeholder counterargument.",
-      "This demonstrates how counterarguments would be structured.",
-      "This shows the format for balanced discussion."
-    ],
+  counterDoc: {
+    title: 'Counter-document',
+    develop: 'Develop this view',
+    readMore: 'Read more',
   },
-
-  communityExamplesHeading: "Community Reasoning (examples)",
-  communityExamples: [
-    "This is a placeholder community example.",
-    "This demonstrates how community reasoning would be structured.",
-    "This shows the format for community input."
-  ],
-
-  backgroundHeading: "Background",
-  backgroundSummary:
-    "This is a placeholder background summary for demonstration purposes.",
-  backgroundReadMore: [
-    "This is a placeholder background detail.",
-    "This demonstrates how background information would be structured."
-  ]
+  composer: {
+    heading: 'Share a revision or counterpoint',
+    placeholder:
+      'Propose a change, add a nuance, or argue a counter-point. Focus on clarity and long-term implications…',
+    helper: 'Short note. 240–1000 characters.',
+    targetLabel: 'Target',
+    target: {
+      community: {
+        label: 'Community',
+        tooltip: 'Suggest a change to the Community document.',
+        cta: 'Post revision to Community doc',
+      },
+      counter: {
+        label: 'Counter',
+        tooltip: 'Add to or argue for the Counter-document.',
+        cta: 'Post addition to Counter-doc',
+      },
+      neutral: {
+        label: 'Neutral',
+        tooltip: 'Share a general note; editors can route it later.',
+        cta: 'Post note (neutral)',
+      },
+    },
+  },
+  subviews: {
+    revisions: 'Revisions',
+    discussion: 'Discussion',
+  },
+  about: {
+    heading: 'About this',
+    suggest: 'Suggest a source',
+    noSummary: 'No summary yet.',
+    stance: {
+      supports: 'Supports',
+      questions: 'Questions',
+      mixed: 'Mixed findings',
+    },
+  },
+  // Legacy support
+  headerTag: 'Principle',
+  communityDocTitle: 'Community document',
+  counterDocTitle: 'Counter-document',
+  livingPill: 'Living document',
+  composerTitle: 'Share a revision or counterpoint',
+  composerPlaceholder: 'Propose a change, add a nuance, or argue a counter-point. Focus on clarity and long-term implications…',
+  composerTargetLabel: 'Target',
+  targetMain: 'Community',
+  targetCounter: 'Counter',
+  targetNeutral: 'Neutral',
+  post: 'Post revision',
+  minMax: 'Short note. 240–1000 characters.',
+  evidenceTitle: 'About this',
+  evidenceEmpty: 'No sources listed yet.',
+  suggestSource: 'Suggest a source',
+  reasoningTitle: 'Recent proposals',
+  readMore: 'Read more',
+  readLess: 'Hide',
+  developThisView: 'Develop this view',
+  lastUpdated: 'Last updated',
+  share: 'Share',
+  created: 'Created',
+  updated: 'Updated',
+  labels: 'Labels',
+  noLabels: 'No labels',
+  retry: 'Retry',
+  loading: 'Loading...',
+  error: 'Error loading content',
+  revisionPosted: 'Revision posted successfully',
+  revisionError: 'Failed to post revision',
 };
-
-// Export all principle copies for easy access
-// This maps to the placeholder principle ID
-export const principleCopies = {
-  "level-a-placeholder": levelAPlaceholderCopy,
-  "hardcoded-1": levelAPlaceholderCopy,
-};
-
-// Debug logging to help identify issues
-console.log('Principles copy loaded:', Object.keys(principleCopies));

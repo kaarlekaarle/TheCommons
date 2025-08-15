@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import TextArea from '../ui/TextArea';
-import { principlesDocCopy } from '../../copy/principlesDoc';
+import { principlesCopy } from '../../copy/principles';
 
 interface RevisionComposerProps {
   onSubmit: (body: string, target: 'main' | 'counter' | 'neutral') => void;
@@ -43,18 +43,20 @@ export default function RevisionComposer({
     setTarget(newTarget);
   };
 
-  const getTargetLabel = (targetType: 'main' | 'counter' | 'neutral') => {
+  const getTargetConfig = (targetType: 'main' | 'counter' | 'neutral') => {
     switch (targetType) {
-      case 'main': return principlesDocCopy.targetMain;
-      case 'counter': return principlesDocCopy.targetCounter;
-      case 'neutral': return principlesDocCopy.targetNeutral;
+      case 'main': return principlesCopy.composer.target.community;
+      case 'counter': return principlesCopy.composer.target.counter;
+      case 'neutral': return principlesCopy.composer.target.neutral;
     }
   };
 
+  const currentTargetConfig = getTargetConfig(target);
+
   return (
-    <Card className="p-6">
+    <Card className="p-6" data-testid="revision-composer">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        {principlesDocCopy.composerTitle}
+        {principlesCopy.composer.heading}
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -63,10 +65,18 @@ export default function RevisionComposer({
             ref={textareaRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder={placeholder || principlesDocCopy.composerPlaceholder}
+            placeholder={placeholder || principlesCopy.composer.placeholder}
             className="min-h-[120px] resize-none w-full"
             disabled={isSubmitting}
             aria-describedby="char-count"
+            onFocus={() => {
+              // Analytics: principles_revision_opened
+              console.log('principles_revision_opened', {
+                principleId: 'current',
+                target,
+                length: charCount
+              });
+            }}
           />
           <div
             id="char-count"
@@ -75,28 +85,53 @@ export default function RevisionComposer({
               charCount >= 240 ? 'text-gray-600' : 'text-gray-400'
             }`}
           >
-            {charCount}/1000 • {principlesDocCopy.minMax}
+            {charCount}/1000 • {principlesCopy.composer.helper}
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {principlesDocCopy.composerTargetLabel}
+            {principlesCopy.composer.targetLabel}
           </label>
           <div className="flex gap-2">
-            {(['main', 'counter', 'neutral'] as const).map((targetType) => (
-              <Button
-                key={targetType}
-                type="button"
-                variant={target === targetType ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleTargetChange(targetType)}
-                disabled={isSubmitting}
-                className="flex-1"
-              >
-                {getTargetLabel(targetType)}
-              </Button>
-            ))}
+            {(['main', 'counter', 'neutral'] as const).map((targetType) => {
+              const config = getTargetConfig(targetType);
+              const isSelected = target === targetType;
+
+              return (
+                <button
+                  key={targetType}
+                  type="button"
+                  onClick={() => handleTargetChange(targetType)}
+                  disabled={isSubmitting}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    isSelected
+                      ? 'bg-blue-50 border-blue-200 text-blue-700'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                  title={config.tooltip}
+                  aria-describedby={`tooltip-${targetType}`}
+                >
+                  {config.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tooltips */}
+          <div className="mt-2 text-xs text-gray-500">
+            {(['main', 'counter', 'neutral'] as const).map((targetType) => {
+              const config = getTargetConfig(targetType);
+              return (
+                <div
+                  key={targetType}
+                  id={`tooltip-${targetType}`}
+                  className={`${target === targetType ? 'block' : 'hidden'}`}
+                >
+                  {config.tooltip}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -104,8 +139,16 @@ export default function RevisionComposer({
           type="submit"
           disabled={!isValid || isSubmitting}
           className="w-full"
+          onClick={() => {
+            // Analytics: principles_revision_submitted
+            console.log('principles_revision_submitted', {
+              principleId: 'current',
+              target,
+              length: charCount
+            });
+          }}
         >
-          {isSubmitting ? principlesDocCopy.loading : principlesDocCopy.post}
+          {isSubmitting ? principlesCopy.loading : currentTargetConfig.cta}
         </Button>
       </form>
     </Card>

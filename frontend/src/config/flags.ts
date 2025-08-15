@@ -22,6 +22,7 @@ export const flags = {
 
   compassEnabled: import.meta.env.VITE_COMPASS_ENABLED === 'true',
   principlesDocMode: import.meta.env.VITE_PRINCIPLES_DOC_MODE === 'true',
+  principlesDocEnabled: import.meta.env.VITE_PRINCIPLES_DOC_ENABLED === 'true',
 };
 
 // Legacy export for backward compatibility

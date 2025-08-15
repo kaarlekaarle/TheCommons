@@ -5,19 +5,25 @@ import { ArrowLeft, Share2, Calendar, Tag } from 'lucide-react';
 import { getPoll, listComments, createComment } from '../lib/api';
 import { useToast } from '../components/ui/useToast';
 import Button from '../components/ui/Button';
-import { principlesDocCopy } from '../copy/principlesDoc';
+import { principlesCopy } from '../copy/principles';
+import { flags } from '../config/flags';
 import CommunityDocument from '../components/principle/CommunityDocument';
 import CounterDocument from '../components/principle/CounterDocument';
 import RevisionComposer from '../components/principle/RevisionComposer';
-import EvidencePanel from '../components/principle/EvidencePanel';
-import ReasoningList from '../components/principle/ReasoningList';
+import RevisionsList from '../components/principle/RevisionsList';
+import DiscussionList from '../components/principle/DiscussionList';
+import AboutThis from '../components/principle/AboutThis';
+import TabSwitcher from '../components/principle/TabSwitcher';
 import type { Poll, Comment } from '../types';
 
 interface EvidenceItem {
+  id: string;
   title: string;
   source: string;
   year: number;
   url: string;
+  summary?: string;
+  stance?: 'supports' | 'questions' | 'mixed';
 }
 
 type SectionState = 'idle' | 'loading' | 'ready' | 'error';
@@ -27,14 +33,13 @@ export default function PrincipleDocPage() {
   const navigate = useNavigate();
   const { success, error: showError } = useToast();
 
-
-
   // State
   const [poll, setPoll] = useState<Poll | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [composerTarget, setComposerTarget] = useState<'main' | 'counter' | 'neutral'>('main');
   const [composerPlaceholder, setComposerPlaceholder] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'revisions' | 'discussion'>('revisions');
 
   // Section states
   const [pollState, setPollState] = useState<SectionState>('idle');
@@ -43,7 +48,15 @@ export default function PrincipleDocPage() {
   // Derived data
   const mainDoc = poll?.longform_main || poll?.description || poll?.body || '';
   const counterDoc = poll?.extra?.counter_body || '';
-  const evidence: EvidenceItem[] = poll?.extra?.evidence || [];
+  const evidence: EvidenceItem[] = (poll?.extra?.evidence || []).map((item, index) => ({
+    id: `evidence-${index}`,
+    title: item.title,
+    source: item.source,
+    year: item.year,
+    url: item.url,
+    summary: item.summary,
+    stance: item.stance
+  }));
 
   // Fetch data
   const fetchPoll = useCallback(async () => {
@@ -66,7 +79,7 @@ export default function PrincipleDocPage() {
 
     setCommentsState('loading');
     try {
-      const commentsData = await listComments(id, { kind: 'revision' });
+      const commentsData = await listComments(id);
       setComments(commentsData.comments);
       setCommentsState('ready');
     } catch (err) {
@@ -94,13 +107,13 @@ export default function PrincipleDocPage() {
 
       // Optimistic update
       setComments(prev => [newComment, ...prev]);
-      success(principlesDocCopy.revisionPosted);
+      success(principlesCopy.revisionPosted);
 
       // Analytics tracking
       console.log('principle.revision.post', { pollId: id, target });
     } catch (err) {
       console.error('Failed to post revision:', err);
-      showError(principlesDocCopy.revisionError);
+      showError(principlesCopy.revisionError);
 
       // Analytics tracking
       console.log('principle.revision.error', { pollId: id, error: err });
@@ -130,8 +143,8 @@ export default function PrincipleDocPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-red-600 mb-4">{principlesDocCopy.error}</p>
-          <Button onClick={fetchPoll}>{principlesDocCopy.retry}</Button>
+          <p className="text-red-600 mb-4">{principlesCopy.error}</p>
+          <Button onClick={fetchPoll}>{principlesCopy.retry}</Button>
         </div>
       </div>
     );
@@ -164,19 +177,24 @@ export default function PrincipleDocPage() {
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{principlesDocCopy.lastUpdated}: {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}</span>
+                  <span>{principlesCopy.lastUpdated}: {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}</span>
                 </div>
+                {flags.principlesDocEnabled && (
+                  <button className="text-blue-600 hover:text-blue-800 font-medium">
+                    Diff view
+                  </button>
+                )}
                 {poll?.labels && poll.labels.length > 0 && (
                   <div className="flex items-center gap-1">
                     <Tag className="w-4 h-4" />
-                    <span>{principlesDocCopy.labels}: {poll.labels.map(l => l.name).join(', ')}</span>
+                    <span>{principlesCopy.labels}: {poll.labels.map(l => l.name).join(', ')}</span>
                   </div>
                 )}
               </div>
             </div>
             <Button variant="outline" size="sm">
               <Share2 className="w-4 h-4 mr-2" />
-              {principlesDocCopy.share}
+              {principlesCopy.share}
             </Button>
           </div>
         </div>
@@ -184,7 +202,7 @@ export default function PrincipleDocPage() {
         {/* Content Grid */}
         <div className="grid gap-6 lg:grid-cols-12">
           {/* Main Column */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-8 space-y-6">
             <CommunityDocument
               content={mainDoc}
               loading={pollState === 'loading'}
@@ -197,24 +215,44 @@ export default function PrincipleDocPage() {
               placeholder={composerPlaceholder}
             />
 
-            <ReasoningList
-              comments={comments}
-              loading={commentsState === 'loading'}
-              error={commentsState === 'error' ? 'Failed to load proposals' : null}
-              onRetry={fetchComments}
-            />
+            {/* Tab Switcher */}
+            <div>
+              <TabSwitcher
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+              />
+
+              {/* Tab Content */}
+              <div className="mt-4">
+                {activeTab === 'revisions' ? (
+                  <RevisionsList
+                    revisions={comments}
+                    loading={commentsState === 'loading'}
+                    error={commentsState === 'error' ? 'Failed to load revisions' : null}
+                    onRetry={fetchComments}
+                  />
+                ) : (
+                  <DiscussionList
+                    comments={comments}
+                    loading={commentsState === 'loading'}
+                    error={commentsState === 'error' ? 'Failed to load discussion' : null}
+                    onRetry={fetchComments}
+                  />
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Aside Column */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             <CounterDocument
               content={counterDoc}
               onDevelopView={handleDevelopView}
               loading={pollState === 'loading'}
             />
 
-            <EvidencePanel
-              evidence={evidence}
+            <AboutThis
+              sources={evidence}
               onSuggestSource={handleSuggestSource}
               loading={pollState === 'loading'}
             />
@@ -224,23 +262,23 @@ export default function PrincipleDocPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Meta</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{principlesDocCopy.created}:</span>
+                  <span className="text-gray-600">{principlesCopy.created}:</span>
                   <span className="text-gray-900">
                     {poll?.created_at ? new Date(poll.created_at).toLocaleDateString() : 'Unknown'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{principlesDocCopy.updated}:</span>
+                  <span className="text-gray-600">{principlesCopy.updated}:</span>
                   <span className="text-gray-900">
                     {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{principlesDocCopy.labels}:</span>
+                  <span className="text-gray-600">{principlesCopy.labels}:</span>
                   <span className="text-gray-900">
                     {poll?.labels && poll.labels.length > 0
                       ? poll.labels.map(l => l.name).join(', ')
-                      : principlesDocCopy.noLabels
+                      : principlesCopy.noLabels
                     }
                   </span>
                 </div>
