@@ -96,6 +96,7 @@ export default function ProposalGrid({
         decision_type: decisionType,
         label: labelFilter || undefined
       });
+      console.log('[DEBUG] ProposalGrid: Fetched polls:', fetchedPolls.map((p: Poll) => ({ id: p.id, title: p.title, decision_type: p.decision_type })));
       setPolls(fetchedPolls);
     } catch (err: unknown) {
       const error = err as { message: string };
