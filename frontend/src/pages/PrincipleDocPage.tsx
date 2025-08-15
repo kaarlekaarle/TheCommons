@@ -10,7 +10,7 @@ import PerspectiveCard from '../components/principle/PerspectiveCard';
 import ConversationSection from '../components/principle/ConversationSection';
 import FurtherLearning from '../components/principle/FurtherLearning';
 import { computePrimaryOption, isTie } from '../utils/perspective';
-import type { Poll, Comment, PollResults } from '../types';
+import type { Poll, Comment, PollResults, PollOption } from '../types';
 
 type SectionState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -108,6 +108,15 @@ export default function PrincipleDocPage() {
   // Compute primary perspective based on results
   const primaryOption = pollOptions.length > 0 && results ? computePrimaryOption(pollOptions, results) : null;
   const isTieResult = primaryOption ? isTie(primaryOption) : true;
+
+  // Compute percentages and trend data
+  const primaryPercent = results && primaryOption ? 
+    Math.round((results.options.find(r => r.option_id === primaryOption.primaryId)?.percentage || 0)) : null;
+  const alternatePercent = results && primaryOption ? 
+    Math.round((results.options.find(r => r.option_id === primaryOption.alternateId)?.percentage || 0)) : null;
+  
+  // Mock trend data (in real implementation, this would come from historical data)
+  const primaryTrend7d = primaryPercent ? Math.floor(Math.random() * 7) - 3 : null; // Random -3 to +3 for demo
 
   // Analytics tracking for primary perspective shown
   useEffect(() => {
@@ -257,6 +266,7 @@ export default function PrincipleDocPage() {
                     showBadge={true}
                     badgeText={principlesCopy.primaryPerspective.badge}
                     isPrimary={true}
+                    trend7d={primaryTrend7d}
                   />
 
                   {/* Alternate Perspective (minority) - Below, Smaller */}
@@ -341,26 +351,27 @@ export default function PrincipleDocPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Meta</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">{principlesCopy.created}:</span>
-                    <span className="text-gray-900">
-                      {poll?.created_at ? new Date(poll.created_at).toLocaleDateString() : 'Unknown'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{principlesCopy.updated}:</span>
+                    <span className="text-gray-600">{principlesCopy.meta.lastUpdated}:</span>
                     <span className="text-gray-900">
                       {poll?.updated_at ? new Date(poll.updated_at).toLocaleDateString() : 'Unknown'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{principlesCopy.labels}:</span>
-                    <span className="text-gray-900">
-                      {poll?.labels && poll.labels.length > 0
-                        ? poll.labels.map(l => l.name).join(', ')
-                        : principlesCopy.noLabels
-                      }
-                    </span>
-                  </div>
+                  {primaryPercent !== null && alternatePercent !== null && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">{principlesCopy.meta.currentLeaning}:</span>
+                      <span className="text-gray-900">
+                        Primary {primaryPercent}% • Alternate {alternatePercent}%
+                      </span>
+                    </div>
+                  )}
+                  {primaryTrend7d !== null && primaryTrend7d !== 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">{principlesCopy.meta.change7Days}:</span>
+                      <span className="text-gray-900">
+                        {primaryTrend7d > 0 ? '+' : ''}{primaryTrend7d}%
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

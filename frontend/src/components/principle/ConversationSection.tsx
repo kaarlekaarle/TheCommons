@@ -125,7 +125,7 @@ export default function ConversationSection({
       {/* Comments List */}
       <div className="space-y-4">
         <h4 className="text-lg font-semibold text-gray-900">
-          Community conversation
+          {principlesCopy.conversation.header}
         </h4>
 
         {loading && (

@@ -20,6 +20,7 @@ interface PerspectiveCardProps {
   badgeText?: string;
   isPrimary?: boolean;
   isSecondary?: boolean;
+  trend7d?: number | null; // Trend percentage for the last 7 days
 }
 
 export default function PerspectiveCard({
@@ -38,7 +39,8 @@ export default function PerspectiveCard({
   showBadge = false,
   badgeText,
   isPrimary = false,
-  isSecondary = false
+  isSecondary = false,
+  trend7d = null
 }: PerspectiveCardProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -63,11 +65,23 @@ export default function PerspectiveCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className={`font-semibold text-gray-900 ${isSecondary ? 'text-base' : 'text-lg'}`} data-testid={`perspective-title-${type}`}>
-            {title}
-          </h3>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className={`font-semibold text-gray-900 ${isSecondary ? 'text-base' : 'text-lg'}`} data-testid={`perspective-title-${type}`}>
+              {title}
+            </h3>
+            {trend7d !== null && trend7d !== 0 && (
+              <Badge 
+                variant="outline" 
+                className="text-xs px-2 py-1"
+                data-testid="trend-chip"
+                aria-label={`Primary leaning change past 7 days: ${trend7d > 0 ? '+' : ''}${trend7d} percent`}
+              >
+                {trend7d > 0 ? '↑' : '↓'} {trend7d > 0 ? '+' : ''}{trend7d}% this week
+              </Badge>
+            )}
+          </div>
           {showBadge && badgeText && (
-            <Badge variant="default" className="mt-2 text-xs" data-testid="community-view-badge">
+            <Badge variant="default" className="text-xs" data-testid="community-view-badge">
               {badgeText}
             </Badge>
           )}

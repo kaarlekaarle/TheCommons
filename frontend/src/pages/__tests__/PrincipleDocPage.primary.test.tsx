@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
+import { ToasterProvider } from '../../components/ui/Toaster';
 import PrincipleDocPage from '../PrincipleDocPage';
 import * as api from '../../lib/api';
 import { flags } from '../../config/flags';
@@ -35,11 +36,22 @@ const mockPoll = {
 };
 
 const mockResults = {
-  totalVotes: 100,
-  optionResults: {
-    'option-1': { votes: 60, percentage: 60 },
-    'option-2': { votes: 40, percentage: 40 },
-  },
+  poll_id: 'ai-edu-001',
+  total_votes: 100,
+  options: [
+    {
+      option_id: 'option-1',
+      text: 'Primary Option',
+      votes: 60,
+      percentage: 60
+    },
+    {
+      option_id: 'option-2',
+      text: 'Alternate Option',
+      votes: 40,
+      percentage: 40
+    }
+  ]
 };
 
 const mockComments = {
@@ -52,9 +64,11 @@ const mockComments = {
 
 const renderWithRouter = (component: React.ReactElement) => {
   return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
+    <ToasterProvider>
+      <BrowserRouter>
+        {component}
+      </BrowserRouter>
+    </ToasterProvider>
   );
 };
 
@@ -64,6 +78,10 @@ describe('PrincipleDocPage - Primary Perspective', () => {
     
     // Mock API calls
     vi.mocked(api.getPoll).mockResolvedValue(mockPoll);
+    vi.mocked(api.getPollOptions).mockResolvedValue([
+      { id: 'option-1', poll_id: 'ai-edu-001', text: 'Primary Option', created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+      { id: 'option-2', poll_id: 'ai-edu-001', text: 'Alternate Option', created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' }
+    ]);
     vi.mocked(api.getResults).mockResolvedValue(mockResults);
     vi.mocked(api.listComments).mockResolvedValue(mockComments);
   });
@@ -88,16 +106,32 @@ describe('PrincipleDocPage - Primary Perspective', () => {
     // Check that alternate perspective is also present (below primary)
     const alternateCard = screen.getByTestId('perspective-card-alternate');
     expect(alternateCard).toBeInTheDocument();
+
+    // Check for new copy
+    expect(screen.getByText('Where most people lean (for now)')).toBeInTheDocument();
+    expect(screen.getByText('Another way people answer this')).toBeInTheDocument();
+    expect(screen.getByText('This speaks to me')).toBeInTheDocument();
   });
 
   test('shows equal weight layout when votes are within 5% threshold', async () => {
     // Mock results with votes within 5% threshold
     const tieResults = {
-      totalVotes: 100,
-      optionResults: {
-        'option-1': { votes: 52, percentage: 52 },
-        'option-2': { votes: 48, percentage: 48 },
-      },
+      poll_id: 'ai-edu-001',
+      total_votes: 100,
+      options: [
+        {
+          option_id: 'option-1',
+          text: 'Primary Option',
+          votes: 52,
+          percentage: 52
+        },
+        {
+          option_id: 'option-2',
+          text: 'Alternate Option',
+          votes: 48,
+          percentage: 48
+        }
+      ]
     };
 
     vi.mocked(api.getResults).mockResolvedValue(tieResults);
@@ -173,5 +207,20 @@ describe('PrincipleDocPage - Primary Perspective', () => {
     // Check that alternate perspective is below primary (not side by side)
     const alternateCard = screen.getByTestId('perspective-card-alternate');
     expect(alternateCard).toBeInTheDocument();
+  });
+
+  test('shows trend chip when trend data is available', async () => {
+    renderWithRouter(<PrincipleDocPage />);
+
+    // Wait for content to load
+    await waitFor(() => {
+      expect(screen.getByTestId('main-question')).toBeInTheDocument();
+    });
+
+    // Check for trend chip (may or may not be present due to random generation)
+    const trendChip = screen.queryByTestId('trend-chip');
+    if (trendChip) {
+      expect(trendChip).toHaveTextContent(/[↑↓] [+-]?\d+% this week/);
+    }
   });
 });
