@@ -216,14 +216,14 @@ export default function PrincipleDocPage() {
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-3">
-          {/* Left Column (span 2) */}
+          {/* Main Content Column (span 2) */}
           <section className="lg:col-span-2 space-y-6">
-            {/* Perspective Cards */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Primary Perspective - Full Width, Prominent */}
+            <div className="w-full">
               {flags.primaryPerspectiveEnabled && primaryOption && !isTieResult ? (
-                // Dynamic primary perspective layout
+                // Dynamic primary perspective layout - Hierarchical
                 <>
-                  {/* Primary Perspective (majority) */}
+                  {/* Primary Perspective (majority) - Full Width, Prominent */}
                   <PerspectiveCard
                     type="primary"
                     title={principlesCopy.primaryPerspective.title}
@@ -242,27 +242,30 @@ export default function PrincipleDocPage() {
                     isPrimary={true}
                   />
 
-                  {/* Alternate Perspective (minority) */}
-                  <PerspectiveCard
-                    type="alternate"
-                    title={principlesCopy.alternatePerspective.title}
-                    summary={principlesCopy.alternatePerspective.summary}
-                    longBody={principlesCopy.alternatePerspective.longBody}
-                    isAligned={userAlignment === 'alternate'}
-                    isSubmitting={isAligning}
-                    onAlign={() => handleAlign('alternate')}
-                    onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'alternate' ? null : 'alternate')}
-                    isExpanded={expandedPerspective === 'alternate'}
-                    readMoreText={principlesCopy.alternatePerspective.readMore}
-                    readLessText={principlesCopy.alternatePerspective.readLess}
-                    alignButtonText={principlesCopy.alternatePerspective.alignButton}
-                    showBadge={false}
-                    isPrimary={false}
-                  />
+                  {/* Alternate Perspective (minority) - Below, Smaller */}
+                  <div className="mt-6">
+                    <PerspectiveCard
+                      type="alternate"
+                      title={principlesCopy.alternatePerspective.title}
+                      summary={principlesCopy.alternatePerspective.summary}
+                      longBody={principlesCopy.alternatePerspective.longBody}
+                      isAligned={userAlignment === 'alternate'}
+                      isSubmitting={isAligning}
+                      onAlign={() => handleAlign('alternate')}
+                      onToggleExpanded={() => setExpandedPerspective(expandedPerspective === 'alternate' ? null : 'alternate')}
+                      isExpanded={expandedPerspective === 'alternate'}
+                      readMoreText={principlesCopy.alternatePerspective.readMore}
+                      readLessText={principlesCopy.alternatePerspective.readLess}
+                      alignButtonText={principlesCopy.alternatePerspective.alignButton}
+                      showBadge={false}
+                      isPrimary={false}
+                      isSecondary={true}
+                    />
+                  </div>
                 </>
               ) : (
-                // Equal weight layout (tie or feature flag off)
-                <>
+                // Equal weight layout (tie or feature flag off) - Side by side
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <PerspectiveCard
                     type="primary"
                     title={principlesCopy.primaryPerspective.title}
@@ -296,7 +299,7 @@ export default function PrincipleDocPage() {
                     showBadge={false}
                     isPrimary={false}
                   />
-                </>
+                </div>
               )}
             </div>
 

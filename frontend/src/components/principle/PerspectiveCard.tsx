@@ -19,6 +19,7 @@ interface PerspectiveCardProps {
   showBadge?: boolean;
   badgeText?: string;
   isPrimary?: boolean;
+  isSecondary?: boolean;
 }
 
 export default function PerspectiveCard({
@@ -36,7 +37,8 @@ export default function PerspectiveCard({
   alignButtonText,
   showBadge = false,
   badgeText,
-  isPrimary = false
+  isPrimary = false,
+  isSecondary = false
 }: PerspectiveCardProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -47,19 +49,21 @@ export default function PerspectiveCard({
 
   return (
     <div
-      className={`p-6 bg-white rounded-xl border transition-all duration-200 ${
+      className={`bg-white rounded-xl border transition-all duration-200 ${
         isAligned
-          ? 'border-green-200 bg-green-50/50 shadow-md'
+          ? 'border-green-200 bg-green-50/50 shadow-md p-6'
           : isPrimary
-          ? 'border-blue-200 bg-blue-50/50 shadow-md ring-1 ring-blue-200'
-          : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
+          ? 'border-blue-200 bg-blue-50/50 shadow-md ring-1 ring-blue-200 p-6'
+          : isSecondary
+          ? 'border-gray-200 shadow-sm p-4'
+          : 'border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 p-6'
       }`}
       data-testid={`perspective-card-${type}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900" data-testid={`perspective-title-${type}`}>
+          <h3 className={`font-semibold text-gray-900 ${isSecondary ? 'text-base' : 'text-lg'}`} data-testid={`perspective-title-${type}`}>
             {title}
           </h3>
           {showBadge && badgeText && (
@@ -77,7 +81,7 @@ export default function PerspectiveCard({
       </div>
 
       {/* Summary - always visible */}
-      <p className="text-gray-700 mb-4 leading-relaxed">
+      <p className={`text-gray-700 mb-4 leading-relaxed ${isSecondary ? 'text-sm' : ''}`}>
         {summary}
       </p>
 

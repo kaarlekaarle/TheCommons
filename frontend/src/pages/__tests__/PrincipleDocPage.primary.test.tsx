@@ -84,6 +84,10 @@ describe('PrincipleDocPage - Primary Perspective', () => {
     const badge = screen.getByTestId('community-view-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveTextContent('Current community view');
+
+    // Check that alternate perspective is also present (below primary)
+    const alternateCard = screen.getByTestId('perspective-card-alternate');
+    expect(alternateCard).toBeInTheDocument();
   });
 
   test('shows equal weight layout when votes are within 5% threshold', async () => {
@@ -152,5 +156,22 @@ describe('PrincipleDocPage - Primary Perspective', () => {
     });
 
     consoleSpy.mockRestore();
+  });
+
+  test('uses hierarchical layout when primary perspective is enabled', async () => {
+    renderWithRouter(<PrincipleDocPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('main-question')).toBeInTheDocument();
+    });
+
+    // Check that primary perspective is full width (not in a grid)
+    const primaryCard = screen.getByTestId('perspective-card-primary');
+    const primaryContainer = primaryCard.closest('.w-full');
+    expect(primaryContainer).toBeInTheDocument();
+
+    // Check that alternate perspective is below primary (not side by side)
+    const alternateCard = screen.getByTestId('perspective-card-alternate');
+    expect(alternateCard).toBeInTheDocument();
   });
 });
