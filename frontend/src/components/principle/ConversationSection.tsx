@@ -67,6 +67,7 @@ export default function ConversationSection({
             maxLength={1000}
             data-testid="conversation-textarea"
             required
+            className="w-full"
           />
 
           <div className="space-y-2">
