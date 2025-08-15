@@ -73,7 +73,6 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   const isActive = (href: string) => {
-    console.log('[Layout] Checking if active:', href, 'current path:', location.pathname);
     if (href === '/proposals' && location.pathname.startsWith('/proposals/') && !location.pathname.includes('/new')) {
       return true;
     }
@@ -102,7 +101,6 @@ export default function Layout({ children }: LayoutProps) {
             {/* Logo */}
             <Link
               to="/dashboard"
-              onClick={() => console.log('[Layout] Logo clicked, navigating to /dashboard')}
               className="flex items-center space-x-3"
             >
               <span className="text-xl font-bold text-neutral-900">The Commons</span>
@@ -128,7 +126,6 @@ export default function Layout({ children }: LayoutProps) {
                   <Link
                     key={item.name}
                     to={item.href}
-                    onClick={() => console.log('[Layout] Navigation clicked:', item.name, item.href)}
                     className={clsx(
                       'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md',
                       isActive(item.href) && 'text-primary-700 border-b-2 border-primary-700'
