@@ -8,6 +8,7 @@ import Empty from '../ui/Empty';
 import { useToast } from '../ui/useToast';
 import { Skeleton } from '../ui/Skeleton';
 import { compassCopy } from '../../copy/compass';
+import { getHardcodedComments, isHardcodedPoll } from '../../utils/hardcodedData';
 
 interface CommentsPanelProps {
   proposalId: string;
@@ -37,8 +38,15 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
     isFetchingRef.current = true;
     setError(null);
     try {
-      const data = await listComments(proposalId, { signal: ac.signal });
-      setItems(data.comments);
+      // Check if this is a hardcoded poll
+      if (isHardcodedPoll(proposalId)) {
+        console.log('[DEBUG] Using hardcoded comments for poll:', proposalId);
+        const hardcodedComments = getHardcodedComments(proposalId);
+        setItems(hardcodedComments);
+      } else {
+        const data = await listComments(proposalId, undefined, ac.signal);
+        setItems(data.comments);
+      }
     } catch (e: any) {
       if (e.name !== 'AbortError') {
         setError('Could not load comments.');
@@ -79,10 +87,24 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
 
     try {
       setPosting(true);
-      const comment = await createComment(proposalId, { body: originalComment.trim() });
-      // Replace optimistic comment with real one
-      setItems(prev => prev ? prev.map(c => c.id === optimisticComment.id ? comment : c) : [comment]);
-      success('Comment posted successfully');
+
+      // Check if this is a hardcoded poll
+      if (isHardcodedPoll(proposalId)) {
+        console.log('[DEBUG] Adding comment to hardcoded poll:', proposalId);
+        // For hardcoded polls, we just keep the optimistic comment
+        const finalComment: Comment = {
+          ...optimisticComment,
+          id: `hardcoded-comment-${Date.now()}`,
+          user: { id: 'hardcoded-user-current', username: 'You' }
+        };
+        setItems(prev => prev ? prev.map(c => c.id === optimisticComment.id ? finalComment : c) : [finalComment]);
+        success('Comment posted successfully');
+      } else {
+        const comment = await createComment(proposalId, { body: originalComment.trim() });
+        // Replace optimistic comment with real one
+        setItems(prev => prev ? prev.map(c => c.id === optimisticComment.id ? comment : c) : [comment]);
+        success('Comment posted successfully');
+      }
     } catch (err: unknown) {
       const error = err as { message: string };
       console.error('Failed to post comment:', error.message);
@@ -287,7 +309,7 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
                                   ? 'bg-green-100 text-green-800'
                                   : 'bg-orange-100 text-orange-800'
                               }`}>
-                                {stance === 'support' ? compassCopy.stanceSupport : compassCopy.stanceConcern}
+                                {stance === 'support' ? compassCopy.toneSupport : compassCopy.toneConcern}
                               </span>
                             </div>
                           )}

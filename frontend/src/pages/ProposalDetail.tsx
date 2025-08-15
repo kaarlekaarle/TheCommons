@@ -19,6 +19,7 @@ import DelegationPath from '../components/DelegationPath';
 import { flags } from '../config/flags';
 import { useNavigate } from 'react-router-dom';
 import PrincipleProposal from '../components/principle/PrincipleProposal';
+import { getHardcodedPoll, getHardcodedPollOptions, isHardcodedPoll, getHardcodedComments, getHardcodedVote } from '../utils/hardcodedData';
 
 export default function ProposalDetail() {
   const { id } = useParams<{ id: string }>();
@@ -73,6 +74,31 @@ export default function ProposalDetail() {
       setLoading(true);
       console.log('[DEBUG] Fetching proposal data for ID:', id);
       console.log('[DEBUG] Current token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+
+      // Check if this is a hardcoded poll ID
+      if (id && isHardcodedPoll(id)) {
+        console.log('[DEBUG] Using hardcoded data for poll:', id);
+
+        const hardcodedPoll = getHardcodedPoll(id);
+        const hardcodedOptions = getHardcodedPollOptions(id);
+        const hardcodedVote = getHardcodedVote(id);
+
+        if (!hardcodedPoll) {
+          throw new Error('Hardcoded poll not found');
+        }
+
+        setPoll(hardcodedPoll);
+        setOptions(hardcodedOptions);
+        setMyVote(hardcodedVote);
+
+        // For hardcoded data, we don't have real results or delegation data
+        setResults(null);
+        setDelegationInfo(null);
+        setDelegationSummary(null);
+
+        console.log('[DEBUG] Hardcoded proposal data loaded successfully');
+        return;
+      }
 
       // Fetch core data (poll and options) first
       const [pollData, optionsData] = await Promise.all([
@@ -145,9 +171,19 @@ export default function ProposalDetail() {
 
     try {
       setVoting(optionId);
-      await castVote(poll.id, optionId);
-      await fetchData(); // Refresh data
-      success('Vote cast successfully');
+
+      // Check if this is a hardcoded poll
+      if (isHardcodedPoll(poll.id)) {
+        console.log('[DEBUG] Handling vote for hardcoded poll:', poll.id);
+        const { createHardcodedVote } = await import('../utils/hardcodedData');
+        const newVote = createHardcodedVote(poll.id, optionId);
+        setMyVote(newVote);
+        success('Vote cast successfully');
+      } else {
+        await castVote(poll.id, optionId);
+        await fetchData(); // Refresh data
+        success('Vote cast successfully');
+      }
     } catch (err: unknown) {
       const error = err as { message: string };
       console.error('Failed to cast vote:', error.message);
@@ -189,8 +225,15 @@ export default function ProposalDetail() {
     );
   }
 
-  // For level_a proposals, use the new structured format
+  // For level_a proposals, redirect to compass page if enabled
+  if (poll.decision_type === 'level_a' && flags.compassEnabled) {
+    navigate(`/compass/${id}`, { replace: true });
+    return null;
+  }
+
+  // For level_a proposals, use the new structured format (fallback)
   if (poll.decision_type === 'level_a') {
+    console.log('[DEBUG] Rendering level_a proposal with new layout for poll:', poll.id);
     const tally = results?.options.map(option => ({
       optionId: option.option_id,
       count: option.votes

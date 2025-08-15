@@ -22,14 +22,19 @@ const WhyTwoLevels = React.lazy(() => import('./pages/WhyTwoLevels'));
 // Lazy load the CompassPage
 const CompassPage = React.lazy(() => import('./pages/CompassPage'));
 
+// Lazy load the PrincipleDocPage
+const PrincipleDocPage = React.lazy(() => import('./pages/PrincipleDocPage'));
+
 // Dev-only accessibility check page
 const A11yCheck = React.lazy(() => import('./pages/_A11yCheck'));
+
+
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem('token');
     console.log('[AUTH DEBUG] App initialization - Token found in storage:', !!token);
-    
+
     if (token) {
       try {
         // Decode JWT to check expiration
@@ -37,20 +42,20 @@ export default function App() {
         const expirationTime = payload.exp * 1000; // Convert to milliseconds
         const currentTime = Date.now();
         const isExpired = currentTime > expirationTime;
-        
+
         console.log('[AUTH DEBUG] Token validation:', {
           expirationTime: new Date(expirationTime).toISOString(),
           currentTime: new Date(currentTime).toISOString(),
           isExpired,
           timeUntilExpiry: Math.floor((expirationTime - currentTime) / 1000) + ' seconds'
         });
-        
+
         if (isExpired) {
           console.log('[AUTH DEBUG] Token is expired, removing from storage');
           localStorage.removeItem('token');
           return false;
         }
-        
+
         console.log('[AUTH DEBUG] Token is valid, user authenticated');
         return true;
       } catch (error) {
@@ -60,7 +65,7 @@ export default function App() {
         return false;
       }
     }
-    
+
     console.log('[AUTH DEBUG] No token found, user not authenticated');
     return false;
   });
@@ -109,7 +114,7 @@ export default function App() {
             </Suspense>
           } />
 
-          
+
           {/* Dev-only accessibility check route */}
           {import.meta.env.DEV && (
             <Route path="/_a11y" element={
@@ -118,10 +123,12 @@ export default function App() {
               </Suspense>
             } />
           )}
-          
+
+
+
           {/* Authentication route */}
-          <Route 
-            path="/auth" 
+          <Route
+            path="/auth"
             element={
               !isAuthenticated ? (
                 <div className="min-h-screen bg-bg flex items-center justify-center p-4">
@@ -145,12 +152,12 @@ export default function App() {
               ) : (
                 <Navigate to="/dashboard" replace />
               )
-            } 
+            }
           />
-          
+
           {/* Protected routes - redirect to auth if not authenticated */}
-          <Route 
-            path="/*" 
+          <Route
+            path="/*"
             element={
               isAuthenticated ? (
                 <Layout>
@@ -167,7 +174,11 @@ export default function App() {
                     <Route path="/topics" element={<TopicsRouteWrapper />} />
                     <Route path="/topics/disabled" element={<TopicsRouteWrapper />} />
                     {flags.compassEnabled && (
-                      <Route path="/compass/:id" element={<CompassPage />} />
+                      flags.principlesDocMode ? (
+                        <Route path="/compass/:id" element={<PrincipleDocPage />} />
+                      ) : (
+                        <Route path="/compass/:id" element={<CompassPage />} />
+                      )
                     )}
                     {!flags.compassEnabled && (
                       <Route path="/compass/:id" element={<Navigate to="/proposals" replace />} />
@@ -177,7 +188,7 @@ export default function App() {
               ) : (
                 <Navigate to="/auth" replace />
               )
-            } 
+            }
           />
         </Routes>
       </Router>

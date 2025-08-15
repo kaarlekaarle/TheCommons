@@ -29,8 +29,14 @@ export default function PrincipleProposal({
   tally = [],
   totalVotes
 }: PrincipleProposalProps) {
+  // Debug logging
+  console.log('PrincipleProposal rendered with poll ID:', poll.id);
+  console.log('Available principle copies:', Object.keys(principleCopies));
+
   // Get the principle copy based on poll ID
   const principleCopy = principleCopies[poll.id as keyof typeof principleCopies];
+
+  console.log('Found principle copy:', !!principleCopy);
 
   if (!principleCopy) {
     // Fallback to basic display if no structured copy exists

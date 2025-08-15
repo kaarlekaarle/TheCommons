@@ -287,7 +287,8 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
                   </Button>
                 </div>
               </motion.div>
-            ))}
+            );
+            })}
           </AnimatePresence>
         </div>
       )}

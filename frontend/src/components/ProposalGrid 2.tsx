@@ -19,13 +19,13 @@ interface ProposalGridProps {
   pageDescription?: string;
 }
 
-export default function ProposalGrid({ 
-  title, 
-  decisionType, 
-  emptyTitle, 
-  emptySubtitle, 
+export default function ProposalGrid({
+  title,
+  decisionType,
+  emptyTitle,
+  emptySubtitle,
   ctaLabel,
-  pageDescription 
+  pageDescription
 }: ProposalGridProps) {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,60 +37,29 @@ export default function ProposalGrid({
   // Check if we should use hardcoded data
   const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
 
-  // Hardcoded data for testing UI logic - filter by decision type
+  // Hardcoded fallback data for development
   const hardcodedPolls: Poll[] = [
     {
       id: 'hardcoded-1',
-      title: 'Install protected bike lanes on Washington Avenue from downtown to university district',
-      description: 'Add dedicated, protected bicycle lanes along Washington Avenue to improve cyclist safety and encourage active transportation between downtown and the university.',
+      title: 'Level A Principle (Placeholder)',
+      description: 'This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.',
       created_by: 'hardcoded-user-1',
       created_at: '2025-01-10T10:00:00Z',
       updated_at: '2025-01-10T10:00:00Z',
       is_active: true,
       end_date: '2025-02-15T00:00:00Z',
-      decision_type: 'level_b',
+      decision_type: 'level_a',
+      direction_choice: 'Placeholder',
       your_vote_status: {
-        status: 'none',
-        resolved_vote_path: []
+        status: 'voted',
+        resolved_vote_path: ['hardcoded-user-1']
       }
     },
     {
       id: 'hardcoded-2',
-      title: 'Launch 18-month curbside composting pilot in four residential neighborhoods',
-      description: 'Begin organic waste collection service in Downtown, Westside, Riverside, and Eastside neighborhoods to reduce landfill waste and create compost for city parks.',
+      title: 'Level B Principle (Placeholder)',
+      description: 'This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.',
       created_by: 'hardcoded-user-2',
-      created_at: '2025-01-20T14:30:00Z',
-      updated_at: '2025-01-20T14:30:00Z',
-      is_active: false,
-      end_date: '2025-03-01T00:00:00Z',
-      decision_type: 'level_b',
-      your_vote_status: {
-        status: 'voted',
-        resolved_vote_path: ['hardcoded-user-2']
-      }
-    },
-    {
-      id: 'hardcoded-3',
-      title: 'Complete Streets Policy',
-      description: 'Design and maintain streets to safely accommodate all users including pedestrians, cyclists, transit riders, and motorists of all ages and abilities.',
-      created_by: 'hardcoded-user-3',
-      created_at: '2025-01-05T09:15:00Z',
-      updated_at: '2025-01-05T09:15:00Z',
-      is_active: true,
-      end_date: '2025-01-31T00:00:00Z',
-      decision_type: 'level_a',
-      direction_choice: 'Transportation Safety',
-      your_vote_status: {
-        status: 'delegated',
-        resolved_vote_path: ['hardcoded-user-3', 'delegate-user-1'],
-        final_delegatee_id: 'delegate-user-1'
-      }
-    },
-    {
-      id: 'hardcoded-4',
-      title: 'Extend public library hours to 9 PM on weekdays for six-month trial',
-      description: 'Extend operating hours at the main library to better serve students, working families, and evening library users.',
-      created_by: 'hardcoded-user-4',
       created_at: '2025-01-15T11:20:00Z',
       updated_at: '2025-01-15T11:20:00Z',
       is_active: true,
@@ -99,101 +68,6 @@ export default function ProposalGrid({
       your_vote_status: {
         status: 'none',
         resolved_vote_path: []
-      }
-    },
-    {
-      id: 'hardcoded-5',
-      title: 'Public Records Transparency Policy',
-      description: 'Make all public records and datasets available online unless specifically exempted by law, with clear processes for requesting information.',
-      created_by: 'hardcoded-user-5',
-      created_at: '2025-01-08T16:45:00Z',
-      updated_at: '2025-01-08T16:45:00Z',
-      is_active: true,
-      end_date: '2025-02-10T00:00:00Z',
-      decision_type: 'level_a',
-      direction_choice: 'Government Transparency',
-      your_vote_status: {
-        status: 'voted',
-        resolved_vote_path: ['hardcoded-user-5']
-      }
-    },
-    {
-      id: 'hardcoded-6',
-      title: 'Plant 750 street trees along major transit corridors and in underserved neighborhoods',
-      description: 'Add urban trees along bus routes and in neighborhoods with low tree canopy to improve air quality, provide shade, and enhance walkability.',
-      created_by: 'hardcoded-user-6',
-      created_at: '2025-01-12T13:30:00Z',
-      updated_at: '2025-01-12T13:30:00Z',
-      is_active: true,
-      end_date: '2025-03-15T00:00:00Z',
-      decision_type: 'level_b',
-      your_vote_status: {
-        status: 'none',
-        resolved_vote_path: []
-      }
-    },
-    {
-      id: 'hardcoded-7',
-      title: 'Green Building Standards for Municipal Construction',
-      description: 'Require all new municipal buildings and major renovations to meet LEED Silver certification or equivalent energy efficiency standards.',
-      created_by: 'hardcoded-user-7',
-      created_at: '2025-01-03T08:00:00Z',
-      updated_at: '2025-01-03T08:00:00Z',
-      is_active: true,
-      end_date: '2025-02-20T00:00:00Z',
-      decision_type: 'level_a',
-      direction_choice: 'Environmental Policy',
-      your_vote_status: {
-        status: 'voted',
-        resolved_vote_path: ['hardcoded-user-7']
-      }
-    },
-    {
-      id: 'hardcoded-8',
-      title: 'Inclusive Housing Development Policy',
-      description: 'Ensure 20% of all new residential development includes affordable housing units or equivalent contributions to the housing trust fund.',
-      created_by: 'hardcoded-user-8',
-      created_at: '2025-01-07T14:20:00Z',
-      updated_at: '2025-01-07T14:20:00Z',
-      is_active: true,
-      end_date: '2025-02-25T00:00:00Z',
-      decision_type: 'level_a',
-      direction_choice: 'Housing & Development',
-      your_vote_status: {
-        status: 'none',
-        resolved_vote_path: []
-      }
-    },
-    {
-      id: 'hardcoded-9',
-      title: 'Municipal Climate Action Plan',
-      description: 'Reduce city government greenhouse gas emissions by 50% by 2030 and achieve carbon neutrality by 2040 through energy efficiency and renewable energy.',
-      created_by: 'hardcoded-user-9',
-      created_at: '2025-01-09T10:30:00Z',
-      updated_at: '2025-01-09T10:30:00Z',
-      is_active: true,
-      end_date: '2025-03-05T00:00:00Z',
-      decision_type: 'level_a',
-      direction_choice: 'Climate & Sustainability',
-      your_vote_status: {
-        status: 'delegated',
-        resolved_vote_path: ['hardcoded-user-9', 'delegate-user-2'],
-        final_delegatee_id: 'delegate-user-2'
-      }
-    },
-    {
-      id: 'hardcoded-10',
-      title: 'Retrofit lighting in all municipal buildings with energy-efficient LED systems',
-      description: 'Replace existing lighting systems in 15 municipal buildings to reduce energy consumption by 40% and lower operating costs.',
-      created_by: 'hardcoded-user-10',
-      created_at: '2025-01-14T16:15:00Z',
-      updated_at: '2025-01-14T16:15:00Z',
-      is_active: true,
-      end_date: '2025-04-01T00:00:00Z',
-      decision_type: 'level_b',
-      your_vote_status: {
-        status: 'voted',
-        resolved_vote_path: ['hardcoded-user-10']
       }
     }
   ];
@@ -283,7 +157,7 @@ export default function ProposalGrid({
                 <span className="text-sm text-blue-600 font-medium">
                   Filtered by: {searchParams.get('label')}
                 </span>
-                <Link 
+                <Link
                   to={window.location.pathname}
                   className="text-blue-600 hover:text-blue-800"
                 >

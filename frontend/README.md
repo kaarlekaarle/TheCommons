@@ -2,6 +2,56 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Environment Setup
+
+Create a `.env.local` file in the frontend directory with the following variables:
+
+```bash
+# API Configuration
+VITE_API_BASE_URL=http://localhost:8000
+
+# Feature Flags
+VITE_COMPASS_ENABLED=true
+VITE_PRINCIPLES_DOC_MODE=true  # Enable new living document UI
+VITE_DELEGATION_ENABLED=true
+VITE_USE_HARDCODED_DATA=true
+VITE_USE_DEMO_CONTENT=true
+
+# Debug
+VITE_DEBUG_OVERLAY=false
+
+# Development
+NODE_ENV=development
+```
+
+### Quick Setup
+
+```bash
+# Copy and modify the example (if it exists)
+cp .env.example .env.local
+
+# Or create manually
+echo "VITE_PRINCIPLES_DOC_MODE=true" > .env.local
+echo "VITE_USE_HARDCODED_DATA=true" >> .env.local
+echo "VITE_API_BASE_URL=http://localhost:8000" >> .env.local
+```
+
+### Feature Flags Explained
+
+- `VITE_PRINCIPLES_DOC_MODE=true` - Enables the new living document UI for Level A principles
+- `VITE_USE_HARDCODED_DATA=true` - Uses placeholder data instead of API calls (for development)
+- `VITE_COMPASS_ENABLED=true` - Enables the compass feature
+- `VITE_DELEGATION_ENABLED=true` - Enables delegation functionality
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+Visit `http://localhost:5173` and navigate to `/compass/hardcoded-1` to see the new living document UI.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh

@@ -52,7 +52,7 @@ const mockPrinciples = [
   },
   {
     id: 'principle-2',
-    title: 'Complete Streets Policy',
+    title: 'Level A Principle (Placeholder)',
     description: 'Design streets to safely accommodate all users.',
     decision_type: 'level_a',
     direction_choice: 'Transportation Safety',
@@ -86,7 +86,7 @@ describe('LinkedPrinciplesDrawer', () => {
         currentPollId="current-poll"
       />
     );
-    
+
     expect(screen.getByText('Linked Principles')).toBeInTheDocument();
     expect(screen.getByText('Mobility')).toBeInTheDocument();
   });
@@ -100,7 +100,7 @@ describe('LinkedPrinciplesDrawer', () => {
         currentPollId="current-poll"
       />
     );
-    
+
     expect(screen.queryByText('Linked Principles')).not.toBeInTheDocument();
   });
 
@@ -119,7 +119,7 @@ describe('LinkedPrinciplesDrawer', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Sustainable Transportation Policy')).toBeInTheDocument();
-      expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+      expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
     });
 
     expect(mockListPolls).toHaveBeenCalledWith({

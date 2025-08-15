@@ -462,7 +462,7 @@ export const getActivityFeed = async (limit: number = 20): Promise<ActivityItem[
 };
 
 // Comment API functions
-export async function listComments(pollId: string, params?: { limit?: number; offset?: number }, signal?: AbortSignal): Promise<CommentList> {
+export async function listComments(pollId: string, params?: { limit?: number; offset?: number; kind?: string }, signal?: AbortSignal): Promise<CommentList> {
   // Check if we should use hardcoded data
   const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
 
@@ -503,6 +503,9 @@ export async function listComments(pollId: string, params?: { limit?: number; of
     if (params?.offset) {
       queryParams.append('offset', params.offset.toString());
     }
+    if (params?.kind) {
+      queryParams.append('kind', params.kind);
+    }
 
     const url = queryParams.toString() ? `/api/polls/${pollId}/comments?${queryParams.toString()}` : `/api/polls/${pollId}/comments`;
     const response = await api.get(url, { signal });
@@ -516,7 +519,7 @@ export async function listComments(pollId: string, params?: { limit?: number; of
   }
 }
 
-export async function createComment(pollId: string, input: { body: string; option_id?: string }): Promise<Comment> {
+export async function createComment(pollId: string, input: { body: string; option_id?: string; kind?: string; stance?: 'main' | 'counter' | 'neutral' }): Promise<Comment> {
   // Check if we should use hardcoded data
   const useHardcodedData = import.meta.env.VITE_USE_HARDCODED_DATA === 'true';
 

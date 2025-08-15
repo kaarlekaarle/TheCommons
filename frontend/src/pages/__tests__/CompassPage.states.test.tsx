@@ -6,6 +6,7 @@ import CompassPage, { type RetryScheduler, computeBackoff } from '../CompassPage
 import * as api from '../../lib/api';
 import * as analytics from '../../lib/analytics';
 import { ToasterProvider } from '../../components/ui/Toaster';
+import type { Poll } from '../../types';
 
 // Mock the API
 vi.mock('../../lib/api');
@@ -45,16 +46,17 @@ const defer = <T,>() => {
 };
 
 // Mock data
-const mockPoll = {
-  id: 'test-poll-1',
-  title: 'Complete Streets Policy',
-  description: 'A long-term compass that guides related community decisions.',
-  decision_type: 'level_a' as const,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  created_by: 'user-1',
+const mockPoll: Poll = {
+  id: 'test-poll-id',
+  title: 'Level A Principle (Placeholder)',
+  description: 'This is a placeholder example for Level A.',
+  created_by: 'test-user',
+  created_at: '2025-01-01T00:00:00Z',
+  updated_at: '2025-01-01T00:00:00Z',
   is_active: true,
-  labels: []
+  end_date: '2025-12-31T00:00:00Z',
+  decision_type: 'level_a',
+  direction_choice: 'Placeholder'
 };
 
 const mockOptions = [
@@ -132,7 +134,7 @@ describe('CompassPage States', () => {
       expect(screen.getByTestId('compass-skeleton')).toBeInTheDocument();
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
     });
 
@@ -143,7 +145,7 @@ describe('CompassPage States', () => {
       expect(skeleton).toBeInTheDocument();
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       expect(skeleton).not.toBeInTheDocument();
@@ -222,7 +224,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
     });
   });
@@ -243,7 +245,7 @@ describe('CompassPage States', () => {
       fireEvent.click(screen.getByText('Try again'));
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       expect(analytics.compassAnalytics.refetch).toHaveBeenCalledWith('directions', 1);
@@ -338,13 +340,13 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       // Check for single H1
       const h1Elements = screen.getAllByRole('heading', { level: 1 });
       expect(h1Elements).toHaveLength(1);
-      expect(h1Elements[0]).toHaveTextContent('Complete Streets Policy');
+      expect(h1Elements[0]).toHaveTextContent('Level A Principle (Placeholder)');
 
       // Check for H2 section headings
       const h2Elements = screen.getAllByRole('heading', { level: 2 });
@@ -361,7 +363,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       // Check for labelled textarea
@@ -380,7 +382,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       // Check that buttons have focus indicators
@@ -397,7 +399,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       // Check for aria-live regions
@@ -411,7 +413,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       expect(analytics.compassAnalytics.view).toHaveBeenCalledWith('test-poll-1');
@@ -429,7 +431,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       fireEvent.click(screen.getByText('Align with this direction'));
@@ -456,7 +458,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       const textarea = screen.getByLabelText('Share why you lean this way');
@@ -491,7 +493,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       expect(screen.getByTestId('char-counter')).toHaveTextContent('0/1000');
@@ -501,7 +503,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       const textarea = screen.getByLabelText('Share why you lean this way');
@@ -514,7 +516,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       const textarea = screen.getByLabelText('Share why you lean this way');
@@ -541,18 +543,18 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       expect(screen.getByText('The Question')).toBeInTheDocument();
-      expect(screen.getByText(/Should Riverbend prioritize pedestrian and cyclist safety/)).toBeInTheDocument();
+      expect(screen.getByText(/This is a placeholder example for Level A/)).toBeInTheDocument();
     });
 
     it('shows read more buttons in direction cards', async () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       const readMoreButtons = screen.getAllByText('Read more');
@@ -563,7 +565,7 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       const readMoreButtons = screen.getAllByText('Read more');
@@ -571,7 +573,7 @@ describe('CompassPage States', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Why choose this direction?')).toBeInTheDocument();
-        expect(screen.getByText('Safety first: redesign to prevent fatalities and injuries, especially for vulnerable users.')).toBeInTheDocument();
+        expect(screen.getByText('This is a placeholder rationale point.')).toBeInTheDocument();
       });
     });
 
@@ -579,11 +581,11 @@ describe('CompassPage States', () => {
       renderWithRoute(<CompassPage scheduler={immediateScheduler} />, { route: '/compass/test-poll-1' });
 
       await waitFor(() => {
-        expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+        expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
       });
 
       expect(screen.getByText('Background')).toBeInTheDocument();
-      expect(screen.getByText(/'Complete Streets' designs streets for all users/)).toBeInTheDocument();
+      expect(screen.getByText(/This is a placeholder background summary/)).toBeInTheDocument();
 
       const backgroundReadMore = screen.getAllByText('Read more').find(button =>
         button.closest('section')?.textContent?.includes('Background')

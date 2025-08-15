@@ -37,6 +37,8 @@ export interface Poll {
   id: string;
   title: string;
   description: string;
+  longform_main?: string;
+  body?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -46,6 +48,15 @@ export interface Poll {
   decision_type: DecisionType;
   direction_choice?: string | null;
   labels?: Label[];
+  extra?: {
+    counter_body?: string;
+    evidence?: Array<{
+      title: string;
+      source: string;
+      year: number;
+      url: string;
+    }>;
+  };
 }
 
 export interface PollOption {
@@ -214,6 +225,8 @@ export interface Comment {
   up_count: number;
   down_count: number;
   my_reaction?: 'up' | 'down' | null;
+  kind?: string;
+  stance?: 'main' | 'counter' | 'neutral';
 }
 
 export interface CommentList {

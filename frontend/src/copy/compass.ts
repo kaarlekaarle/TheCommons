@@ -55,68 +55,59 @@ export const compassCopy = {
 };
 
 export const completeStreetsCopy = {
-  title: "Complete Streets Policy",
-  framing: "A long-term compass that guides related community decisions.",
+  title: "Level A Principle (Placeholder)",
+  framing: "A placeholder example for Level A principles.",
 
   questionHeading: "The Question",
   questionBody:
-    "Should Riverbend prioritize pedestrian and cyclist safety in all street design decisions, or maintain current street design standards with only minor safety improvements?\n\nThis choice will guide future transportation and land-use policies, affecting mobility, safety, equity, climate, and the local economy.",
+    "This is a placeholder example for Level A. It demonstrates how a single evolving document could be revised and countered.",
 
   dir1: {
-    title: "Prioritize pedestrian and cyclist safety in all street design decisions",
-    summary:
-      "Choose this direction to align with a safety-first, walkable and bike-friendly future.",
+    title: "Direction 1 (Placeholder)",
+    summary: "This is a placeholder direction for demonstration purposes.",
     readMoreHeading: "Why choose this direction?",
     rationale: [
-      "Safety first: redesign to prevent fatalities and injuries, especially for vulnerable users.",
-      "Equity & accessibility: benefits people without cars, including low-income residents, seniors, and people with disabilities.",
-      "Climate goals: more walking, cycling, and transit reduce car dependence and emissions.",
-      "Public health: active travel improves health and reduces air-pollution exposure.",
-      "Economic vitality: walkable, bike-friendly areas attract business and raise street life."
+      "This is a placeholder rationale point.",
+      "This demonstrates how rationale points would be structured.",
+      "This shows the format for Level A principle directions."
     ],
     counterHeading: "Counterarguments (raised by the other direction)",
     counters: [
-      "Congestion risk: lane reductions/bike lanes can increase congestion in car-dependent areas.",
-      "Business impact: shops reliant on drive-up customers and parking may lose footfall.",
-      "Equity paradox: car-dependent suburban/rural residents may feel disadvantaged without transit alternatives.",
-      "Cost & disruption: large redesigns are expensive and cause construction disruption."
+      "This is a placeholder counterargument.",
+      "This demonstrates how counterarguments would be structured.",
+      "This shows the format for balanced discussion."
     ],
   },
 
   dir2: {
-    title: "Maintain current street design standards with minor safety improvements",
-    summary:
-      "Choose this direction to align with incremental change and minimizing disruption.",
+    title: "Direction 2 (Placeholder)",
+    summary: "This is a placeholder direction for demonstration purposes.",
     readMoreHeading: "Why choose this direction?",
     rationale: [
-      "Practical improvements: targeted crosswalks, signals, and speed enforcement.",
-      "Minimizing disruption: keeps traffic flowing for commuters, deliveries, and emergency services.",
-      "Economic stability: protects businesses dependent on car access and parking.",
-      "Cost efficiency: lower upfront costs than large-scale redesign.",
-      "Flexibility: leaves room for gradual changes without a single radical shift."
+      "This is a placeholder rationale point.",
+      "This demonstrates how rationale points would be structured.",
+      "This shows the format for Level A principle directions."
     ],
     counterHeading: "Counterarguments (raised by the other direction)",
     counters: [
-      "Safety plateau: minor tweaks rarely deliver large crash/fatality reductions.",
-      "Climate inaction: maintaining car dominance undermines emissions targets.",
-      "Missed health benefits: fewer incentives for active travel.",
-      "Long-term costs: short-term savings can mean higher future health, congestion, and environmental costs."
+      "This is a placeholder counterargument.",
+      "This demonstrates how counterarguments would be structured.",
+      "This shows the format for balanced discussion."
     ],
   },
 
   communityExamplesHeading: "Community Reasoning (examples)",
   communityExamples: [
-    "Alice (equity): \"Complete streets make our community more accessible for everyone, including seniors and people with disabilities. This is about equity and safety.\"",
-    "Bob (balanced): \"I support this, but we need to ensure it doesn't create traffic congestion. Let's implement gradually and monitor impacts.\"",
-    "Carol (climate): \"This aligns with our city's climate goals. More walking and cycling means fewer car trips and better air quality.\"",
-    "Dan (business): \"My shop depends on parking access. If we remove too many spaces, it could hurt local business.\""
+    "This is a placeholder community example.",
+    "This demonstrates how community reasoning would be structured.",
+    "This shows the format for community input."
   ],
 
   backgroundHeading: "Background",
   backgroundSummary:
-    "'Complete Streets' designs streets for all users, not just cars. Research links redesigns to fewer injuries and deaths, but implementation can conflict with car-centric infrastructure, business needs, and commuter habits.",
+    "This is a placeholder background summary for demonstration purposes.",
   backgroundReadMore: [
-    "The concept originated in the United States and has spread globally.",
-    "Adopting a clear direction in Riverbend will shape: (1) transportation budgets, (2) zoning & development, (3) climate & health integration, (4) equity strategies."
+    "This is a placeholder background detail.",
+    "This demonstrates how background information would be structured."
   ]
 };

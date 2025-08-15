@@ -190,18 +190,18 @@ export default function Dashboard() {
   const communityStories = [
     {
       icon: <Heart className="w-6 h-6" />,
-      title: "Vision Zero Implementation",
-      description: "Reduced traffic fatalities by 40% through street redesign and safety improvements"
+      title: "Placeholder Story 1",
+      description: "This is a placeholder story for demonstration purposes"
     },
     {
       icon: <Handshake className="w-6 h-6" />,
-      title: "Open Government Initiative",
-      description: "Published 200+ datasets, leading to better-informed community decisions"
+      title: "Placeholder Story 2",
+      description: "This is a placeholder story for demonstration purposes"
     },
     {
       icon: <Lightbulb className="w-6 h-6" />,
-      title: "Green Building Program",
-      description: "Retrofitted 15 public buildings, cutting energy costs by 30%"
+      title: "Placeholder Story 3",
+      description: "This is a placeholder story for demonstration purposes"
     }
   ];
 

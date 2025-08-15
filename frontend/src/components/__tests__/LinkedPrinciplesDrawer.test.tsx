@@ -1,8 +1,10 @@
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import LinkedPrinciplesDrawer from '../LinkedPrinciplesDrawer';
 import { listPolls } from '../../lib/api';
+import type { Poll } from '../../types';
 
 
 // Mock the API
@@ -86,7 +88,7 @@ describe('LinkedPrinciplesDrawer', () => {
         currentPollId="current-poll"
       />
     );
-    
+
     expect(screen.getByText('Linked Principles')).toBeInTheDocument();
     expect(screen.getByText('Mobility')).toBeInTheDocument();
   });
@@ -100,7 +102,7 @@ describe('LinkedPrinciplesDrawer', () => {
         currentPollId="current-poll"
       />
     );
-    
+
     expect(screen.queryByText('Linked Principles')).not.toBeInTheDocument();
   });
 
@@ -119,7 +121,7 @@ describe('LinkedPrinciplesDrawer', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Sustainable Transportation Policy')).toBeInTheDocument();
-      expect(screen.getByText('Complete Streets Policy')).toBeInTheDocument();
+      expect(screen.getByText('Level A Principle (Placeholder)')).toBeInTheDocument();
     });
 
     expect(mockListPolls).toHaveBeenCalledWith({

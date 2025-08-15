@@ -12,28 +12,28 @@
   --civic-border: #e5e7eb; /* Lines and borders */
   --civic-brand: #0b6fbf; /* Actions and links */
   --civic-brand-hover: #095b99; /* Brand hover state */
-  
+
   /* Civic UI Status Colors */
   --civic-success: #2e7d32; /* Success green */
   --civic-warning: #c77700; /* Warning orange */
   --civic-danger: #b3261e; /* Danger red */
-  
+
   /* Civic UI Level Colors */
   --civic-levelA: #0b6fbf; /* Blue for Level A (Principles) */
   --civic-levelB: #1b7f5f; /* Teal/green for Level B (Actions) */
-  
+
   /* Civic UI Shadows */
   --shadow-civic: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-civic-md: 0 2px 4px rgba(0, 0, 0, 0.08);
   --shadow-civic-lg: 0 4px 8px rgba(0, 0, 0, 0.1);
   --shadow-civic-xl: 0 8px 16px rgba(0, 0, 0, 0.12);
-  
+
   /* Legacy Government Colors (keeping for compatibility) */
   --gov-primary: #002f6c;
   --gov-secondary: #f1c40f;
   --gov-background: #f8f9fa;
   --gov-text: #212529;
-  --gov-text-muted: #6c757d;
+  --gov-text-muted: #495057; /* Darker gray for better contrast (was #6c757d) */
   --gov-surface: #ffffff;
   --gov-border: #dee2e6;
   --gov-border-dark: #adb5bd;
@@ -41,7 +41,7 @@
   --gov-warning: #ffc107;
   --gov-danger: #dc3545;
   --gov-info: #17a2b8;
-  
+
   /* Legacy support */
   --color-primary: 0 47 108; /* gov-primary */
   --color-primary-foreground: 255 255 255;
@@ -51,15 +51,15 @@
   --color-warning: 255 193 7; /* gov-warning */
   --color-danger: 220 53 69; /* gov-danger */
   --color-info: 23 162 184; /* gov-info */
-  --color-muted: 108 117 125; /* gov-text-muted */
-  --color-muted-foreground: 108 117 125;
+  --color-muted: 73 80 87; /* gov-text-muted - darker gray for better contrast */
+  --color-muted-foreground: 73 80 87;
   --color-border: 222 226 230; /* gov-border */
   --color-border-600: 173 181 189; /* gov-border-dark */
   --color-surface: 255 255 255; /* gov-surface */
   --color-bg: 248 249 250; /* gov-background */
   --color-text: 33 37 41; /* gov-text */
-  --color-text-muted: 108 117 125; /* gov-text-muted */
-  
+  --color-text-muted: 73 80 87; /* gov-text-muted - darker gray for better contrast */
+
   /* Government shadows */
   --shadow-gov: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-gov-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
@@ -363,25 +363,25 @@ a:focus {
     padding: 0.75rem;
     margin-bottom: 0.75rem;
   }
-  
+
   .gov-btn {
     min-height: 44px;
     width: 100%;
     justify-content: center;
   }
-  
+
   .gov-search {
     width: 100%;
   }
-  
+
   h1 {
     font-size: 1.75rem;
   }
-  
+
   h2 {
     font-size: 1.5rem;
   }
-  
+
   h3 {
     font-size: 1.25rem;
   }
@@ -476,15 +476,15 @@ a:focus {
   .safe-area-top {
     padding-top: max(1rem, env(safe-area-inset-top));
   }
-  
+
   .safe-area-bottom {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
-  
+
   .safe-area-left {
     padding-left: max(1rem, env(safe-area-inset-left));
   }
-  
+
   .safe-area-right {
     padding-right: max(1rem, env(safe-area-inset-right));
   }

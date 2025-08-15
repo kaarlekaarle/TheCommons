@@ -12,7 +12,7 @@ export default {
         // USWDS-inspired color palette
         primary: {
           50: '#eef5ff',
-          100: '#dbe9ff', 
+          100: '#dbe9ff',
           200: '#bad3ff',
           300: '#8fb7ff',
           400: '#5f97f7',
@@ -49,7 +49,21 @@ export default {
           800: '#1f2937',
           900: '#0f172a',
         },
-        
+
+        // Custom gray scale for better contrast
+        gray: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#4b5563', // Darker for better contrast (was #6b7280)
+          600: '#4b5563', // Darker for better contrast
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+        },
+
         // Legacy Civic UI colors (keeping for compatibility)
         civic: {
           // Core semantic colors
@@ -60,24 +74,24 @@ export default {
           border: '#e5e7eb', // Lines and borders
           brand: '#0b6fbf', // Actions and links
           'brand-hover': '#095b99', // Brand hover state
-          
+
           // Status colors
           success: '#2e7d32', // Success green
           warning: '#c77700', // Warning orange
           danger: '#b3261e', // Danger red
-          
+
           // Level-specific colors
           levelA: '#0b6fbf', // Blue for Level A (Principles)
           levelB: '#1b7f5f', // Teal/green for Level B (Actions)
         },
-        
+
         // Legacy gov colors (keeping for compatibility)
         gov: {
           primary: '#002f6c', // Navy blue
           secondary: '#f1c40f', // Muted gold
           background: '#f8f9fa', // Light neutral
           text: '#212529', // Dark gray
-          'text-muted': '#6c757d', // Medium gray
+          'text-muted': '#495057', // Darker gray for better contrast (was #6c757d)
           'surface': '#ffffff', // White
           'border': '#dee2e6', // Light gray border
           'border-dark': '#adb5bd', // Darker border
@@ -86,9 +100,9 @@ export default {
           'danger': '#dc3545', // Government red
           'info': '#17a2b8', // Government blue
         },
-        
+
         'primary-foreground': '#ffffff',
-        
+
         // Background colors
         bg: {
           50: '#f8f9fa', // gov-background
@@ -96,13 +110,13 @@ export default {
           200: '#dee2e6',
           300: '#ced4da',
           400: '#adb5bd',
-          500: '#6c757d',
+          500: '#495057', // Darker gray for better contrast (was #6c757d)
           600: '#495057',
           700: '#343a40',
           800: '#212529', // gov-text
           900: '#1a1d20',
         },
-        
+
         // Surface colors
         surface: {
           50: '#ffffff', // gov-surface
@@ -111,45 +125,45 @@ export default {
           300: '#dee2e6',
           400: '#ced4da',
           500: '#adb5bd',
-          600: '#6c757d',
+          600: '#495057', // Darker gray for better contrast (was #6c757d)
           700: '#495057',
           800: '#343a40',
           900: '#212529',
           DEFAULT: '#ffffff',
         },
-        
+
         // Border colors
         border: {
-          50: '#f8f9fa',
+          50: '#f8fafc',
           100: '#e9ecef',
           200: '#dee2e6', // gov-border
           300: '#ced4da',
           400: '#adb5bd', // gov-border-dark
-          500: '#6c757d',
+          500: '#495057', // Darker gray for better contrast (was #6c757d)
           600: '#495057',
           700: '#343a40',
           800: '#212529',
           900: '#1a1d20',
           DEFAULT: '#dee2e6',
         },
-        
+
         // Muted colors
         muted: {
-          50: '#f8f9fa',
+          50: '#f8fafc',
           100: '#e9ecef',
           200: '#dee2e6',
           300: '#ced4da',
           400: '#adb5bd',
-          500: '#6c757d', // gov-text-muted
+          500: '#495057', // Darker gray for better contrast (was #6c757d)
           600: '#495057',
           700: '#343a40',
           800: '#212529',
           900: '#1a1d20',
-          DEFAULT: '#6c757d',
+          DEFAULT: '#495057', // Darker gray for better contrast (was #6c757d)
         },
-        
 
-        
+
+
         // Warning - Government yellow
         warning: {
           50: '#fff8e1',
@@ -164,7 +178,7 @@ export default {
           900: '#ff6f00',
           DEFAULT: '#ffc107',
         },
-        
+
         // Danger - Government red
         danger: {
           50: '#f8d7da',
@@ -179,7 +193,7 @@ export default {
           900: '#651418',
           DEFAULT: '#dc3545',
         },
-        
+
         // Info - Government blue
         info: {
           50: '#d1ecf1',
@@ -246,7 +260,7 @@ export default {
         'card-md': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
         'card-lg': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
         'card-xl': '0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04)',
-        
+
         // Legacy shadows (keeping for compatibility)
         'civic': '0 1px 2px rgba(0, 0, 0, 0.05)',
         'civic-md': '0 2px 4px rgba(0, 0, 0, 0.08)',
