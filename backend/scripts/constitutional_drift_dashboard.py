@@ -219,6 +219,10 @@ class ConstitutionalDriftDashboard:
         tile_lines = []
         tile_lines.append(f"{emoji} Cascade Decisions: {decision}")
         
+        # Add Rule B SLO status
+        rule_b_status = self._get_rule_b_slo_status(cascade_data)
+        tile_lines.append(f"   Rule B: SLO 1500ms (+50ms grace) — Status: {rule_b_status}")
+        
         if rule_count > 0:
             rule_details = []
             for rule in triggered_rules:
@@ -251,6 +255,26 @@ class ConstitutionalDriftDashboard:
         tile_lines.append(f"   Events: {warn_block_count} WARN/BLOCK in 14 days")
         
         return "\n".join(tile_lines)
+    
+    def _get_rule_b_slo_status(self, cascade_data: Dict[str, Any]) -> str:
+        """Get Rule B SLO status with p95 and effective block threshold."""
+        signals = cascade_data.get("signals", [])
+        
+        for signal in signals:
+            if signal.get("id") == "#2":  # Override latency signal
+                p95_ms = signal.get("p95_ms", 0)
+                effective_block_ms = signal.get("effective_block_ms", 1550)  # Default: 1500 + 50
+                
+                if signal.get("value") == "STALE":
+                    return "STALE"
+                elif p95_ms >= effective_block_ms:
+                    return f"BLOCK (p95={p95_ms}ms ≥ {effective_block_ms}ms)"
+                elif p95_ms >= 1500:
+                    return f"WARN (p95={p95_ms}ms ≥ 1500ms)"
+                else:
+                    return f"OK (p95={p95_ms}ms < 1500ms)"
+        
+        return "UNKNOWN"
     
     def _calculate_overall_health(self, drift_results: Dict[str, Any]) -> str:
         """Calculate overall constitutional health."""
