@@ -18,7 +18,7 @@ export type FieldSearchResult = {
 
 // --- Delegation creation types ---
 export type CreateDelegationInput = {
-  mode: 'traditional' | 'field';
+  mode: 'traditional' | 'field' | 'commons';
   delegatee_id: string;
   field_id?: string;
   expiry?: string; // ISO date string

@@ -1,13 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUnifiedDelegationSearch } from "../hooks/useUnifiedDelegationSearch";
 import ComposerDrawer from "../components/delegations/ComposerDrawer";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
+import { AlertTriangle } from "lucide-react";
+
+interface CascadeHealth {
+  ruleB: string;
+  effectiveBlockMs: number | null;
+  p95Ms: number | null;
+}
 
 export default function DelegationsPage() {
   const { query, setQuery, people, fields, loading, error } = useUnifiedDelegationSearch();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | undefined>(undefined);
   const [selectedField, setSelectedField] = useState<FieldSearchResult | undefined>(undefined);
+  const [cascadeHealth, setCascadeHealth] = useState<CascadeHealth | null>(null);
+
+  // Fetch cascade health on mount
+  useEffect(() => {
+    async function fetchCascadeHealth() {
+      try {
+        const response = await fetch('/api/health/cascade');
+        if (response.ok) {
+          const data = await response.json();
+          setCascadeHealth(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch cascade health:', err);
+      }
+    }
+
+    fetchCascadeHealth();
+  }, []);
 
   const handlePersonClick = (person: PersonSearchResult) => {
     setSelectedPerson(person);
@@ -27,8 +52,31 @@ export default function DelegationsPage() {
     setSelectedField(undefined);
   };
 
+  // Check if performance banner should be shown
+  const showPerformanceBanner = cascadeHealth &&
+    cascadeHealth.ruleB === "high" &&
+    cascadeHealth.effectiveBlockMs &&
+    cascadeHealth.p95Ms &&
+    cascadeHealth.effectiveBlockMs >= 1550 &&
+    cascadeHealth.p95Ms >= 1480;
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
+      {/* Performance Banner */}
+      {showPerformanceBanner && (
+        <div className="mb-6 p-4 bg-warn-bg border border-warn-fg/20 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-warn-fg mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-warn-fg mb-1">Performance Notice</h3>
+              <p className="text-sm text-warn-fg/80">
+                Performance near threshold (p95 {cascadeHealth.p95Ms?.toFixed(2) || 'unknown'}s). Overrides may feel slower.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Page Title */}
       <h1 className="text-3xl font-semibold text-fg-strong">Delegations</h1>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, User, Hash } from 'lucide-react';
+import { X, Calendar, User, Hash, AlertTriangle } from 'lucide-react';
 import { useToast } from '../ui/useToast';
 import { createDelegation } from '../../api/delegationsApi';
 import { searchPeople, searchFields } from '../../api/delegationsApi';
@@ -14,6 +14,11 @@ interface ComposerDrawerProps {
 }
 
 type TabType = 'traditional' | 'commons';
+
+interface DelegationWarnings {
+  concentration?: boolean;
+  superDelegateRisk?: boolean;
+}
 
 export default function ComposerDrawer({
   open,
@@ -31,6 +36,7 @@ export default function ComposerDrawer({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expiry, setExpiry] = useState('');
+  const [warnings, setWarnings] = useState<DelegationWarnings>({});
   const { success, error: showError } = useToast();
 
   // Calculate default expiry (4 years from now)
@@ -119,6 +125,7 @@ export default function ComposerDrawer({
     }
 
     setSubmitting(true);
+    setWarnings({});
 
     try {
       const input: CreateDelegationInput = {
@@ -128,7 +135,12 @@ export default function ComposerDrawer({
         expiry: expiry || undefined,
       };
 
-      await createDelegation(input);
+      const response = await createDelegation(input);
+
+      // Check for warnings in the response
+      if (response.warnings) {
+        setWarnings(response.warnings);
+      }
 
       success(
         activeTab === 'traditional'
@@ -205,6 +217,32 @@ export default function ComposerDrawer({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
+            {/* Constitutional Warnings */}
+            {(warnings.concentration || warnings.superDelegateRisk) && (
+              <div className="mb-6 space-y-3">
+                {warnings.concentration && (
+                  <div className="p-3 bg-warn-bg border border-warn-fg/20 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-warn-fg mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-warn-fg">
+                        <strong>High concentration detected</strong> in this area. Consider adding a second delegate for checks.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {warnings.superDelegateRisk && (
+                  <div className="p-3 bg-warn-bg border border-warn-fg/20 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-warn-fg mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-warn-fg">
+                        <strong>Super-delegate risk</strong> - This selection could create 'super-delegate' patterns. Consider scoping or adding counter-balance.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'traditional' ? (
               /* Traditional Tab */
               <div className="space-y-6">
