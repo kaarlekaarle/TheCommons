@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2025-08-17T19:18:26.169719",
+    "phase": "6.4",
+    "component": "constitutional_cascade_detector",
+    "category": "cascade_rule_b",
+    "severity": "critical",
+    "summary": "Cascade Rule B triggered: Opacity + complexity",
+    "details": "Decision: BLOCK, Signals: 1",
+    "pr": null,
+    "commit": null,
+    "files": [],
+    "owner": null,
+    "mitigation_ticket": null,
+    "status": "open",
+    "impact_budget_points": 5,
+    "hard_or_soft": "hard",
+    "source": "ci",
+    "tool": "constitutional_cascade_detector.py",
+    "cascade_rule_id": "B",
+    "cascade_decision": "block",
+    "cascade_signals": [
+      "#2"
+    ]
+  }
+]

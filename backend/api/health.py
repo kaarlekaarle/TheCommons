@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
