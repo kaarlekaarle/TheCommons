@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-08-17T18:19:13.131853",
+  "modules": {
+    "dispatch": 17,
+    "test_anti_hierarchy": 18,
+    "facade": 22,
+    "dispatch_sync": 14,
+    "test_constitutional_compliance": 9,
+    "test_transparency_anonymity": 17,
+    "chain_resolution": 15,
+    "test_modes_legacy_revocable": 29,
+    "test_override_latency_fastpath": 25,
+    "test_modes_hybrid_seed": 28,
+    "test_chain_resolution_core": 3,
+    "test_unified_search": 8,
+    "cache": 13,
+    "telemetry": 15,
+    "test_interruptions": 21,
+    "repository_read": 19,
+    "test_values_delegates": 13,
+    "dispatch_async": 8,
+    "repository": 32,
+    "delegation": 47,
+    "repository_write": 14,
+    "delegations": 43,
+    "test_circulation_decay": 19,
+    "__init__": 4
+  },
+  "total_flows": 453,
+  "files_analyzed": 26
+}
