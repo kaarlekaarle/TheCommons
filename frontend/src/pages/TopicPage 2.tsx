@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  Users, 
-  Target, 
-  Compass, 
+import {
+  ArrowLeft,
+  Target,
+  Compass,
   TrendingUp,
   ExternalLink,
-  UserCheck,
   UserX,
   AlertTriangle,
   ChevronDown
@@ -39,7 +37,7 @@ export default function TopicPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const [overview, setOverview] = useState<LabelOverview | null>(null);
   const [popularLabels, setPopularLabels] = useState<PopularLabel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +59,7 @@ export default function TopicPage() {
   useEffect(() => {
     if (overview?.label) {
       document.title = `${overview.label.name} · Topics · The Commons`;
-      
+
       // Update meta description
       const metaDescription = document.querySelector('meta[name="description"]');
       if (metaDescription) {
@@ -89,24 +87,24 @@ export default function TopicPage() {
   // Fetch data function - defined outside useEffect to prevent recreation
   const fetchData = useCallback(async () => {
     if (!slug) return;
-    
+
     // Prevent multiple simultaneous fetches
     if (isLoadingRef.current) {
       console.log('[TopicPage] Skipping fetch - already loading');
       return;
     }
-    
+
     console.log('[TopicPage] Fetching data for slug:', slug);
-    
+
     try {
       isLoadingRef.current = true;
       setLoading(true);
       setError(null);
-      
+
       // Try to fetch both endpoints independently
       let overviewData = null;
       let popularData = [];
-      
+
       try {
         overviewData = await retryWithBackoff(() => getLabelOverview(slug, {
           tab: activeTab,
@@ -114,40 +112,40 @@ export default function TopicPage() {
           per_page: perPage,
           sort: sortOrder
         }));
-        
+
         // Log the raw data from API
         if (overviewData.items) {
           logSet("overview:afterFetch", overviewData.items);
-          
+
           // Deduplicate polls by ID to prevent duplicate key issues (safety net)
-          const uniquePolls = overviewData.items.filter((poll, index, self) => 
+          const uniquePolls = overviewData.items.filter((poll, index, self) =>
             index === self.findIndex(p => p.id === poll.id)
           );
-          
+
           // Log if duplicates were found (dev only)
           if (process.env.NODE_ENV === 'development' && uniquePolls.length !== overviewData.items.length) {
             console.warn(`[TopicPage] Found ${overviewData.items.length - uniquePolls.length} duplicate polls in topic data for slug=${slug}`);
           }
-          
+
           overviewData.items = uniquePolls;
         }
       } catch (overviewErr) {
         console.error('Failed to fetch overview data:', overviewErr);
         setError('Failed to load topic overview');
-        
+
         // Set fallback data if we have it
         if (fallbackData) {
           setOverview(fallbackData);
         }
       }
-      
+
       try {
         popularData = await retryWithBackoff(() => getPopularLabels(8));
       } catch (popularErr) {
         console.error('Failed to fetch popular labels:', popularErr);
         // Don't set error for popular labels - it's not critical
       }
-      
+
       // Ensure idempotent merge using Map
       if (overviewData) {
         const byId = new Map<string, PollSummary>();
@@ -158,10 +156,10 @@ export default function TopicPage() {
         overviewData.items = finalItems;
         logSet("overview:afterMerge", finalItems);
       }
-      
+
       setOverview(overviewData);
       setPopularLabels(popularData);
-      
+
       // Cache successful data as fallback
       if (overviewData) {
         setFallbackData(overviewData);
@@ -169,7 +167,7 @@ export default function TopicPage() {
     } catch (err: unknown) {
       console.error('Failed to fetch topic data:', err);
       let errorMessage = 'Failed to load topic data';
-      
+
       if (err && typeof err === 'object') {
         if ('message' in err && typeof err.message === 'string') {
           errorMessage = err.message;
@@ -179,7 +177,7 @@ export default function TopicPage() {
           errorMessage = `Error ${err.status}: Failed to load topic data`;
         }
       }
-      
+
       setError(errorMessage);
       showErrorRef.current(errorMessage);
     } finally {
@@ -232,7 +230,7 @@ export default function TopicPage() {
 
   const getTabCount = useCallback(() => {
     if (!overview) return 0;
-    
+
     switch (activeTab) {
       case 'principles':
         return overview.counts.level_a;
@@ -255,12 +253,12 @@ export default function TopicPage() {
             <Skeleton className="h-4 w-4" />
             <Skeleton className="h-4 w-32" />
           </div>
-          
+
           <div className="flex items-center gap-3 mb-4">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-8 w-20 rounded-full" />
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-gray-800 rounded-lg p-4">
@@ -293,7 +291,7 @@ export default function TopicPage() {
           subtitle={error || "The topic you're looking for doesn't exist."}
           action={
             error && (
-              <Button 
+              <Button
                 onClick={() => {
                   setRetryCount(prev => prev + 1);
                   fetchData();
@@ -335,20 +333,20 @@ export default function TopicPage() {
           </li>
         </ol>
       </nav>
-      
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <h1 className="text-3xl font-bold text-gray-900">{overview.label.name}</h1>
-          <LabelChip 
-            label={{ 
-              id: overview.label.id, 
-              name: overview.label.name, 
+          <LabelChip
+            label={{
+              id: overview.label.id,
+              name: overview.label.name,
               slug: overview.label.slug,
               is_active: true,
               created_at: '',
               updated_at: ''
-            }} 
+            }}
             size="lg"
           />
         </div>
@@ -362,7 +360,7 @@ export default function TopicPage() {
             </div>
             <div className="text-2xl font-bold text-white">{overview.counts.level_a}</div>
           </div>
-          
+
           <div className="bg-gray-800 rounded-lg p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-2">
               <Target className="w-4 h-4" />
@@ -370,7 +368,7 @@ export default function TopicPage() {
             </div>
             <div className="text-2xl font-bold text-white">{overview.counts.level_b}</div>
           </div>
-          
+
           <div className="bg-gray-800 rounded-lg p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-2">
               <AlertTriangle className="w-4 h-4" />
@@ -378,7 +376,7 @@ export default function TopicPage() {
             </div>
             <div className="text-2xl font-bold text-white">{overview.counts.level_c}</div>
           </div>
-          
+
           <div className="bg-gray-800 rounded-lg p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-2">
               <TrendingUp className="w-4 h-4" />
@@ -388,41 +386,7 @@ export default function TopicPage() {
           </div>
         </div>
 
-        {/* Delegation Summary */}
-        {overview.delegation_summary && (
-          <div className="bg-gray-800 rounded-lg p-6 mb-8">
-            <h3 className="text-lg font-semibold text-white mb-4">Your Delegation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <UserCheck className="w-4 h-4" />
-                  <span className="text-sm">Topic Delegate</span>
-                </div>
-                <div className="text-white">
-                  {overview.delegation_summary.label_delegate ? (
-                    overview.delegation_summary.label_delegate.username
-                  ) : (
-                    <span className="text-gray-500">Not set</span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm">Global Delegate</span>
-                </div>
-                <div className="text-white">
-                  {overview.delegation_summary.global_delegate ? (
-                    overview.delegation_summary.global_delegate.username
-                  ) : (
-                    <span className="text-gray-500">Not set</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* Tabs and Controls */}
@@ -440,7 +404,7 @@ export default function TopicPage() {
             </Button>
           ))}
         </div>
-        
+
         <div className="flex items-center gap-2">
           <label htmlFor="sort-select" className="text-sm text-gray-600">
             Sort by:
@@ -489,7 +453,7 @@ export default function TopicPage() {
                       <ExternalLink className="w-4 h-4" />
                     </Link>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 mb-4">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       poll.decision_type === 'level_a' ? 'bg-blue-900 text-blue-200' :
@@ -503,7 +467,7 @@ export default function TopicPage() {
                       {new Date(poll.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-1">
                     {poll.labels.map((label, labelIndex) => (
                       <LabelChip

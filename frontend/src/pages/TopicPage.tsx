@@ -3,12 +3,10 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
-  Users,
   Target,
   Compass,
   TrendingUp,
   ExternalLink,
-  UserCheck,
   UserX,
   AlertTriangle,
   ChevronDown
@@ -435,41 +433,7 @@ export default function TopicPage() {
           </div>
         </div>
 
-        {/* Delegation Summary */}
-        {overview.delegation_summary && (
-          <div className="bg-gray-800 rounded-lg p-6 mb-8">
-            <h3 className="text-lg font-semibold text-white mb-4">Your Delegation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <UserCheck className="w-4 h-4" />
-                  <span className="text-sm">Topic Delegate</span>
-                </div>
-                <div className="text-white">
-                  {overview.delegation_summary.label_delegate ? (
-                    overview.delegation_summary.label_delegate.username
-                  ) : (
-                    <span className="text-gray-500">Not set</span>
-                  )}
-                </div>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm">Global Delegate</span>
-                </div>
-                <div className="text-white">
-                  {overview.delegation_summary.global_delegate ? (
-                    overview.delegation_summary.global_delegate.username
-                  ) : (
-                    <span className="text-gray-500">Not set</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Tabs and Controls */}
