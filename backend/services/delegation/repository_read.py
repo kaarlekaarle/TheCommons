@@ -5,7 +5,7 @@ separated from write operations to reduce complexity.
 """
 
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, or_, select
@@ -16,14 +16,14 @@ from backend.models.delegation import Delegation, DelegationMode
 
 class DelegationReadRepository:
     """Read-only repository for delegation data access operations."""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def get_delegation_by_id(self, delegation_id: UUID) -> Optional[Delegation]:
         """Get delegation by ID."""
         return await self.db.get(Delegation, delegation_id)
-    
+
     async def get_active_delegations_for_user(
         self,
         user_id: UUID,
@@ -56,26 +56,30 @@ class DelegationReadRepository:
             conditions.append(Delegation.idea_id == idea_id)
         else:
             # Global delegation (no specific target)
-            conditions.extend([
-                Delegation.poll_id.is_(None),
-                Delegation.label_id.is_(None),
-                Delegation.field_id.is_(None),
-                Delegation.institution_id.is_(None),
-                Delegation.value_id.is_(None),
-                Delegation.idea_id.is_(None),
-            ])
+            conditions.extend(
+                [
+                    Delegation.poll_id.is_(None),
+                    Delegation.label_id.is_(None),
+                    Delegation.field_id.is_(None),
+                    Delegation.institution_id.is_(None),
+                    Delegation.value_id.is_(None),
+                    Delegation.idea_id.is_(None),
+                ]
+            )
 
         # Add active date conditions
-        conditions.extend([
-            or_(
-                Delegation.end_date.is_(None),
-                Delegation.end_date > func.now(),
-            ),
-            or_(
-                Delegation.start_date.is_(None),
-                Delegation.start_date <= func.now(),
-            ),
-        ])
+        conditions.extend(
+            [
+                or_(
+                    Delegation.end_date.is_(None),
+                    Delegation.end_date > func.now(),
+                ),
+                or_(
+                    Delegation.start_date.is_(None),
+                    Delegation.start_date <= func.now(),
+                ),
+            ]
+        )
 
         # Optimized query with lean column selection
         query = (
@@ -104,7 +108,7 @@ class DelegationReadRepository:
 
         result = await self.db.execute(query)
         rows = result.fetchall()
-        
+
         # Convert rows to Delegation objects
         delegations = []
         for row in rows:
@@ -124,9 +128,9 @@ class DelegationReadRepository:
             delegation.legacy_term_ends_at = row.legacy_term_ends_at
             delegation.created_at = row.created_at
             delegations.append(delegation)
-        
+
         return delegations
-    
+
     async def get_active_delegations_batch(
         self,
         user_ids: List[UUID],
@@ -140,7 +144,7 @@ class DelegationReadRepository:
         """Get active delegations for multiple users in a single query (N+1 prevention)."""
         if not user_ids:
             return {}
-        
+
         conditions = [
             Delegation.delegator_id.in_(user_ids),
             Delegation.is_deleted == False,
@@ -162,26 +166,30 @@ class DelegationReadRepository:
             conditions.append(Delegation.idea_id == idea_id)
         else:
             # Global delegation (no specific target)
-            conditions.extend([
-                Delegation.poll_id.is_(None),
-                Delegation.label_id.is_(None),
-                Delegation.field_id.is_(None),
-                Delegation.institution_id.is_(None),
-                Delegation.value_id.is_(None),
-                Delegation.idea_id.is_(None),
-            ])
+            conditions.extend(
+                [
+                    Delegation.poll_id.is_(None),
+                    Delegation.label_id.is_(None),
+                    Delegation.field_id.is_(None),
+                    Delegation.institution_id.is_(None),
+                    Delegation.value_id.is_(None),
+                    Delegation.idea_id.is_(None),
+                ]
+            )
 
         # Add active date conditions
-        conditions.extend([
-            or_(
-                Delegation.end_date.is_(None),
-                Delegation.end_date > func.now(),
-            ),
-            or_(
-                Delegation.start_date.is_(None),
-                Delegation.start_date <= func.now(),
-            ),
-        ])
+        conditions.extend(
+            [
+                or_(
+                    Delegation.end_date.is_(None),
+                    Delegation.end_date > func.now(),
+                ),
+                or_(
+                    Delegation.start_date.is_(None),
+                    Delegation.start_date <= func.now(),
+                ),
+            ]
+        )
 
         # Batch query with lean column selection
         query = (
@@ -211,10 +219,12 @@ class DelegationReadRepository:
 
         result = await self.db.execute(query)
         rows = result.fetchall()
-        
+
         # Group results by delegator_id
-        delegations_by_user: Dict[UUID, List[Delegation]] = {user_id: [] for user_id in user_ids}
-        
+        delegations_by_user: Dict[UUID, List[Delegation]] = {
+            user_id: [] for user_id in user_ids
+        }
+
         for row in rows:
             delegation = Delegation()
             delegation.id = row.id
@@ -231,11 +241,11 @@ class DelegationReadRepository:
             delegation.end_date = row.end_date
             delegation.legacy_term_ends_at = row.legacy_term_ends_at
             delegation.created_at = row.created_at
-            
+
             delegations_by_user[row.delegator_id].append(delegation)
-        
+
         return delegations_by_user
-    
+
     async def get_all_active_delegations(self) -> List[Delegation]:
         """Get all active delegations (for chain resolution)."""
         conditions = [
@@ -251,29 +261,26 @@ class DelegationReadRepository:
             ),
         ]
 
-        query = (
-            select(
-                Delegation.id,
-                Delegation.delegator_id,
-                Delegation.delegatee_id,
-                Delegation.mode,
-                Delegation.poll_id,
-                Delegation.label_id,
-                Delegation.field_id,
-                Delegation.institution_id,
-                Delegation.value_id,
-                Delegation.idea_id,
-                Delegation.start_date,
-                Delegation.end_date,
-                Delegation.legacy_term_ends_at,
-                Delegation.created_at,
-            )
-            .where(and_(*conditions))
-        )
+        query = select(
+            Delegation.id,
+            Delegation.delegator_id,
+            Delegation.delegatee_id,
+            Delegation.mode,
+            Delegation.poll_id,
+            Delegation.label_id,
+            Delegation.field_id,
+            Delegation.institution_id,
+            Delegation.value_id,
+            Delegation.idea_id,
+            Delegation.start_date,
+            Delegation.end_date,
+            Delegation.legacy_term_ends_at,
+            Delegation.created_at,
+        ).where(and_(*conditions))
 
         result = await self.db.execute(query)
         rows = result.fetchall()
-        
+
         # Convert rows to Delegation objects
         delegations = []
         for row in rows:
@@ -293,9 +300,9 @@ class DelegationReadRepository:
             delegation.legacy_term_ends_at = row.legacy_term_ends_at
             delegation.created_at = row.created_at
             delegations.append(delegation)
-        
+
         return delegations
-    
+
     async def get_delegation_history(self, user_id: UUID) -> List[Delegation]:
         """Get delegation history for a user."""
         query = (
@@ -305,13 +312,13 @@ class DelegationReadRepository:
         )
         result = await self.db.execute(query)
         return result.scalars().all()
-    
+
     async def get_poll_delegations(self, poll_id: UUID) -> List[Delegation]:
         """Get all delegations for a specific poll."""
         query = select(Delegation).where(Delegation.poll_id == poll_id)
         result = await self.db.execute(query)
         return result.scalars().all()
-    
+
     async def get_expired_legacy_delegations(self) -> List[Delegation]:
         """Get expired legacy fixed-term delegations."""
         now = datetime.utcnow()
