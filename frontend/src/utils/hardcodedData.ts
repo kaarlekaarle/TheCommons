@@ -62,6 +62,21 @@ export const hardcodedPolls: Poll[] = [
       status: 'none',
       resolved_vote_path: []
     }
+  },
+  {
+    id: 'hardcoded-2',
+    title: 'Level B Principle (Placeholder)',
+    description: 'This is a placeholder example for Level B. It demonstrates how community-level or technical sub-questions could be explored.',
+    created_by: 'hardcoded-user-2',
+    created_at: '2025-01-15T11:20:00Z',
+    updated_at: '2025-01-15T11:20:00Z',
+    is_active: true,
+    end_date: '2025-02-28T00:00:00Z',
+    decision_type: 'level_b',
+    your_vote_status: {
+      status: 'none',
+      resolved_vote_path: []
+    }
   }
 ];
 
@@ -105,6 +120,29 @@ export const hardcodedPollOptions: Record<string, PollOption[]> = {
       created_at: '2025-08-01T12:00:00Z',
       updated_at: '2025-08-15T12:00:00Z'
     }
+  ],
+  'hardcoded-2': [
+    {
+      id: 'option-hardcoded-2a',
+      poll_id: 'hardcoded-2',
+      text: 'Approve',
+      created_at: '2025-01-15T11:20:00Z',
+      updated_at: '2025-01-15T11:20:00Z'
+    },
+    {
+      id: 'option-hardcoded-2b',
+      poll_id: 'hardcoded-2',
+      text: 'Modify',
+      created_at: '2025-01-15T11:20:00Z',
+      updated_at: '2025-01-15T11:20:00Z'
+    },
+    {
+      id: 'option-hardcoded-2c',
+      poll_id: 'hardcoded-2',
+      text: 'Reject',
+      created_at: '2025-01-15T11:20:00Z',
+      updated_at: '2025-01-15T11:20:00Z'
+    }
   ]
 };
 
@@ -143,6 +181,30 @@ export const hardcodedResults: Record<string, PollResults> = {
         text: 'Modify',
         votes: 20,
         percentage: 40
+      }
+    ]
+  },
+  'hardcoded-2': {
+    poll_id: 'hardcoded-2',
+    total_votes: 25,
+    options: [
+      {
+        option_id: 'option-hardcoded-2a',
+        text: 'Approve',
+        votes: 15,
+        percentage: 60
+      },
+      {
+        option_id: 'option-hardcoded-2b',
+        text: 'Modify',
+        votes: 8,
+        percentage: 32
+      },
+      {
+        option_id: 'option-hardcoded-2c',
+        text: 'Reject',
+        votes: 2,
+        percentage: 8
       }
     ]
   }
@@ -208,6 +270,22 @@ export const hardcodedComments: Record<string, Comment[]> = {
       body: 'This pilot approach with strict privacy controls and teacher oversight seems like a good way to test the concept.',
       created_at: '2025-08-01T12:30:00Z',
       up_count: 4,
+      down_count: 0,
+      my_reaction: null,
+      perspective: 'primary'
+    }
+  ],
+  'hardcoded-2': [
+    {
+      id: 'comment-hardcoded-2a',
+      poll_id: 'hardcoded-2',
+      user: {
+        id: 'hardcoded-user-1',
+        username: 'alice'
+      },
+      body: 'This is a good example of how we can structure community-level decisions.',
+      created_at: '2025-01-15T12:30:00Z',
+      up_count: 3,
       down_count: 0,
       my_reaction: null,
       perspective: 'primary'
