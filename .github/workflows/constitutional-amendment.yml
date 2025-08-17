@@ -360,6 +360,15 @@ jobs:
     
     - name: Cascade Detector (shadow/warn/enforce)
       run: |
+        # Export branch information for cascade detector
+        export GITHUB_REF_NAME="${{ github.ref_name }}"
+        export GITHUB_REF="${{ github.ref }}"
+        
+        echo ""
+        echo "🌿 BRANCH: $GITHUB_REF_NAME"
+        echo "================================="
+        echo ""
+        
         python3 backend/scripts/constitutional_cascade_detector.py \
           --mode "${{ env.CASCADE_MODE || 'warn' }}" \
           --json-out reports/constitutional_cascade.json
