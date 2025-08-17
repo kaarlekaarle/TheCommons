@@ -51,11 +51,11 @@ export default function Layout({ children }: LayoutProps) {
   }, []);
 
   const navigation = [
+    { name: 'Delegations', href: '/delegations', icon: Users },
     { name: 'Principles', href: '/principles', icon: ListChecks },
     { name: 'Actions', href: '/actions', icon: ListChecks },
     { name: 'Share Your Idea', href: '/proposals/new', icon: FilePlus2 },
     ...(flags.labelsEnabled ? [{ name: 'Topics', href: '/topics', icon: Hash }] : []),
-    { name: 'Delegations', href: '/delegations', icon: Users },
   ];
 
   const isActive = (href: string) => {
@@ -95,18 +95,6 @@ export default function Layout({ children }: LayoutProps) {
               <span className="text-xl font-bold text-neutral-900">The Commons</span>
             </Link>
 
-            {/* Search Bar */}
-            <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-500 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search proposals..."
-                  className="w-full px-3 py-2 pl-10 border border-neutral-300 rounded-lg bg-white text-neutral-900 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500"
-                />
-              </div>
-            </div>
-
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
               {navigation.map((item) => {
@@ -129,6 +117,16 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* User Menu */}
             <div className="hidden md:flex items-center space-x-4">
+              {/* Search Bar */}
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-500 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search proposals..."
+                  className="w-full px-3 py-2 pl-10 border border-neutral-300 rounded-lg bg-white text-neutral-900 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500"
+                />
+              </div>
+              
               <Button
                 onClick={handleLogout}
                 variant="ghost"
