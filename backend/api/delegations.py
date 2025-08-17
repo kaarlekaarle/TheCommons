@@ -1054,7 +1054,7 @@ async def get_my_delegation_chain(
                 )
                 field = field_result.scalar_one_or_none()
                 if field:
-                    field_name = field.label or field.slug
+                    field_name = field.name or field.slug
                     chains[field_id]["fieldName"] = field_name
             
             if delegatee:
@@ -1172,7 +1172,7 @@ async def get_delegatee_inbound_delegations(
                 )
                 field = field_result.scalar_one_or_none()
                 if field:
-                    field_name = field.label or field.slug
+                    field_name = field.name or field.slug
                     field_names[str(delegation.field_id)] = field_name
             
             inbound_item = {
@@ -1347,7 +1347,7 @@ async def get_delegation_health_summary(
                 "id": str(delegatee_id),
                 "name": delegatee.username if delegatee else "Unknown",
                 "count": count,
-                "fieldName": field.label if field else "Unknown Field"
+                "fieldName": field.name if field else "Unknown Field"
             })
         
         # Limit top delegatees per field
