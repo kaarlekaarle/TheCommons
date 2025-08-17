@@ -12,7 +12,7 @@ export function useCurrentUser() {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Check if user is authenticated
         const token = localStorage.getItem('token');
         if (!token) {
@@ -25,8 +25,17 @@ export function useCurrentUser() {
       } catch (err: unknown) {
         const error = err as { status?: number; message?: string };
         console.error('Failed to fetch current user:', error);
-        setError(error.message || 'Failed to fetch user data');
-        setUser(null);
+
+        // Handle authentication errors gracefully
+        if (error.status === 401) {
+          console.log('[DEBUG] Authentication error - removing invalid token');
+          localStorage.removeItem('token');
+          setUser(null);
+          setError(null); // Don't show error for auth issues
+        } else {
+          setError(error.message || 'Failed to fetch user data');
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }

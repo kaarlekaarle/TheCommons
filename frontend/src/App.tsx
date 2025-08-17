@@ -34,13 +34,24 @@ const A11yCheck = React.lazy(() => import('./pages/_A11yCheck'));
 
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const token = localStorage.getItem('token');
-    console.log('[AUTH DEBUG] App initialization - Token found in storage:', !!token);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
 
-    if (token) {
+  // Validate token on app start
+  useEffect(() => {
+    const validateToken = async () => {
+      const token = localStorage.getItem('token');
+      console.log('[AUTH DEBUG] App initialization - Token found in storage:', !!token);
+
+      if (!token) {
+        console.log('[AUTH DEBUG] No token found, user not authenticated');
+        setIsAuthenticated(false);
+        setIsValidating(false);
+        return;
+      }
+
       try {
-        // Decode JWT to check expiration
+        // First check if token is expired
         const payload = JSON.parse(atob(token.split('.')[1]));
         const expirationTime = payload.exp * 1000; // Convert to milliseconds
         const currentTime = Date.now();
@@ -56,22 +67,30 @@ export default function App() {
         if (isExpired) {
           console.log('[AUTH DEBUG] Token is expired, removing from storage');
           localStorage.removeItem('token');
-          return false;
+          setIsAuthenticated(false);
+          setIsValidating(false);
+          return;
         }
 
+        // Test token against backend
+        console.log('[AUTH DEBUG] Testing token against backend...');
+        const { getCurrentUser } = await import('./lib/api');
+        await getCurrentUser();
+
         console.log('[AUTH DEBUG] Token is valid, user authenticated');
-        return true;
+        setIsAuthenticated(true);
       } catch (error) {
-        console.error('[AUTH DEBUG] Error parsing token:', error);
+        console.error('[AUTH DEBUG] Token validation failed:', error);
         console.log('[AUTH DEBUG] Removing invalid token from storage');
         localStorage.removeItem('token');
-        return false;
+        setIsAuthenticated(false);
+      } finally {
+        setIsValidating(false);
       }
-    }
+    };
 
-    console.log('[AUTH DEBUG] No token found, user not authenticated');
-    return false;
-  });
+    validateToken();
+  }, []);
 
   // Check if debug overlay should be shown
   const isDebugOverlayVisible = import.meta.env.VITE_DEBUG_OVERLAY === 'true';
@@ -104,6 +123,20 @@ export default function App() {
   };
   // Suppress unused variable warning
   void handleLogout;
+
+  // Show loading screen while validating token
+  if (isValidating) {
+    return (
+      <ToasterProvider>
+        <div className="min-h-screen bg-bg flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted">Loading...</p>
+          </div>
+        </div>
+      </ToasterProvider>
+    );
+  }
 
   return (
     <ToasterProvider>
