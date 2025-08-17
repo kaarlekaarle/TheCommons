@@ -1,0 +1,34 @@
+{
+  "mode": "warn",
+  "mode_overrides": {
+    "B": "enforce",
+    "C": "enforce",
+    "A": "warn",
+    "D": "warn"
+  },
+  "severity_scale": ["info", "warn", "high", "critical"],
+  "thresholds": {
+    "override_latency_ms": { "critical": 2000, "high": 1600, "warn": 1200 },
+    "complexity_flows_per_module": { "critical": 8, "high": 7, "warn": 4 },
+    "maintainer_concentration_pct": { "critical": 90, "high": 80, "warn": 50 },
+    "lookback_days": 30,
+    "min_commits": 5
+  },
+  "windows": {
+    "hierarchy_days": 3,
+    "transparency_days": 7,
+    "mixed_days": 5,
+    "complexity_concentration_days": 14
+  },
+  "anti_flap": { "hysteresis_clean_runs": 2, "cooldown_hours": 24, "trend_count": 3 },
+  "rules": [
+    { "id": "A", "signals": ["#1","#4>=high"], "window_days": 3,  "decision": "block",
+      "rationale": "Formal + informal hierarchy" },
+    { "id": "B", "signals": ["#2>=critical","#3>=high"], "window_days": 7, "decision": "block",
+      "rationale": "Opacity + complexity" },
+    { "id": "C", "signals": ["#3>=high","#4>=high"], "window_days": 14, "decision": "block",
+      "rationale": "Knowledge silos" },
+    { "id": "D", "signals": ["#2>=high","#4>=high"], "window_days": 5, "decision": "block",
+      "rationale": "Unresponsive + concentrated" }
+  ]
+}
