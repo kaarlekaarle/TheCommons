@@ -994,7 +994,7 @@ async def get_my_delegation_chain(
     """Get current user's outbound delegation chain(s) by field.
     
     Returns:
-        dict: Delegation chains organized by field
+        dict: Delegation chains organized by field with display names
     """
     try:
         # Get user's active delegations
@@ -1012,14 +1012,20 @@ async def get_my_delegation_chain(
         
         # Group by field
         chains = {}
+        field_counts = {}
+        
         for delegation in user_delegations:
             field_id = str(delegation.field_id) if delegation.field_id else "global"
             
             if field_id not in chains:
                 chains[field_id] = {
                     "fieldId": delegation.field_id,
+                    "fieldName": None,  # Will be populated if field exists
                     "path": []
                 }
+                field_counts[field_id] = 0
+            
+            field_counts[field_id] += 1
             
             # Get delegatee info
             delegatee_result = await db.execute(
@@ -1027,9 +1033,21 @@ async def get_my_delegation_chain(
             )
             delegatee = delegatee_result.scalar_one_or_none()
             
+            # Get field info if it exists
+            field_name = None
+            if delegation.field_id:
+                field_result = await db.execute(
+                    select(Field).where(Field.id == delegation.field_id)
+                )
+                field = field_result.scalar_one_or_none()
+                if field:
+                    field_name = field.label or field.slug
+                    chains[field_id]["fieldName"] = field_name
+            
             if delegatee:
                 chains[field_id]["path"].append({
                     "delegator": str(delegation.delegator_id),
+                    "delegatorName": current_user.username,  # Current user is always delegator
                     "delegatee": str(delegation.delegatee_id),
                     "delegateeName": delegatee.username,
                     "mode": delegation.mode,
@@ -1040,7 +1058,11 @@ async def get_my_delegation_chain(
         
         return {
             "chains": list(chains.values()),
-            "totalChains": len(chains)
+            "totalChains": len(chains),
+            "summary": {
+                "totalDelegations": sum(field_counts.values()),
+                "byField": field_counts
+            }
         }
         
     except Exception as e:
@@ -1057,6 +1079,7 @@ async def get_delegatee_inbound_delegations(
     delegatee_id: UUID,
     field_id: Optional[UUID] = Query(None, description="Optional field ID to filter by"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of results"),
+    cursor: Optional[str] = Query(None, description="Cursor for pagination"),
     current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -1066,9 +1089,10 @@ async def get_delegatee_inbound_delegations(
         delegatee_id: ID of the delegatee to check
         field_id: Optional field ID to filter by
         limit: Maximum number of results to return
+        cursor: Cursor for pagination
         
     Returns:
-        dict: Inbound delegations and counts
+        dict: Inbound delegations and counts with pagination
     """
     try:
         # Build base query
@@ -1085,9 +1109,26 @@ async def get_delegatee_inbound_delegations(
         if field_id:
             base_query = base_query.where(Delegation.field_id == field_id)
         
-        # Get delegations
-        result = await db.execute(base_query.limit(limit))
+        # Add pagination if cursor provided
+        if cursor:
+            try:
+                cursor_date = datetime.fromisoformat(cursor)
+                base_query = base_query.where(Delegation.created_at < cursor_date)
+            except ValueError:
+                # Invalid cursor, ignore it
+                pass
+        
+        # Order by creation date for consistent pagination
+        base_query = base_query.order_by(Delegation.created_at.desc())
+        
+        # Get delegations with limit + 1 to check if there are more
+        result = await db.execute(base_query.limit(limit + 1))
         delegations = result.scalars().all()
+        
+        # Check if there are more results
+        has_more = len(delegations) > limit
+        if has_more:
+            delegations = delegations[:-1]  # Remove the extra item
         
         # Get delegatee info
         delegatee_result = await db.execute(
@@ -1101,6 +1142,7 @@ async def get_delegatee_inbound_delegations(
         # Build response
         inbound = []
         field_counts = {}
+        field_names = {}
         
         for delegation in delegations:
             # Get delegator info
@@ -1109,10 +1151,22 @@ async def get_delegatee_inbound_delegations(
             )
             delegator = delegator_result.scalar_one_or_none()
             
+            # Get field info if it exists
+            field_name = None
+            if delegation.field_id:
+                field_result = await db.execute(
+                    select(Field).where(Field.id == delegation.field_id)
+                )
+                field = field_result.scalar_one_or_none()
+                if field:
+                    field_name = field.label or field.slug
+                    field_names[str(delegation.field_id)] = field_name
+            
             inbound_item = {
                 "delegatorId": str(delegation.delegator_id),
                 "delegatorName": delegator.username if delegator else "Unknown",
                 "fieldId": str(delegation.field_id) if delegation.field_id else None,
+                "fieldName": field_name,
                 "mode": delegation.mode,
                 "createdAt": delegation.created_at.isoformat() if delegation.created_at else None,
                 "expiresAt": delegation.end_date.isoformat() if delegation.end_date else None,
@@ -1130,6 +1184,21 @@ async def get_delegatee_inbound_delegations(
         )
         total_count = total_result.scalar() or 0
         
+        # Get top 3 fields by count
+        top_fields = sorted(field_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_fields_with_names = []
+        for field_id, count in top_fields:
+            if field_id == "global":
+                top_fields_with_names.append({"fieldId": field_id, "fieldName": "Global", "count": count})
+            else:
+                field_name = field_names.get(field_id, field_id)
+                top_fields_with_names.append({"fieldId": field_id, "fieldName": field_name, "count": count})
+        
+        # Prepare next cursor
+        next_cursor = None
+        if has_more and delegations:
+            next_cursor = delegations[-1].created_at.isoformat()
+        
         return {
             "delegateeId": str(delegatee_id),
             "delegateeName": delegatee.username,
@@ -1137,6 +1206,15 @@ async def get_delegatee_inbound_delegations(
             "counts": {
                 "total": total_count,
                 "byField": field_counts
+            },
+            "summary": {
+                "totalInbound": total_count,
+                "topFields": top_fields_with_names
+            },
+            "pagination": {
+                "hasMore": has_more,
+                "nextCursor": next_cursor,
+                "limit": limit
             }
         }
         
