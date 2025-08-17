@@ -182,6 +182,59 @@ User intent supremacy compromised!
 
 **Implementation**: Real monitoring using `constitutional_dependency_validator.py`
 
+### 5. Runtime Delegation Warnings (NUDGES)
+
+**Purpose**: Provide real-time warnings during delegation creation to guide users toward constitutional compliance.
+
+**Implementation**: Runtime services using `concentration_monitor.py` and `super_delegate_detector.py`
+
+**Warning Categories**:
+
+#### Concentration Warnings
+- **Warning Threshold**: >7.5% of delegations to same delegatee
+- **High Threshold**: >15% of delegations to same delegatee
+- **Scope**: Can be field-specific or global
+- **Action**: Non-blocking warning in UI
+
+#### Super-Delegate Risk Warnings
+- **Global In-Degree Threshold**: ≥500 total delegations to one person
+- **Distinct Fields Threshold**: ≥12 distinct fields delegated to one person
+- **Percentile Threshold**: Top 5% of delegatees by delegation count
+- **Action**: Non-blocking warning in UI
+
+**Runtime Thresholds**:
+```python
+# Concentration Monitor
+warn_threshold = 0.075  # 7.5%
+high_threshold = 0.15   # 15%
+
+# Super-Delegate Detector
+global_in_degree_threshold = 500
+distinct_fields_threshold = 12
+percentile_threshold = 0.05  # Top 5%
+```
+
+**API Response Format**:
+```json
+{
+  "delegation": { ... },
+  "warnings": {
+    "concentration": {
+      "active": true,
+      "level": "warn",
+      "percent": 0.08
+    },
+    "superDelegateRisk": {
+      "active": true,
+      "reason": "Would be delegated in 13 distinct fields (threshold: 12)",
+      "stats": { ... }
+    }
+  }
+}
+```
+
+**Philosophy**: These warnings are non-blocking nudges that help users understand the constitutional implications of their delegation choices without preventing them from making their own decisions.
+
 **Monitoring Categories**:
 
 #### Delegation API Complexity Monitoring

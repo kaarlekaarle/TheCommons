@@ -58,6 +58,30 @@ Rule C monitors for knowledge concentration in specific domains.
 
 Rule D monitors overall system performance degradation.
 
+## Runtime Warnings (Non-Blocking Nudges)
+
+Runtime warnings provide real-time feedback during delegation creation without blocking the operation.
+
+### Concentration Warnings
+- **Warning Threshold**: >7.5% of delegations to same delegatee
+- **High Threshold**: >15% of delegations to same delegatee
+- **Scope**: Global or field-specific
+- **Implementation**: `backend/services/concentration_monitor.py`
+
+### Super-Delegate Risk Warnings
+- **Global In-Degree**: ≥500 total delegations to one person
+- **Distinct Fields**: ≥12 distinct fields delegated to one person
+- **Percentile Rank**: Top 5% of delegatees by delegation count
+- **Implementation**: `backend/services/super_delegate_detector.py`
+
+### Relationship to Cascade Rules
+- **Runtime warnings** are non-blocking nudges that help users make informed decisions
+- **Cascade rules** are hard gates that prevent constitutional violations in CI/CD
+- **Thresholds** are related but separate:
+  - Runtime: 7.5% concentration warning vs Cascade: 50% maintainer concentration
+  - Runtime: 12 distinct fields vs Cascade: 5 delegations to same user
+- **Philosophy**: Runtime warnings guide users; cascade rules protect the system
+
 ## Cascade Decision Matrix
 
 | Rule | WARN Mode | BLOCK Mode |
