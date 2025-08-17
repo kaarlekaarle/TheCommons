@@ -29,6 +29,7 @@ class ConstitutionalCascadeDetector:
         """Initialize the cascade detector."""
         self.config_path = config_path
         self.config = self._load_config()
+        self.perf_thresholds = self._load_perf_thresholds()
         self.signals: List[Dict[str, Any]] = []
         self.cascade_results: List[Dict[str, Any]] = []
         self.current_branch = self._detect_current_branch()
@@ -99,6 +100,22 @@ class ConstitutionalCascadeDetector:
         except Exception as e:
             print(f"Error loading config {self.config_path}: {e}")
             sys.exit(1)
+
+    def _load_perf_thresholds(self) -> Dict[str, Any]:
+        """Load performance thresholds configuration."""
+        try:
+            with open("backend/config/perf_thresholds.json", "r") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading perf thresholds: {e}")
+            # Fallback to default thresholds
+            return {
+                "override_latency": {
+                    "p95_slo_ms": 1500,
+                    "grace_ms": 50,
+                    "stale_hours": 24
+                }
+            }
 
     def collect_signal_1_super_delegate(self) -> Optional[Dict[str, Any]]:
         """Collect signal #1: Super-delegate pattern (always critical)."""
@@ -197,7 +214,7 @@ class ConstitutionalCascadeDetector:
                         continue
 
             if newest_file and newest_timestamp:
-                # Check if data is stale (>24h old)
+                # Check if data is stale (>stale_hours old)
                 now = datetime.now()
                 if newest_timestamp.tzinfo is None:
                     # Assume local time if no timezone
@@ -207,16 +224,17 @@ class ConstitutionalCascadeDetector:
                     now = now.astimezone()
 
                 age_hours = (now - newest_timestamp).total_seconds() / 3600
+                stale_hours = self.perf_thresholds["override_latency"]["stale_hours"]
 
-                if age_hours > 24:
-                    print("⚠️  Latency signal stale (>24h); not blocking.")
+                if age_hours > stale_hours:
+                    print(f"⚠️  Latency signal stale (>{stale_hours}h); not blocking.")
                     return {
                         "id": "#2",
                         "metric": "Override latency",
                         "value": "STALE",
                         "unit": "ms",
                         "severity": "info",
-                        "description": "Latency signal stale (>24h); not blocking.",
+                        "description": f"Latency signal stale (>{stale_hours}h); not blocking.",
                         "is_blocking": False,  # Mark as non-blocking if stale
                         "file_used": newest_file,
                         "file_age_hours": round(age_hours, 1),
@@ -236,18 +254,27 @@ class ConstitutionalCascadeDetector:
                 # Use p95 for severity determination (primary SLO metric)
                 latency_ms = p95
 
-                # Determine severity based on SLOs
-                severity = "ok"
-                description = f"P95: {p95}ms, P99: {p99}ms, Cache: {cache_hit_rate}%"
+                # Determine severity based on unified thresholds with grace period
+                slo = self.perf_thresholds["override_latency"]["p95_slo_ms"]
+                grace = self.perf_thresholds["override_latency"]["grace_ms"]
+                
+                severity = "info"
+                description = f"P95: {p95}ms, P99: {p99}ms, SLO: {slo}ms, Grace: {grace}ms"
                 is_blocking = False
 
-                if p95 > 1500:
-                    severity = "warn"
-                    description += " (P95 > 1.5s)"
-                if p99 > 2000:
+                if p95 >= (slo + grace):
                     severity = "critical"
-                    description += " (P99 > 2.0s)"
-                    is_blocking = True  # Blocking if critical
+                    description += f" (P95 >= {slo + grace}ms)"
+                    is_blocking = True
+                elif p95 >= slo:
+                    severity = "high"
+                    description += f" (P95 >= {slo}ms)"
+                elif p95 >= (slo - 100):
+                    severity = "warn"
+                    description += f" (P95 >= {slo - 100}ms)"
+                else:
+                    severity = "info"
+                    description += " (within SLO)"
 
                 print(f"📊 Using {newest_file} (age: {age_hours:.1f}h)")
                 print(
