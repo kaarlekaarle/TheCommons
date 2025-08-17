@@ -178,20 +178,44 @@ class DelegationService:
         Returns:
             List[Delegation]: Chain of delegations ending at the final delegatee
         """
+        import time
+        start_time = time.time()
+        
         # Try cache first
+        cache_start = time.time()
         cache_key = self._get_chain_cache_key(
             user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
         )
         cached_chain_data = await self._get_cached_chain(cache_key)
+        cache_time = time.time() - cache_start
         
         if cached_chain_data:
-            return self._deserialize_chain(cached_chain_data)
+            deserialize_start = time.time()
+            chain = self._deserialize_chain(cached_chain_data)
+            deserialize_time = time.time() - deserialize_start
+            total_time = time.time() - start_time
+            
+            logger.info(
+                f"Chain resolution cache hit: {total_time:.3f}s total (cache: {cache_time:.3f}s, deserialize: {deserialize_time:.3f}s)",
+                extra={
+                    "user_id": str(user_id),
+                    "poll_id": str(poll_id) if poll_id else None,
+                    "cache_time_ms": int(cache_time * 1000),
+                    "deserialize_time_ms": int(deserialize_time * 1000),
+                    "total_time_ms": int(total_time * 1000),
+                    "chain_length": len(chain),
+                    "cache_hit": True,
+                }
+            )
+            return chain
 
-        # Intra-request memoization cache
+        # Cache miss - resolve chain from database
+        db_start = time.time()
         memoized_delegations = {}
         chain = []
         current_user_id = user_id
         depth = 0
+        db_queries = 0
 
         while depth < max_depth:
             # Check memoization cache first
@@ -201,9 +225,13 @@ class DelegationService:
                     break
             else:
                 # Query database for delegation
+                query_start = time.time()
                 delegation = await self._get_active_delegation_for_user(
                     current_user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
                 )
+                query_time = time.time() - query_start
+                db_queries += 1
+                
                 memoized_delegations[current_user_id] = delegation
                 
                 if not delegation:
@@ -229,7 +257,9 @@ class DelegationService:
             depth += 1
 
             # Constitutional protection: stop immediately on user override
+            override_start = time.time()
             if await self._has_user_override(current_user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id):
+                override_time = time.time() - override_start
                 logger.info(
                     f"Stopping chain resolution due to user override for {current_user_id}",
                     extra={
@@ -240,9 +270,12 @@ class DelegationService:
                         "institution_id": str(institution_id) if institution_id else None,
                         "value_id": str(value_id) if value_id else None,
                         "idea_id": str(idea_id) if idea_id else None,
+                        "override_check_time_ms": int(override_time * 1000),
                     }
                 )
                 break
+
+        db_time = time.time() - db_start
 
         if depth >= max_depth:
             logger.warning(
@@ -255,7 +288,26 @@ class DelegationService:
             )
 
         # Cache the resolved chain
+        cache_start = time.time()
         await self._cache_chain(cache_key, chain)
+        cache_time = time.time() - cache_start
+        
+        total_time = time.time() - start_time
+        
+        logger.info(
+            f"Chain resolution completed: {total_time:.3f}s total (db: {db_time:.3f}s, cache: {cache_time:.3f}s, queries: {db_queries})",
+            extra={
+                "user_id": str(user_id),
+                "poll_id": str(poll_id) if poll_id else None,
+                "db_time_ms": int(db_time * 1000),
+                "cache_time_ms": int(cache_time * 1000),
+                "total_time_ms": int(total_time * 1000),
+                "db_queries": db_queries,
+                "chain_length": len(chain),
+                "cache_hit": False,
+                "memoization_hits": len(memoized_delegations) - db_queries,
+            }
+        )
         
         return chain
 

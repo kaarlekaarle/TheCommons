@@ -1,233 +1,240 @@
 #!/usr/bin/env python3
 """
-Override Latency Collection
+Override Latency Metrics Collector
 
-Collects real override latency metrics from backend logs and Redis for cascade detection.
+This script collects and analyzes override latency metrics from application logs
+to monitor SLO compliance and identify performance bottlenecks.
 """
 
-import os
-import sys
+import re
 import json
 import argparse
-import re
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Dict, List, Any, Optional
+import statistics
 
-
-def parse_log_line(line: str) -> Optional[Dict[str, Any]]:
-    """Parse a log line for override latency metrics."""
-    try:
-        # Look for structured log format
-        if '"evt":"override_latency_ms"' in line:
-            # Extract JSON from log line
-            json_start = line.find('{')
-            if json_start != -1:
-                json_str = line[json_start:]
-                data = json.loads(json_str)
-                return {
-                    "ms": data.get("ms", 0),
-                    "poll_id": data.get("poll_id"),
-                    "user_id": data.get("user_id"),
-                    "ts": data.get("ts", datetime.now().isoformat())
+class OverrideLatencyCollector:
+    def __init__(self, log_file: str):
+        self.log_file = log_file
+        self.metrics = {
+            "total_requests": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "latencies": {
+                "total": [],
+                "db": [],
+                "cache": [],
+                "deserialize": [],
+                "override_check": [],
+            },
+            "chain_lengths": [],
+            "db_queries": [],
+            "memoization_hits": [],
+            "errors": [],
+        }
+    
+    def collect_metrics(self, hours_back: int = 24) -> Dict[str, Any]:
+        """Collect metrics from log file for the specified time period."""
+        cutoff_time = datetime.now() - timedelta(hours=hours_back)
+        
+        # Log patterns for chain resolution
+        cache_hit_pattern = r'Chain resolution cache hit: ([\d.]+)s total \(cache: ([\d.]+)s, deserialize: ([\d.]+)s\)'
+        cache_miss_pattern = r'Chain resolution completed: ([\d.]+)s total \(db: ([\d.]+)s, cache: ([\d.]+)s, queries: (\d+)\)'
+        
+        with open(self.log_file, 'r') as f:
+            for line in f:
+                # Check if line contains chain resolution metrics
+                if 'Chain resolution cache hit:' in line:
+                    self._parse_cache_hit(line, cache_hit_pattern, cutoff_time)
+                elif 'Chain resolution completed:' in line:
+                    self._parse_cache_miss(line, cache_miss_pattern, cutoff_time)
+        
+        return self._calculate_statistics()
+    
+    def _parse_cache_hit(self, line: str, pattern: str, cutoff_time: datetime) -> None:
+        """Parse cache hit log line."""
+        match = re.search(pattern, line)
+        if not match:
+            return
+        
+        # Extract timestamps and check if within time window
+        timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', line)
+        if timestamp_match:
+            try:
+                log_time = datetime.strptime(timestamp_match.group(1), '%Y-%m-%d %H:%M:%S')
+                if log_time < cutoff_time:
+                    return
+            except ValueError:
+                pass
+        
+        total_time = float(match.group(1))
+        cache_time = float(match.group(2))
+        deserialize_time = float(match.group(3))
+        
+        self.metrics["total_requests"] += 1
+        self.metrics["cache_hits"] += 1
+        self.metrics["latencies"]["total"].append(total_time)
+        self.metrics["latencies"]["cache"].append(cache_time)
+        self.metrics["latencies"]["deserialize"].append(deserialize_time)
+        
+        # Extract additional metrics from JSON
+        json_match = re.search(r'\{.*\}', line)
+        if json_match:
+            try:
+                extra_data = json.loads(json_match.group())
+                self.metrics["chain_lengths"].append(extra_data.get("chain_length", 0))
+            except json.JSONDecodeError:
+                pass
+    
+    def _parse_cache_miss(self, line: str, pattern: str, cutoff_time: datetime) -> None:
+        """Parse cache miss log line."""
+        match = re.search(pattern, line)
+        if not match:
+            return
+        
+        # Extract timestamps and check if within time window
+        timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', line)
+        if timestamp_match:
+            try:
+                log_time = datetime.strptime(timestamp_match.group(1), '%Y-%m-%d %H:%M:%S')
+                if log_time < cutoff_time:
+                    return
+            except ValueError:
+                pass
+        
+        total_time = float(match.group(1))
+        db_time = float(match.group(2))
+        cache_time = float(match.group(3))
+        db_queries = int(match.group(4))
+        
+        self.metrics["total_requests"] += 1
+        self.metrics["cache_misses"] += 1
+        self.metrics["latencies"]["total"].append(total_time)
+        self.metrics["latencies"]["db"].append(db_time)
+        self.metrics["latencies"]["cache"].append(cache_time)
+        self.metrics["db_queries"].append(db_queries)
+        
+        # Extract additional metrics from JSON
+        json_match = re.search(r'\{.*\}', line)
+        if json_match:
+            try:
+                extra_data = json.loads(json_match.group())
+                self.metrics["chain_lengths"].append(extra_data.get("chain_length", 0))
+                self.metrics["memoization_hits"].append(extra_data.get("memoization_hits", 0))
+            except json.JSONDecodeError:
+                pass
+    
+    def _calculate_statistics(self) -> Dict[str, Any]:
+        """Calculate statistics from collected metrics."""
+        stats = {
+            "summary": {
+                "total_requests": self.metrics["total_requests"],
+                "cache_hit_rate": 0.0,
+                "avg_chain_length": 0.0,
+                "avg_db_queries": 0.0,
+            },
+            "latency_percentiles": {},
+            "slo_compliance": {},
+        }
+        
+        # Calculate cache hit rate
+        if self.metrics["total_requests"] > 0:
+            stats["summary"]["cache_hit_rate"] = self.metrics["cache_hits"] / self.metrics["total_requests"]
+        
+        # Calculate average chain length
+        if self.metrics["chain_lengths"]:
+            stats["summary"]["avg_chain_length"] = statistics.mean(self.metrics["chain_lengths"])
+        
+        # Calculate average DB queries
+        if self.metrics["db_queries"]:
+            stats["summary"]["avg_db_queries"] = statistics.mean(self.metrics["db_queries"])
+        
+        # Calculate latency percentiles
+        for latency_type, values in self.metrics["latencies"].items():
+            if values:
+                stats["latency_percentiles"][latency_type] = {
+                    "p50": statistics.quantiles(values, n=2)[0] if len(values) > 1 else values[0],
+                    "p95": statistics.quantiles(values, n=20)[18] if len(values) > 19 else max(values),
+                    "p99": statistics.quantiles(values, n=100)[98] if len(values) > 99 else max(values),
+                    "min": min(values),
+                    "max": max(values),
+                    "count": len(values),
                 }
-    except (json.JSONDecodeError, KeyError):
-        pass
-    
-    # Fallback: look for latency patterns in unstructured logs
-    latency_patterns = [
-        r'override.*latency.*?(\d+)ms',
-        r'latency.*?(\d+)ms.*override',
-        r'override.*?(\d+)ms.*latency'
-    ]
-    
-    for pattern in latency_patterns:
-        match = re.search(pattern, line, re.IGNORECASE)
-        if match:
-            return {
-                "ms": int(match.group(1)),
-                "poll_id": None,
-                "user_id": None,
-                "ts": datetime.now().isoformat()
+        
+        # Check SLO compliance
+        total_latencies = self.metrics["latencies"]["total"]
+        if total_latencies:
+            p95_latency = statistics.quantiles(total_latencies, n=20)[18] if len(total_latencies) > 19 else max(total_latencies)
+            p99_latency = statistics.quantiles(total_latencies, n=100)[98] if len(total_latencies) > 99 else max(total_latencies)
+            
+            stats["slo_compliance"] = {
+                "p95_target_1_5s": p95_latency <= 1.5,
+                "p99_target_2s": p99_latency <= 2.0,
+                "p95_latency_ms": int(p95_latency * 1000),
+                "p99_latency_ms": int(p99_latency * 1000),
             }
-    
-    return None
-
-
-def collect_from_logs(log_path: str, lines: int = 1000) -> List[Dict[str, Any]]:
-    """Collect override latency metrics from log file."""
-    latencies = []
-    
-    if not os.path.exists(log_path):
-        print(f"⚠️  Log file not found: {log_path}")
-        return latencies
-    
-    try:
-        with open(log_path, 'r') as f:
-            # Read last N lines
-            all_lines = f.readlines()
-            recent_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
-            
-            for line in recent_lines:
-                latency_data = parse_log_line(line.strip())
-                if latency_data:
-                    latencies.append(latency_data)
-    
-    except IOError as e:
-        print(f"❌ Could not read log file: {e}")
-    
-    return latencies
-
-
-def collect_from_redis() -> List[Dict[str, Any]]:
-    """Collect override latency metrics from Redis (if available)."""
-    latencies = []
-    
-    try:
-        import redis
         
-        # Try to connect to Redis
-        r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-        
-        # Get metrics from Redis list
-        redis_key = "metrics:override_latency"
-        if r.exists(redis_key):
-            # Get last 100 entries (cap at reasonable size)
-            entries = r.lrange(redis_key, 0, 99)
-            
-            for entry in entries:
-                try:
-                    data = json.loads(entry)
-                    latencies.append(data)
-                except json.JSONDecodeError:
-                    continue
-        
-        r.close()
-        
-    except ImportError:
-        print("⚠️  Redis module not available - skipping Redis collection")
-    except Exception as e:
-        print(f"⚠️  Redis collection failed: {e}")
-    
-    return latencies
-
-
-def calculate_statistics(latencies: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Calculate latency statistics."""
-    if not latencies:
-        return {
-            "count": 0,
-            "p50": 0,
-            "p95": 0,
-            "p99": 0,
-            "min": 0,
-            "max": 0,
-            "mean": 0,
-            "window_size": "0s"
-        }
-    
-    # Extract latency values
-    values = [lat["ms"] for lat in latencies if lat.get("ms")]
-    values.sort()
-    
-    if not values:
-        return {
-            "count": 0,
-            "p50": 0,
-            "p95": 0,
-            "p99": 0,
-            "min": 0,
-            "max": 0,
-            "mean": 0,
-            "window_size": "0s"
-        }
-    
-    # Calculate percentiles
-    count = len(values)
-    p50_idx = int(count * 0.5)
-    p95_idx = int(count * 0.95)
-    p99_idx = int(count * 0.99)
-    
-    stats = {
-        "count": count,
-        "p50": values[p50_idx] if p50_idx < count else values[-1],
-        "p95": values[p95_idx] if p95_idx < count else values[-1],
-        "p99": values[p99_idx] if p99_idx < count else values[-1],
-        "min": values[0],
-        "max": values[-1],
-        "mean": sum(values) / count,
-        "window_size": f"{count} samples"
-    }
-    
-    return stats
-
-
-def save_latency_stats(stats: Dict[str, Any], output_path: str) -> None:
-    """Save latency statistics to file."""
-    output_data = {
-        "timestamp": datetime.now().isoformat(),
-        "source": "real_metrics",
-        "statistics": stats,
-        "collection_method": "logs_and_redis"
-    }
-    
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, 'w') as f:
-        json.dump(output_data, f, indent=2)
-    
-    print(f"✅ Latency stats saved to {output_path}")
-
+        return stats
 
 def main():
-    """Main CLI entry point."""
-    parser = argparse.ArgumentParser(description="Collect real override latency metrics")
-    parser.add_argument("--log-file", default="logs/app.log", help="Path to application log file")
-    parser.add_argument("--lines", type=int, default=1000, help="Number of log lines to analyze")
-    parser.add_argument("--output", default="reports/override_latency_stats.json", 
-                       help="Output path for latency statistics")
-    parser.add_argument("--redis-only", action="store_true", help="Only collect from Redis")
-    parser.add_argument("--logs-only", action="store_true", help="Only collect from logs")
+    parser = argparse.ArgumentParser(description="Collect override latency metrics")
+    parser.add_argument("--log-file", default="backend/logs/app.log", help="Path to log file")
+    parser.add_argument("--hours-back", type=int, default=24, help="Hours to look back")
+    parser.add_argument("--json-out", help="Output JSON file path")
+    parser.add_argument("--format", choices=["json", "text"], default="text", help="Output format")
     
     args = parser.parse_args()
     
-    print("📊 COLLECTING OVERRIDE LATENCY METRICS")
-    print("=" * 40)
+    if not Path(args.log_file).exists():
+        print(f"Error: Log file {args.log_file} not found")
+        return 1
     
-    latencies = []
+    collector = OverrideLatencyCollector(args.log_file)
+    stats = collector.collect_metrics(args.hours_back)
     
-    # Collect from logs
-    if not args.redis_only:
-        print(f"📄 Collecting from logs: {args.log_file}")
-        log_latencies = collect_from_logs(args.log_file, args.lines)
-        latencies.extend(log_latencies)
-        print(f"   Found {len(log_latencies)} latency entries in logs")
+    if args.format == "json":
+        output = json.dumps(stats, indent=2)
+    else:
+        output = format_text_output(stats)
     
-    # Collect from Redis
-    if not args.logs_only:
-        print("🔴 Collecting from Redis")
-        redis_latencies = collect_from_redis()
-        latencies.extend(redis_latencies)
-        print(f"   Found {len(redis_latencies)} latency entries in Redis")
+    if args.json_out:
+        with open(args.json_out, 'w') as f:
+            f.write(output)
+        print(f"Metrics saved to {args.json_out}")
+    else:
+        print(output)
     
-    # Calculate statistics
-    print("📈 Calculating statistics...")
-    stats = calculate_statistics(latencies)
-    
-    print(f"📊 Latency Statistics:")
-    print(f"   Count: {stats['count']}")
-    print(f"   P50: {stats['p50']}ms")
-    print(f"   P95: {stats['p95']}ms")
-    print(f"   P99: {stats['p99']}ms")
-    print(f"   Min: {stats['min']}ms")
-    print(f"   Max: {stats['max']}ms")
-    print(f"   Mean: {stats['mean']:.1f}ms")
-    print(f"   Window: {stats['window_size']}")
-    
-    # Save statistics
-    save_latency_stats(stats, args.output)
-    
-    print("✅ Override latency collection complete")
+    return 0
 
+def format_text_output(stats: Dict[str, Any]) -> str:
+    """Format statistics as human-readable text."""
+    output = []
+    output.append("Override Latency Metrics Report")
+    output.append("=" * 40)
+    output.append(f"Total Requests: {stats['summary']['total_requests']}")
+    output.append(f"Cache Hit Rate: {stats['summary']['cache_hit_rate']:.1%}")
+    output.append(f"Average Chain Length: {stats['summary']['avg_chain_length']:.1f}")
+    output.append(f"Average DB Queries: {stats['summary']['avg_db_queries']:.1f}")
+    output.append("")
+    
+    output.append("Latency Percentiles (seconds):")
+    for latency_type, percentiles in stats["latency_percentiles"].items():
+        output.append(f"  {latency_type.upper()}:")
+        output.append(f"    P50: {percentiles['p50']:.3f}s")
+        output.append(f"    P95: {percentiles['p95']:.3f}s")
+        output.append(f"    P99: {percentiles['p99']:.3f}s")
+        output.append(f"    Min: {percentiles['min']:.3f}s")
+        output.append(f"    Max: {percentiles['max']:.3f}s")
+        output.append(f"    Count: {percentiles['count']}")
+        output.append("")
+    
+    output.append("SLO Compliance:")
+    slo = stats["slo_compliance"]
+    output.append(f"  P95 ≤ 1.5s: {'✅' if slo['p95_target_1_5s'] else '❌'} ({slo['p95_latency_ms']}ms)")
+    output.append(f"  P99 ≤ 2.0s: {'✅' if slo['p99_target_2s'] else '❌'} ({slo['p99_latency_ms']}ms)")
+    
+    return "\n".join(output)
 
 if __name__ == "__main__":
-    main()
+    exit(main())
