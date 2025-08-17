@@ -230,9 +230,12 @@ def format_text_output(stats: Dict[str, Any]) -> str:
         output.append("")
     
     output.append("SLO Compliance:")
-    slo = stats["slo_compliance"]
-    output.append(f"  P95 ≤ 1.5s: {'✅' if slo['p95_target_1_5s'] else '❌'} ({slo['p95_latency_ms']}ms)")
-    output.append(f"  P99 ≤ 2.0s: {'✅' if slo['p99_target_2s'] else '❌'} ({slo['p99_latency_ms']}ms)")
+    slo = stats.get("slo_compliance", {})
+    if slo:
+        output.append(f"  P95 ≤ 1.5s: {'✅' if slo.get('p95_target_1_5s', False) else '❌'} ({slo.get('p95_latency_ms', 0)}ms)")
+        output.append(f"  P99 ≤ 2.0s: {'✅' if slo.get('p99_target_2s', False) else '❌'} ({slo.get('p99_latency_ms', 0)}ms)")
+    else:
+        output.append("  No latency data available for SLO compliance check")
     
     return "\n".join(output)
 
