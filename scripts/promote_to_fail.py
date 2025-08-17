@@ -12,6 +12,22 @@ import sys
 from typing import Any, Dict, List, Optional
 
 
+def load_perf_thresholds() -> Dict[str, Any]:
+    """Load performance thresholds configuration."""
+    try:
+        with open("backend/config/perf_thresholds.json", "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading perf thresholds: {e}")
+        # Fallback to default thresholds
+        return {
+            "override_latency": {
+                "p95_slo_ms": 1500,
+                "grace_ms": 50,
+                "stale_hours": 24
+            }
+        }
+
 def load_warnings_ledger(ledger_path: str) -> List[Dict[str, Any]]:
     """Load warnings ledger from file."""
     if not os.path.exists(ledger_path):
@@ -53,6 +69,13 @@ def check_visibility_regression(warnings: List[Dict[str, Any]]) -> Optional[str]
 
 def check_override_latency_regression(warnings: List[Dict[str, Any]]) -> Optional[str]:
     """Check for override latency regression (signal #2 with HIGH/CRITICAL severity)."""
+    # Load unified performance thresholds
+    perf_thresholds = load_perf_thresholds()
+    slo = perf_thresholds["override_latency"]["p95_slo_ms"]
+    grace = perf_thresholds["override_latency"]["grace_ms"]
+    stale_hours = perf_thresholds["override_latency"]["stale_hours"]
+    effective_block = slo + grace
+    
     for warning in warnings:
         # Check if this is a cascade rule with signal #2
         cascade_signals = warning.get("cascade_signals", [])
@@ -62,7 +85,7 @@ def check_override_latency_regression(warnings: List[Dict[str, Any]]) -> Optiona
                 # Check for stale snapshot first
                 details = warning.get("details", "").lower()
                 if "stale" in details or "snapshot stale" in details:
-                    print("⚠️  Stale latency snapshot detected - not failing build")
+                    print(f"⚠️  Stale latency snapshot detected (>{stale_hours}h) - not failing build")
                     return None
 
                 # Check for latency threshold in details
@@ -79,20 +102,20 @@ def check_override_latency_regression(warnings: List[Dict[str, Any]]) -> Optiona
                         )
                         p99_ms = int(p99_match.group(1)) if p99_match else 0
 
-                        if p95_ms >= 1600:
+                        if p95_ms >= effective_block:
                             return (
                                 f"Override latency regression: p95={p95_ms}ms, "
-                                f"p99={p99_ms}ms, threshold=1600ms"
+                                f"p99={p99_ms}ms, slo={slo}ms, grace={grace}ms, effective_block={effective_block}ms"
                             )
                     else:
                         # Fallback to general latency extraction
                         latency_match = re.search(r"(\d+)ms", details)
                         if latency_match:
                             latency_ms = int(latency_match.group(1))
-                            if latency_ms >= 1600:
+                            if latency_ms >= effective_block:
                                 return (
                                     f"Override latency regression: p95={latency_ms}ms, "
-                                    f"p99=unknown, threshold=1600ms"
+                                    f"p99=unknown, slo={slo}ms, grace={grace}ms, effective_block={effective_block}ms"
                                 )
                         else:
                             return (
