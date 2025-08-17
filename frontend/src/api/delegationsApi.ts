@@ -89,3 +89,34 @@ export async function createDelegation(input: CreateDelegationInput): Promise<Cr
 
   return res.json();
 }
+
+// --- Transparency endpoints ---
+export async function getMyChains(): Promise<any> {
+  const res = await fetch('/api/delegations/me/chain');
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Failed to fetch delegation chains' }));
+    throw new Error(error.detail || 'Failed to fetch delegation chains');
+  }
+  return res.json();
+}
+
+export async function getInbound(delegateeId: string, fieldId?: string): Promise<any> {
+  const params = new URLSearchParams();
+  if (fieldId) params.append('fieldId', fieldId);
+  
+  const res = await fetch(`/api/delegations/${delegateeId}/inbound?${params.toString()}`);
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Failed to fetch inbound delegations' }));
+    throw new Error(error.detail || 'Failed to fetch inbound delegations');
+  }
+  return res.json();
+}
+
+export async function getHealthSummary(): Promise<any> {
+  const res = await fetch('/api/delegations/health/summary');
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Failed to fetch health summary' }));
+    throw new Error(error.detail || 'Failed to fetch health summary');
+  }
+  return res.json();
+}

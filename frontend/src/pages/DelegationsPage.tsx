@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useUnifiedDelegationSearch } from "../hooks/useUnifiedDelegationSearch";
 import ComposerDrawer from "../components/delegations/ComposerDrawer";
+import TransparencyPanel from "../components/delegations/TransparencyPanel";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
 import { AlertTriangle, AlertCircle } from "lucide-react";
+import Button from "../components/ui/Button";
 
 interface CascadeHealth {
   ruleB: string;
@@ -17,6 +19,7 @@ export default function DelegationsPage() {
   const [selectedField, setSelectedField] = useState<FieldSearchResult | undefined>(undefined);
   const [cascadeHealth, setCascadeHealth] = useState<CascadeHealth | null>(null);
   const [peopleWarnings, setPeopleWarnings] = useState<Record<string, { concentration?: boolean; superDelegate?: boolean }>>({});
+  const [transparencyOpen, setTransparencyOpen] = useState(false);
 
   // Fetch cascade health on mount
   useEffect(() => {
@@ -112,7 +115,12 @@ export default function DelegationsPage() {
       )}
 
       {/* Page Title */}
-      <h1 className="text-3xl font-semibold text-fg-strong">Delegations</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-semibold text-fg-strong">Delegations</h1>
+        <Button onClick={() => setTransparencyOpen(true)}>
+          Transparency
+        </Button>
+      </div>
 
       {/* Transition Banner */}
       <div className="mt-6 p-6 bg-surface border border-border rounded-lg">
@@ -260,6 +268,12 @@ export default function DelegationsPage() {
         onClose={handleCloseDrawer}
         defaultPerson={selectedPerson}
         defaultField={selectedField}
+      />
+
+      {/* Transparency Panel */}
+      <TransparencyPanel
+        isOpen={transparencyOpen}
+        onClose={() => setTransparencyOpen(false)}
       />
     </div>
   );
