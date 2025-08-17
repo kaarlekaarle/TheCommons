@@ -1,7 +1,7 @@
 // DEPRECATED: replaced by InlineTraditionalForm/InlineCommonsForm rendered on DelegationsPage.
 // Kept temporarily for potential reuse. Do not import this component in DelegationsPage.
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Calendar, User, Hash, AlertTriangle } from 'lucide-react';
 import { useToast } from '../ui/useToast';
 import { createDelegation, trackDelegationCreated } from '../../api/delegationsApi';
@@ -33,7 +33,6 @@ export default function ComposerDrawer({
   const [fieldQuery, setFieldQuery] = useState('');
   const [people, setPeople] = useState<PersonSearchResult[]>([]);
   const [fields, setFields] = useState<FieldSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expiry, setExpiry] = useState('');
   const [warnings, setWarnings] = useState<DelegationWarnings>({});

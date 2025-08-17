@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -13,8 +13,6 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import Button from './ui/Button';
-import { listLabels } from '../lib/api';
-import type { Label } from '../types';
 import { flags } from '../config/flags';
 
 
@@ -25,30 +23,13 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [labels, setLabels] = useState<Label[]>([]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.reload();
   };
 
-  useEffect(() => {
-    if (flags.labelsEnabled) {
-      const fetchLabels = async () => {
-        try {
-          console.log('Fetching labels...');
-          const labelsData = await listLabels();
-          console.log('Labels loaded:', labelsData.length, labelsData);
-          setLabels(labelsData);
-        } catch (err) {
-          console.error('Failed to load labels:', err);
-        }
-      };
-      fetchLabels();
-    } else {
-      console.log('Labels disabled by flag');
-    }
-  }, []);
+
 
   const navigation = [
     { name: 'Delegations', href: '/delegations', icon: Users },
@@ -77,9 +58,7 @@ export default function Layout({ children }: LayoutProps) {
     return location.pathname === href;
   };
 
-  const isTopicPage = () => {
-    return location.pathname.startsWith('/t/');
-  };
+
 
   return (
     <div className="min-h-screen bg-neutral-50">
