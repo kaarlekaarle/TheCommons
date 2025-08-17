@@ -55,6 +55,18 @@ def normalize_cascade_to_warning(cascade_data: Dict[str, Any]) -> List[Dict[str,
         else:
             severity = "info"
         
+        # Check for latency signal and add snapshot age tracking
+        snapshot_age_hours = None
+        tags = []
+        
+        for signal in triggered_signals:
+            if signal.get("id") == "#2":  # Override latency signal
+                snapshot_age_hours = signal.get("file_age_hours")
+                if snapshot_age_hours and snapshot_age_hours > 24:
+                    severity = "info"  # Downshift stale snapshots
+                    tags.append("stale-snapshot")
+                    break
+        
         # Create normalized warning
         warning = {
             "timestamp": timestamp,
@@ -76,7 +88,9 @@ def normalize_cascade_to_warning(cascade_data: Dict[str, Any]) -> List[Dict[str,
             "tool": "constitutional_cascade_detector.py",
             "cascade_rule_id": rule_id,
             "cascade_decision": decision,
-            "cascade_signals": [s.get("id", "unknown") for s in triggered_signals]
+            "cascade_signals": [s.get("id", "unknown") for s in triggered_signals],
+            "snapshot_age_hours": snapshot_age_hours,
+            "tags": tags
         }
         
         warnings.append(warning)
