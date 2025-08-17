@@ -393,6 +393,18 @@ jobs:
           --json-out reports/constitutional_cascade.json
       continue-on-error: ${{ env.CASCADE_MODE == 'shadow' || env.CASCADE_MODE == 'warn' }}
 
+    - name: Show cascade results
+      run: cat reports/constitutional_cascade.json || true
+
+    - name: Promote to fail check
+      run: |
+        echo ""
+        echo "🔍 PROMOTE TO FAIL CHECK"
+        echo "========================"
+        echo ""
+        
+        python3 scripts/promote_to_fail.py --warnings reports/constitutional_warnings.json
+
     - name: Collect Override Latency SLOs
       if: always()
       run: |
