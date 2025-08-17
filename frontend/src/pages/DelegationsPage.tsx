@@ -3,6 +3,7 @@ import { useUnifiedDelegationSearch } from "../hooks/useUnifiedDelegationSearch"
 import ComposerDrawer from "../components/delegations/ComposerDrawer";
 import TransparencyPanel from "../components/delegations/TransparencyPanel";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
+import { trackComposerOpen, trackDelegationCreated } from "../api/delegationsApi";
 import { AlertTriangle, AlertCircle } from "lucide-react";
 import Button from "../components/ui/Button";
 
@@ -42,12 +43,16 @@ export default function DelegationsPage() {
     setSelectedPerson(person);
     setSelectedField(undefined);
     setDrawerOpen(true);
+    // Track composer open with traditional mode pre-selected
+    trackComposerOpen('traditional');
   };
 
   const handleFieldClick = (field: FieldSearchResult) => {
     setSelectedField(field);
     setSelectedPerson(undefined);
     setDrawerOpen(true);
+    // Track composer open with commons mode pre-selected
+    trackComposerOpen('commons');
   };
 
   const handleCloseDrawer = () => {

@@ -120,3 +120,34 @@ export async function getHealthSummary(): Promise<any> {
   }
   return res.json();
 }
+
+// --- Telemetry endpoints ---
+export async function trackComposerOpen(mode: string): Promise<void> {
+  try {
+    await fetch('/api/telemetry/composer-open', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ mode }),
+    });
+  } catch (err) {
+    // Silently fail - telemetry is non-critical
+    console.debug('Failed to track composer open:', err);
+  }
+}
+
+export async function trackDelegationCreated(mode: string): Promise<void> {
+  try {
+    await fetch('/api/telemetry/delegation-created', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ mode }),
+    });
+  } catch (err) {
+    // Silently fail - telemetry is non-critical
+    console.debug('Failed to track delegation created:', err);
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, User, Hash, AlertTriangle } from 'lucide-react';
 import { useToast } from '../ui/useToast';
-import { createDelegation } from '../../api/delegationsApi';
+import { createDelegation, trackDelegationCreated } from '../../api/delegationsApi';
 import { searchPeople, searchFields } from '../../api/delegationsApi';
 import type { PersonSearchResult, FieldSearchResult, CreateDelegationInput, DelegationWarnings } from '../../api/delegationsApi';
 import Button from '../ui/Button';
@@ -136,6 +136,9 @@ export default function ComposerDrawer({
       if (response.warnings) {
         setWarnings(response.warnings);
       }
+
+      // Track delegation creation
+      trackDelegationCreated(activeTab);
 
       success(
         activeTab === 'traditional'
