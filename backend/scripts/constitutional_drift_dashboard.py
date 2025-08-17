@@ -164,6 +164,75 @@ class ConstitutionalDriftDashboard:
             # Return empty sparkline data
             return [(datetime.now().strftime('%Y-%m-%d'), 0)] * 14
     
+    def _load_adoption_data(self) -> Optional[Dict[str, Any]]:
+        """Load adoption telemetry data from the database."""
+        try:
+            # Try to connect to the constitutional history database
+            db_path = Path(self.db_path)
+            if not db_path.exists():
+                print(f"Warning: Adoption database not found at {db_path}")
+                return None
+            
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Check if adoption_events table exists
+            cursor.execute("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='adoption_events'
+            """)
+            
+            if not cursor.fetchone():
+                print("Warning: adoption_events table not found")
+                conn.close()
+                return None
+            
+            # Get adoption statistics for the last 14 days
+            cursor.execute("""
+                SELECT mode, COUNT(*) as count
+                FROM adoption_events
+                WHERE timestamp >= datetime('now', '-14 days')
+                AND from_mode IS NULL
+                GROUP BY mode
+            """)
+            
+            adoption_counts = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            # Get transition counts
+            cursor.execute("""
+                SELECT from_mode, mode as to_mode, COUNT(*) as count
+                FROM adoption_events
+                WHERE timestamp >= datetime('now', '-14 days')
+                AND from_mode IS NOT NULL
+                GROUP BY from_mode, mode
+            """)
+            
+            transitions = {}
+            for row in cursor.fetchall():
+                key = f"{row[0]}_to_{row[1]}"
+                transitions[key] = row[2]
+            
+            # Calculate percentages
+            total_adoptions = sum(adoption_counts.values())
+            percentages = {}
+            if total_adoptions > 0:
+                for mode, count in adoption_counts.items():
+                    percentages[mode] = (count / total_adoptions) * 100
+            
+            conn.close()
+            
+            return {
+                "period_days": 14,
+                "total_adoptions": total_adoptions,
+                "mode_counts": adoption_counts,
+                "mode_percentages": percentages,
+                "transitions": transitions
+            }
+            
+        except Exception as e:
+            print(f"Warning: Could not load adoption data: {e}")
+            return None
+    
     def _generate_sparkline(self, data: List[Tuple[str, int]], max_value: int = 10) -> str:
         """Generate ASCII sparkline from daily counts."""
         sparkline = ""
@@ -329,6 +398,13 @@ class ConstitutionalDriftDashboard:
                 "14_day_events": 0,
                 "blocked_prs": 0,  # TODO: Future enforce mode metric
                 "emergency_overrides": 0  # TODO: Future enforce mode metric
+            },
+            "mode_adoption": {
+                "legacy_percentage": 0.0,
+                "commons_percentage": 0.0,
+                "transitions_count": 0,
+                "period_days": 14,
+                "status": "unknown"
             }
         }
         
@@ -372,6 +448,25 @@ class ConstitutionalDriftDashboard:
             if "cascade_sparkline" in dashboard_data:
                 sparkline_data = dashboard_data["cascade_sparkline"]
                 cascade_health["14_day_events"] = sum(count for _, count in sparkline_data if count > 0)
+        
+        # Update mode adoption metrics
+        adoption_data = self._load_adoption_data()
+        if adoption_data:
+            mode_adoption = metrics["mode_adoption"]
+            mode_adoption["legacy_percentage"] = adoption_data.get("mode_percentages", {}).get("legacy_fixed_term", 0.0)
+            mode_adoption["commons_percentage"] = adoption_data.get("mode_percentages", {}).get("flexible_domain", 0.0)
+            mode_adoption["transitions_count"] = sum(adoption_data.get("transitions", {}).values())
+            mode_adoption["period_days"] = adoption_data.get("period_days", 14)
+            
+            # Determine status based on adoption patterns
+            if mode_adoption["commons_percentage"] > 70:
+                mode_adoption["status"] = "excellent"
+            elif mode_adoption["commons_percentage"] > 50:
+                mode_adoption["status"] = "good"
+            elif mode_adoption["commons_percentage"] > 30:
+                mode_adoption["status"] = "fair"
+            else:
+                mode_adoption["status"] = "needs_attention"
         
         return metrics
     
