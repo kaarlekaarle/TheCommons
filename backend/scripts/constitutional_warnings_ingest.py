@@ -19,7 +19,7 @@ def load_warnings_ledger(ledger_path: str) -> List[Dict[str, Any]]:
     if os.path.exists(ledger_path):
         try:
             with open(ledger_path, 'r') as f:
-                return json.load(f)
+                data = json.load(f); return data if isinstance(data, list) else data.get("warnings", [])
         except (json.JSONDecodeError, IOError) as e:
             print(f"Warning: Could not load warnings ledger: {e}")
             return []
