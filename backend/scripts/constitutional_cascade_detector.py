@@ -23,14 +23,70 @@ EXIT_BLOCK = 10
 class ConstitutionalCascadeDetector:
     """Detector for constitutional cascade rules."""
 
-    def __init__(
-        self, config_path: str = "backend/config/constitutional_cascade_rules.json"
-    ):
+    def __init__(self, config_path: str = "backend/config/constitutional_cascade_rules.json"):
         """Initialize the cascade detector."""
         self.config_path = config_path
         self.config = self._load_config()
         self.signals: List[Dict[str, Any]] = []
         self.cascade_results: List[Dict[str, Any]] = []
+        self.current_branch = self._detect_current_branch()
+    
+    def _detect_current_branch(self) -> str:
+        """Detect current branch from environment variables."""
+        # Try GITHUB_REF_NAME first (GitHub Actions)
+        branch = os.environ.get("GITHUB_REF_NAME")
+        if branch:
+            return branch
+        
+        # Fallback to GITHUB_REF (remove refs/heads/ prefix)
+        ref = os.environ.get("GITHUB_REF")
+        if ref and ref.startswith("refs/heads/"):
+            return ref[11:]  # Remove "refs/heads/" prefix
+        
+        # Fallback to git command
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except Exception:
+            pass
+        
+        # Final fallback
+        return "unknown"
+    
+    def _is_branch_enforced(self, rule_id: str, branch: str) -> bool:
+        """Check if a rule should be enforced on the current branch."""
+        branch_overrides = self.config.get("branch_overrides", {})
+        
+        if rule_id not in branch_overrides:
+            return False
+        
+        enforce_patterns = branch_overrides[rule_id].get("enforce_on", [])
+        
+        for pattern in enforce_patterns:
+            if self._matches_branch_pattern(branch, pattern):
+                return True
+        
+        return False
+    
+    def _matches_branch_pattern(self, branch: str, pattern: str) -> bool:
+        """Check if branch matches a pattern (supports wildcards)."""
+        if pattern == branch:
+            return True
+        
+        # Handle wildcard patterns like "release/*"
+        if "*" in pattern:
+            # Convert pattern to regex
+            regex_pattern = pattern.replace("*", ".*")
+            import re
+            return bool(re.match(regex_pattern, branch))
+        
+        return False
 
     def _load_config(self) -> Dict[str, Any]:
         """Load cascade rules configuration."""
@@ -262,39 +318,55 @@ class ConstitutionalCascadeDetector:
         return signals
 
     def _get_effective_mode(self, rule_id: str) -> str:
-        """Get effective mode for a specific rule, considering mode overrides."""
+        """Get effective mode for a specific rule, considering mode and branch overrides."""
         global_mode = self.config.get("mode", "warn")
         mode_overrides = self.config.get("mode_overrides", {})
-
-        # Check if there's a specific override for this rule
+        
+        # Check if there's a specific mode override for this rule
         if rule_id in mode_overrides:
-            return mode_overrides[rule_id]
-
-        # Fall back to global mode
-        return global_mode
+            base_mode = mode_overrides[rule_id]
+        else:
+            base_mode = global_mode
+        
+        # Check if this rule should be enforced on the current branch
+        if self._is_branch_enforced(rule_id, self.current_branch):
+            return "enforce"
+        
+        # Return the base mode (from mode_overrides or global)
+        return base_mode
 
     def evaluate_cascade_rules(self) -> List[Dict[str, Any]]:
         """Evaluate cascade rules against collected signals."""
         print("\n🔍 EVALUATING CASCADE RULES")
         print("=" * 30)
-
+        
+        # Print cascade modes summary
+        print(f"Branch: {self.current_branch}")
+        mode_summary = []
+        for rule in self.config["rules"]:
+            rule_id = rule["id"]
+            effective_mode = self._get_effective_mode(rule_id)
+            mode_summary.append(f"{rule_id}={effective_mode}")
+        print(f"Cascade Modes: {' '.join(mode_summary)} on {self.current_branch}")
+        print("")
+        
         results = []
-
+        
         for rule in self.config["rules"]:
             rule_id = rule["id"]
             rule_signals = rule["signals"]
             window_days = rule["window_days"]
             decision = rule["decision"]
             rationale = rule["rationale"]
-
+            
             # Get effective mode for this rule
             effective_mode = self._get_effective_mode(rule_id)
-
+            
             print(f"Evaluating Rule {rule_id}: {rationale} (mode: {effective_mode})")
-
+            
             # Check if rule conditions are met
             triggered_signals = self._check_rule_conditions(rule_signals)
-
+            
             if triggered_signals:
                 result = {
                     "rule_id": rule_id,
@@ -303,13 +375,14 @@ class ConstitutionalCascadeDetector:
                     "window_days": window_days,
                     "triggered_signals": triggered_signals,
                     "effective_mode": effective_mode,
+                    "branch": self.current_branch,
                     "ts": datetime.now().isoformat(),
                 }
                 results.append(result)
                 print(f"  ✅ Rule {rule_id} TRIGGERED ({effective_mode.upper()})")
             else:
                 print(f"  ❌ Rule {rule_id} not triggered")
-
+        
         self.cascade_results = results
         return results
 

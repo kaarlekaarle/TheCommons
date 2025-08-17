@@ -6,6 +6,10 @@
     "A": "warn",
     "D": "warn"
   },
+  "branch_overrides": {
+    "A": { "enforce_on": ["main", "release/*"] },
+    "D": { "enforce_on": ["main", "release/*"] }
+  },
   "severity_scale": ["info", "warn", "high", "critical"],
   "thresholds": {
     "override_latency_ms": { "critical": 2000, "high": 1600, "warn": 1200 },
