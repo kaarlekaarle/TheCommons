@@ -309,14 +309,32 @@ export default function DelegationsPage() {
       <div className="mt-6 p-6 bg-surface border border-border rounded-lg">
         <h2 className="text-lg font-medium text-fg-strong mb-4">Choose Your Delegation Approach</h2>
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="p-4 bg-surface-muted border border-border rounded-lg">
-            <h3 className="font-medium text-fg-strong mb-2">Traditional</h3>
+          <button
+            onClick={() => {
+              setNudgeTab('traditional');
+              setDrawerOpen(true);
+              setSelectedPerson(undefined);
+              setSelectedField(undefined);
+              trackComposerOpen('traditional');
+            }}
+            className="p-4 bg-surface-muted border border-border rounded-lg hover:bg-surface-muted/80 hover:border-primary-300 transition-all duration-200 cursor-pointer text-left group"
+          >
+            <h3 className="font-medium text-fg-strong mb-2 group-hover:text-primary-600">Traditional</h3>
             <p className="text-fg-muted text-sm">Delegate all power to one person for 4 years (revocable).</p>
-          </div>
-          <div className="p-4 bg-info-bg border border-border rounded-lg">
-            <h3 className="font-medium text-fg-strong mb-2">Commons</h3>
+          </button>
+          <button
+            onClick={() => {
+              setNudgeTab('commons');
+              setDrawerOpen(true);
+              setSelectedPerson(undefined);
+              setSelectedField(undefined);
+              trackComposerOpen('commons');
+            }}
+            className="p-4 bg-info-bg border border-border rounded-lg hover:bg-info-bg/80 hover:border-primary-300 transition-all duration-200 cursor-pointer text-left group"
+          >
+            <h3 className="font-medium text-fg-strong mb-2 group-hover:text-primary-600">Commons</h3>
             <p className="text-fg-muted text-sm">Delegate by field, interrupt anytime.</p>
-          </div>
+          </button>
         </div>
       </div>
 
