@@ -110,6 +110,137 @@ Run the cascade smoke tests to verify selective enforcement:
 - ✅ Rule A: WARN (exit code 8) - warn mode
 - ✅ Rule D: WARN (exit code 8) - warn mode
 
+## Selective Enforcement by Branch
+
+### Branch-Scoped Enforcement
+
+Rules A and D now have branch-scoped enforcement, allowing them to be enforced only on protected branches while staying in WARN mode on feature branches:
+
+- **Rules A & D**: ENFORCE mode on `main` and `release/*` branches, WARN mode on feature branches
+- **Rules B & C**: ENFORCE mode globally (all branches)
+
+### Configuration
+
+Branch-scoped enforcement is configured in `backend/config/constitutional_cascade_rules.json`:
+
+```json
+{
+  "mode": "warn",
+  "mode_overrides": {
+    "B": "enforce",
+    "C": "enforce",
+    "A": "warn",
+    "D": "warn"
+  },
+  "branch_overrides": {
+    "A": { "enforce_on": ["main", "release/*"] },
+    "D": { "enforce_on": ["main", "release/*"] }
+  }
+}
+```
+
+### Branch Pattern Matching
+
+The system supports wildcard patterns for branch matching:
+
+- **Exact match**: `"main"` matches only the main branch
+- **Wildcard patterns**: `"release/*"` matches `release/1.0`, `release/2.0`, etc.
+- **Multiple patterns**: Rules can be enforced on multiple branch patterns
+
+### What Developers See
+
+#### On Feature Branch (feature/foo)
+```
+🌿 BRANCH: feature/foo
+=================================
+
+🔍 EVALUATING CASCADE RULES
+==============================
+Branch: feature/foo
+Cascade Modes: A=warn B=enforce C=enforce D=warn on feature/foo
+
+Evaluating Rule A: Formal + informal hierarchy (mode: warn)
+  ✅ Rule A TRIGGERED (WARN)
+
+Evaluating Rule D: Unresponsive + concentrated (mode: warn)
+  ✅ Rule D TRIGGERED (WARN)
+```
+
+#### On Main Branch
+```
+🌿 BRANCH: main
+=================================
+
+🔍 EVALUATING CASCADE RULES
+==============================
+Branch: main
+Cascade Modes: A=enforce B=enforce C=enforce D=enforce on main
+
+Evaluating Rule A: Formal + informal hierarchy (mode: enforce)
+  ✅ Rule A TRIGGERED (ENFORCE)
+
+Evaluating Rule D: Unresponsive + concentrated (mode: enforce)
+  ✅ Rule D TRIGGERED (ENFORCE)
+```
+
+### Dashboard Display
+
+The cascade tile shows branch-scoped enforce badges:
+
+#### Feature Branch
+```
+🔴 Cascade Decisions: BLOCK
+   Triggered Rules: Rule A [WARN on feature/foo], Rule D [WARN on feature/foo]
+   Rule Modes: A[WARN/ENFORCED on feature/foo] B[ENFORCED] C[ENFORCED] D[WARN/ENFORCED on feature/foo]
+```
+
+#### Main Branch
+```
+🔴 Cascade Decisions: BLOCK
+   Triggered Rules: Rule A [ENFORCED on main], Rule D [ENFORCED on main]
+   Rule Modes: A[WARN/ENFORCED on main] B[ENFORCED] C[ENFORCED] D[WARN/ENFORCED on main]
+```
+
+### Branch Detection
+
+The system automatically detects the current branch from:
+
+1. **GitHub Actions**: `GITHUB_REF_NAME` environment variable
+2. **Fallback**: `GITHUB_REF` with `refs/heads/` prefix removal
+3. **Local**: `git rev-parse --abbrev-ref HEAD` command
+4. **Final fallback**: "unknown" branch
+
+### Use Cases
+
+#### Protected Branches (main, release/*)
+- **Rules A & D**: ENFORCE mode - blocks PRs with hierarchy or concentration issues
+- **Purpose**: Prevent constitutional drift in production code
+- **Override**: Available with `constitutional-override` label
+
+#### Feature Branches (feature/*, bugfix/*, etc.)
+- **Rules A & D**: WARN mode - logs warnings but doesn't block
+- **Purpose**: Allow experimentation while maintaining awareness
+- **Override**: Not needed (warnings don't block)
+
+### Testing Branch-Scoped Enforcement
+
+Test different branch scenarios:
+
+```bash
+# Test on feature branch
+git checkout feature/test-branch
+python3 backend/scripts/constitutional_cascade_detector.py --mode warn
+
+# Test on main branch
+git checkout main
+python3 backend/scripts/constitutional_cascade_detector.py --mode warn
+```
+
+**Expected Results**:
+- **Feature branch**: Rules A/D show WARN mode
+- **Main branch**: Rules A/D show ENFORCE mode
+- **Rules B/C**: Always ENFORCE mode on all branches
+
 ## Auto-Comment System
 
 ### What the Auto-Comment Includes
