@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import ComposerDrawer from "../components/delegations/ComposerDrawer";
+import InlineTraditionalForm from "../components/delegations/InlineTraditionalForm";
+import InlineCommonsForm from "../components/delegations/InlineCommonsForm";
 import TransparencyPanel from "../components/delegations/TransparencyPanel";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
 import { trackComposerOpen, trackDelegationCreated, getMyAdoptionSnapshot, getCombinedSearch } from "../api/delegationsApi";
@@ -22,14 +23,13 @@ export default function DelegationsPage() {
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [openCard, setOpenCard] = useState<'traditional' | 'commons' | null>(null);
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | undefined>(undefined);
   const [selectedField, setSelectedField] = useState<FieldSearchResult | undefined>(undefined);
   const [cascadeHealth, setCascadeHealth] = useState<CascadeHealth | null>(null);
   const [peopleWarnings, setPeopleWarnings] = useState<Record<string, { concentration?: boolean; superDelegate?: boolean }>>({});
   const [transparencyOpen, setTransparencyOpen] = useState(false);
   const [adoptionSnapshot, setAdoptionSnapshot] = useState<{ last30d: { legacyPct: number; commonsPct: number } } | null>(null);
-  const [nudgeTab, setNudgeTab] = useState<'traditional' | 'commons' | undefined>(undefined);
 
   // Fetch cascade health on mount
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function DelegationsPage() {
   const handlePersonClick = (person: PersonSearchResult) => {
     setSelectedPerson(person);
     setSelectedField(undefined);
-    setDrawerOpen(true);
+    setOpenCard('traditional');
     // Track composer open with traditional mode pre-selected
     trackComposerOpen('traditional');
   };
@@ -87,16 +87,15 @@ export default function DelegationsPage() {
   const handleFieldClick = (field: FieldSearchResult) => {
     setSelectedField(field);
     setSelectedPerson(undefined);
-    setDrawerOpen(true);
+    setOpenCard('commons');
     // Track composer open with commons mode pre-selected
     trackComposerOpen('commons');
   };
 
-  const handleCloseDrawer = () => {
-    setDrawerOpen(false);
+  const handleCollapseForm = () => {
+    setOpenCard(null);
     setSelectedPerson(undefined);
     setSelectedField(undefined);
-    setNudgeTab(undefined);
   };
 
   // Combined search with debounce
@@ -138,6 +137,20 @@ export default function DelegationsPage() {
       }
     };
   }, [query]);
+
+  // Keyboard support for Escape key to collapse forms
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && openCard) {
+        handleCollapseForm();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openCard]);
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -278,8 +291,7 @@ export default function DelegationsPage() {
             <Button
               onClick={() => {
                 const suggestedTab = adoptionSnapshot.last30d.legacyPct > adoptionSnapshot.last30d.commonsPct ? 'commons' : 'traditional';
-                setNudgeTab(suggestedTab);
-                setDrawerOpen(true);
+                setOpenCard(suggestedTab);
                 setSelectedPerson(undefined);
                 setSelectedField(undefined);
                 // Track the nudge click
@@ -309,32 +321,62 @@ export default function DelegationsPage() {
       <div className="mt-6 p-6 bg-surface border border-border rounded-lg">
         <h2 className="text-lg font-medium text-fg-strong mb-4">Choose Your Delegation Approach</h2>
         <div className="grid md:grid-cols-2 gap-6">
-          <button
-            onClick={() => {
-              setNudgeTab('traditional');
-              setDrawerOpen(true);
-              setSelectedPerson(undefined);
-              setSelectedField(undefined);
-              trackComposerOpen('traditional');
-            }}
-            className="p-4 bg-surface-muted border border-border rounded-lg hover:bg-surface-muted/80 hover:border-primary-300 transition-all duration-200 cursor-pointer text-left group"
-          >
-            <h3 className="font-medium text-fg-strong mb-2 group-hover:text-primary-600">Traditional</h3>
-            <p className="text-fg-muted text-sm">Delegate all power to one person for 4 years (revocable).</p>
-          </button>
-          <button
-            onClick={() => {
-              setNudgeTab('commons');
-              setDrawerOpen(true);
-              setSelectedPerson(undefined);
-              setSelectedField(undefined);
-              trackComposerOpen('commons');
-            }}
-            className="p-4 bg-info-bg border border-border rounded-lg hover:bg-info-bg/80 hover:border-primary-300 transition-all duration-200 cursor-pointer text-left group"
-          >
-            <h3 className="font-medium text-fg-strong mb-2 group-hover:text-primary-600">Commons</h3>
-            <p className="text-fg-muted text-sm">Delegate by field, interrupt anytime.</p>
-          </button>
+          <div className="p-4 bg-surface-muted border border-border rounded-lg">
+            <h3 id="traditional-title" className="font-medium text-fg-strong mb-2">Traditional</h3>
+            <p className="text-fg-muted text-sm mb-4">Delegate all power to one person for 4 years (revocable).</p>
+            
+            {openCard === 'traditional' ? (
+              <InlineTraditionalForm
+                onSubmitted={handleCollapseForm}
+                defaults={{
+                  personId: selectedPerson?.id,
+                  termDate: new Date(Date.now() + 4 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                }}
+                onCollapse={handleCollapseForm}
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  setOpenCard('traditional');
+                  setSelectedPerson(undefined);
+                  setSelectedField(undefined);
+                  trackComposerOpen('traditional');
+                }}
+                className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                Create Traditional Delegation
+              </button>
+            )}
+          </div>
+          
+          <div className="p-4 bg-info-bg border border-border rounded-lg">
+            <h3 id="commons-title" className="font-medium text-fg-strong mb-2">Commons</h3>
+            <p className="text-fg-muted text-sm mb-4">Delegate by field, interrupt anytime.</p>
+            
+            {openCard === 'commons' ? (
+              <InlineCommonsForm
+                onSubmitted={handleCollapseForm}
+                defaults={{
+                  fieldId: selectedField?.id,
+                  personId: selectedPerson?.id,
+                  expiryDate: null
+                }}
+                onCollapse={handleCollapseForm}
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  setOpenCard('commons');
+                  setSelectedPerson(undefined);
+                  setSelectedField(undefined);
+                  trackComposerOpen('commons');
+                }}
+                className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                Create Commons Delegation
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -470,15 +512,6 @@ export default function DelegationsPage() {
           <p className="mt-2 text-sm text-danger-fg">{error}</p>
         )}
       </div>
-
-      {/* Composer Drawer */}
-      <ComposerDrawer
-        open={drawerOpen}
-        onClose={handleCloseDrawer}
-        defaultPerson={selectedPerson}
-        defaultField={selectedField}
-        defaultTab={nudgeTab}
-      />
 
       {/* Transparency Panel */}
       <TransparencyPanel
