@@ -63,7 +63,7 @@ def normalize_cascade_to_warning(cascade_data: Dict[str, Any]) -> List[Dict[str,
             "category": f"cascade_rule_{rule_id.lower()}",
             "severity": severity,
             "summary": f"Cascade Rule {rule_id} triggered: {rationale}",
-            "details": f"Decision: {decision.upper()}, Signals: {len(triggered_signals)}",
+            "details": "Decision: " + decision.upper() + ", Signals: " + str(len(triggered_signals)) + ". " + "; ".join([s.get("id", "unknown") + ": " + s.get("description", "") for s in triggered_signals]),
             "pr": None,  # Will be filled by workflow
             "commit": None,  # Will be filled by workflow
             "files": [],  # Could be extracted from signals if available
