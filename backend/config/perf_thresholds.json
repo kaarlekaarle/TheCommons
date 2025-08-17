@@ -1,0 +1,7 @@
+{
+  "override_latency": {
+    "p95_slo_ms": 1500,
+    "grace_ms": 50,
+    "stale_hours": 24
+  }
+}
