@@ -210,6 +210,11 @@ class ConstitutionalDriftDashboard:
         triggered_rules = cascade_data.get("cascade_results", [])
         rule_count = len(triggered_rules)
         
+        # Get current branch from cascade data
+        current_branch = "unknown"
+        if triggered_rules:
+            current_branch = triggered_rules[0].get("branch", "unknown")
+        
         # Build tile content
         tile_lines = []
         tile_lines.append(f"{emoji} Cascade Decisions: {decision}")
@@ -219,17 +224,24 @@ class ConstitutionalDriftDashboard:
             for rule in triggered_rules:
                 rule_id = rule['rule_id']
                 effective_mode = rule.get('effective_mode', 'warn')
+                branch = rule.get('branch', 'unknown')
                 
-                # Add enforce/warn badges
+                # Add enforce/warn badges with branch info for A/D
                 if effective_mode == 'enforce':
-                    rule_details.append(f"Rule {rule_id} [ENFORCED]")
+                    if rule_id in ['A', 'D']:
+                        rule_details.append(f"Rule {rule_id} [ENFORCED on {branch}]")
+                    else:
+                        rule_details.append(f"Rule {rule_id} [ENFORCED]")
                 else:
-                    rule_details.append(f"Rule {rule_id} [WARN]")
+                    if rule_id in ['A', 'D']:
+                        rule_details.append(f"Rule {rule_id} [WARN on {branch}]")
+                    else:
+                        rule_details.append(f"Rule {rule_id} [WARN]")
             
             tile_lines.append(f"   Triggered Rules: {', '.join(rule_details)}")
         
-        # Add mode badges for all rules
-        tile_lines.append("   Rule Modes: A[WARN] B[ENFORCED] C[ENFORCED] D[WARN]")
+        # Add mode badges for all rules with branch info
+        tile_lines.append(f"   Rule Modes: A[WARN/ENFORCED on {current_branch}] B[ENFORCED] C[ENFORCED] D[WARN/ENFORCED on {current_branch}]")
         
         tile_lines.append(f"📅 Last Updated: {formatted_time}")
         tile_lines.append(f"📈 14-Day Trend: {sparkline}")
