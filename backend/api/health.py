@@ -57,16 +57,39 @@ async def health_check_cascade() -> Dict[str, Any]:
     try:
         # Look for the most recent cascade report
         reports_dir = Path("reports")
+        
+        # Check if reports directory exists
+        if not reports_dir.exists():
+            return {
+                "ruleB": "unknown", 
+                "effectiveBlockMs": None, 
+                "p95Ms": None,
+                "message": "No reports directory found"
+            }
+
         cascade_files = list(reports_dir.glob("*cascade*.json"))
 
         if not cascade_files:
-            return {"ruleB": "unknown", "effectiveBlockMs": None, "p95Ms": None}
+            return {
+                "ruleB": "unknown", 
+                "effectiveBlockMs": None, 
+                "p95Ms": None,
+                "message": "No cascade reports found"
+            }
 
         # Get the most recent cascade file
         latest_file = max(cascade_files, key=lambda f: f.stat().st_mtime)
 
-        with open(latest_file, "r") as f:
-            cascade_data = json.load(f)
+        try:
+            with open(latest_file, "r") as f:
+                cascade_data = json.load(f)
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            return {
+                "ruleB": "error",
+                "effectiveBlockMs": None,
+                "p95Ms": None,
+                "error": f"Invalid JSON in {latest_file.name}: {str(e)}"
+            }
 
         # Extract performance metrics
         rule_b_status = "unknown"

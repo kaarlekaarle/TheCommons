@@ -39,9 +39,23 @@ export default function DelegationsPage() {
         if (response.ok) {
           const data = await response.json();
           setCascadeHealth(data);
+        } else {
+          console.warn('Cascade health endpoint returned non-OK status:', response.status);
+          // Set a default state to prevent errors
+          setCascadeHealth({
+            ruleB: "unknown",
+            effectiveBlockMs: null,
+            p95Ms: null
+          });
         }
       } catch (err) {
         console.error('Failed to fetch cascade health:', err);
+        // Set a default state to prevent errors
+        setCascadeHealth({
+          ruleB: "unknown",
+          effectiveBlockMs: null,
+          p95Ms: null
+        });
       }
     }
 
