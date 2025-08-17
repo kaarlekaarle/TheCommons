@@ -1,8 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import { useUnifiedDelegationSearch } from "../hooks/useUnifiedDelegationSearch";
+import ComposerDrawer from "../components/delegations/ComposerDrawer";
+import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
 
 export default function DelegationsPage() {
   const { query, setQuery, people, fields, loading, error } = useUnifiedDelegationSearch();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | undefined>(undefined);
+  const [selectedField, setSelectedField] = useState<FieldSearchResult | undefined>(undefined);
+
+  const handlePersonClick = (person: PersonSearchResult) => {
+    setSelectedPerson(person);
+    setSelectedField(undefined);
+    setDrawerOpen(true);
+  };
+
+  const handleFieldClick = (field: FieldSearchResult) => {
+    setSelectedField(field);
+    setSelectedPerson(undefined);
+    setDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedPerson(undefined);
+    setSelectedField(undefined);
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -50,7 +73,11 @@ export default function DelegationsPage() {
             ) : people.length > 0 ? (
               <div className="space-y-3">
                 {people.map((person) => (
-                  <div key={person.id} className="p-3 bg-surface-muted rounded-lg border border-border">
+                  <button
+                    key={person.id}
+                    onClick={() => handlePersonClick(person)}
+                    className="w-full p-3 bg-surface-muted rounded-lg border border-border hover:bg-surface-muted/80 transition-colors text-left"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-medium text-fg-strong">{person.displayName}</h3>
@@ -73,7 +100,7 @@ export default function DelegationsPage() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : query ? (
@@ -97,7 +124,11 @@ export default function DelegationsPage() {
             ) : fields.length > 0 ? (
               <div className="space-y-3">
                 {fields.map((field) => (
-                  <div key={field.id} className="p-3 bg-surface-muted rounded-lg border border-border">
+                  <button
+                    key={field.id}
+                    onClick={() => handleFieldClick(field)}
+                    className="w-full p-3 bg-surface-muted rounded-lg border border-border hover:bg-surface-muted/80 transition-colors text-left"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-medium text-fg-strong">{field.label}</h3>
@@ -111,7 +142,7 @@ export default function DelegationsPage() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : query ? (
@@ -126,6 +157,14 @@ export default function DelegationsPage() {
           </div>
         </div>
       </div>
+
+      {/* Composer Drawer */}
+      <ComposerDrawer
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+        defaultPerson={selectedPerson}
+        defaultField={selectedField}
+      />
     </div>
   );
 }

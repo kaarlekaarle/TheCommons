@@ -16,6 +16,14 @@ export type FieldSearchResult = {
   trending?: boolean;
 };
 
+// --- Delegation creation types ---
+export type CreateDelegationInput = {
+  mode: 'traditional' | 'field';
+  delegatee_id: string;
+  field_id?: string;
+  expiry?: string; // ISO date string
+};
+
 // --- Search endpoints ---
 // NOTE: these can hit your real backend later.
 // For now they'll call mock endpoints if not present.
@@ -44,4 +52,22 @@ export async function searchFields(q: string): Promise<FieldSearchResult[]> {
     f.label.toLowerCase().includes(q.toLowerCase()) ||
     f.key.toLowerCase().includes(q.toLowerCase())
   );
+}
+
+// --- Delegation creation endpoint ---
+export async function createDelegation(input: CreateDelegationInput): Promise<any> {
+  const res = await fetch('/api/delegations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Failed to create delegation' }));
+    throw new Error(error.detail || 'Failed to create delegation');
+  }
+
+  return res.json();
 }
