@@ -28,6 +28,8 @@ from backend.schemas.delegation import (
     DelegationSummary,
 )
 from backend.services.delegation import DelegationService, DelegationTarget
+from backend.services.concentration_monitor import ConcentrationMonitorService
+from backend.services.super_delegate_detector import SuperDelegateDetectorService
 from backend.config import get_settings
 from datetime import datetime
 
@@ -165,6 +167,45 @@ async def create_delegation(
             elif target.type == 'idea':
                 idea_id = target.id
         
+        # Check for warnings before creating delegation
+        warnings = {}
+        
+        # Check concentration
+        concentration_monitor = ConcentrationMonitorService(db)
+        is_high_conc, conc_level, conc_percent = await concentration_monitor.is_high_concentration(
+            delegation_in.delegatee_id, field_id
+        )
+        if is_high_conc:
+            warnings["concentration"] = {
+                "active": True,
+                "level": conc_level,
+                "percent": conc_percent
+            }
+        else:
+            warnings["concentration"] = {
+                "active": False,
+                "level": "",
+                "percent": conc_percent
+            }
+        
+        # Check super-delegate risk
+        super_delegate_detector = SuperDelegateDetectorService(db)
+        super_risk, super_reason, super_stats = await super_delegate_detector.would_create_super_delegate(
+            delegation_in.delegatee_id, field_id
+        )
+        if super_risk:
+            warnings["superDelegateRisk"] = {
+                "active": True,
+                "reason": super_reason,
+                "stats": super_stats
+            }
+        else:
+            warnings["superDelegateRisk"] = {
+                "active": False,
+                "reason": super_reason,
+                "stats": super_stats
+            }
+        
         # Use delegation service for creation
         delegation_service = DelegationService(db)
         
@@ -225,17 +266,20 @@ async def create_delegation(
         except Exception as e:
             logger.warning(f"Failed to broadcast delegation creation", extra={"error": str(e)})
         
-        # Return enhanced response
+        # Return enhanced response with warnings
         return {
-            "id": str(delegation.id),
-            "delegator_id": str(delegation.delegator_id),
-            "delegatee_id": str(delegation.delegatee_id),
-            "mode": delegation.mode,
-            "target_type": delegation.target_type,
-            "is_anonymous": delegation.is_anonymous,
-            "legacy_term_ends_at": delegation.legacy_term_ends_at.isoformat() if delegation.legacy_term_ends_at else None,
-            "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
-            "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None
+            "delegation": {
+                "id": str(delegation.id),
+                "delegator_id": str(delegation.delegator_id),
+                "delegatee_id": str(delegation.delegatee_id),
+                "mode": delegation.mode,
+                "target_type": delegation.target_type,
+                "is_anonymous": delegation.is_anonymous,
+                "legacy_term_ends_at": delegation.legacy_term_ends_at.isoformat() if delegation.legacy_term_ends_at else None,
+                "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
+                "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None
+            },
+            "warnings": warnings
         }
         
     except Exception as e:
