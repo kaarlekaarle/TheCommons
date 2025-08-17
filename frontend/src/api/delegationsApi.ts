@@ -81,6 +81,28 @@ export async function searchFields(q: string): Promise<FieldSearchResult[]> {
   );
 }
 
+export async function getCombinedSearch(q: string): Promise<{ people: PersonSearchResult[]; fields: FieldSearchResult[] }> {
+  if (!q?.trim()) return { people: [], fields: [] };
+  
+  try {
+    // Fetch both people and fields in parallel
+    const [peopleRes, fieldsRes] = await Promise.all([
+      fetch(`/api/search/people?q=${encodeURIComponent(q)}`),
+      fetch(`/api/search/fields?q=${encodeURIComponent(q)}`)
+    ]);
+    
+    const people = peopleRes.ok ? await peopleRes.json() : [];
+    const fields = fieldsRes.ok ? await fieldsRes.json() : [];
+    
+    return { people, fields };
+  } catch (err) {
+    // Fallback to mock data if API calls fail
+    const mockPeople = await searchPeople(q);
+    const mockFields = await searchFields(q);
+    return { people: mockPeople, fields: mockFields };
+  }
+}
+
 // --- Delegation creation endpoint ---
 export async function createDelegation(input: CreateDelegationInput): Promise<CreateDelegationResponse> {
   const res = await fetch('/api/delegations', {

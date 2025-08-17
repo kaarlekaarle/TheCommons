@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { useUnifiedDelegationSearch } from "../hooks/useUnifiedDelegationSearch";
+import React, { useState, useEffect, useRef } from "react";
 import ComposerDrawer from "../components/delegations/ComposerDrawer";
 import TransparencyPanel from "../components/delegations/TransparencyPanel";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
-import { trackComposerOpen, trackDelegationCreated, getMyAdoptionSnapshot } from "../api/delegationsApi";
-import { AlertTriangle, AlertCircle } from "lucide-react";
+import { trackComposerOpen, trackDelegationCreated, getMyAdoptionSnapshot, getCombinedSearch } from "../api/delegationsApi";
+import { AlertTriangle, AlertCircle, Search, User, Hash, ChevronDown, ChevronUp } from "lucide-react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 
@@ -15,7 +14,14 @@ interface CascadeHealth {
 }
 
 export default function DelegationsPage() {
-  const { query, setQuery, people, fields, loading, error } = useUnifiedDelegationSearch();
+  const [query, setQuery] = useState("");
+  const [people, setPeople] = useState<PersonSearchResult[]>([]);
+  const [fields, setFields] = useState<FieldSearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showResults, setShowResults] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | undefined>(undefined);
   const [selectedField, setSelectedField] = useState<FieldSearchResult | undefined>(undefined);
@@ -78,6 +84,110 @@ export default function DelegationsPage() {
     setSelectedField(undefined);
     setNudgeTab(undefined);
   };
+
+  // Combined search with debounce
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (!query.trim()) {
+      setPeople([]);
+      setFields([]);
+      setShowResults(false);
+      setSelectedIndex(-1);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const results = await getCombinedSearch(query);
+        setPeople(results.people);
+        setFields(results.fields);
+        setShowResults(true);
+        setSelectedIndex(-1);
+      } catch (err: any) {
+        setError(err.message || 'Search failed');
+        setPeople([]);
+        setFields([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [query]);
+
+  // Keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const totalItems = people.length + fields.length;
+    
+    if (totalItems === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < totalItems - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev > 0 ? prev - 1 : totalItems - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0) {
+          const itemIndex = selectedIndex;
+          if (itemIndex < people.length) {
+            handlePersonClick(people[itemIndex]);
+          } else {
+            const fieldIndex = itemIndex - people.length;
+            handleFieldClick(fields[fieldIndex]);
+          }
+        }
+        break;
+      case 'Escape':
+        setShowResults(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
+
+  const handleItemClick = (type: 'person' | 'field', item: PersonSearchResult | FieldSearchResult) => {
+    if (type === 'person') {
+      handlePersonClick(item as PersonSearchResult);
+    } else {
+      handleFieldClick(item as FieldSearchResult);
+    }
+    setShowResults(false);
+    setQuery("");
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.search-container')) {
+        setShowResults(false);
+        setSelectedIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Check if performance banner should be shown
   const showPerformanceBanner = cascadeHealth &&
@@ -196,129 +306,137 @@ export default function DelegationsPage() {
         </div>
       </div>
 
-      {/* Unified Search Input */}
-      <div className="mt-6">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search people or fields…"
-          className="w-full max-w-2xl px-4 py-3 border border-border rounded-lg bg-surface text-fg placeholder-placeholder focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
-        />
+      {/* Combined Search Input */}
+      <div className="mt-6 relative search-container">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fg-muted" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setShowResults(true)}
+            placeholder="Search people or fields…"
+            className="w-full max-w-2xl pl-10 pr-4 py-3 border border-border rounded-lg bg-surface text-fg placeholder-placeholder focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+          />
+        </div>
+        
+        {/* Search Results Dropdown */}
+        {showResults && (query.trim() || loading) && (
+          <div className="absolute top-full left-0 right-0 max-w-2xl mt-1 bg-surface border border-border rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
+            {loading ? (
+              <div className="p-4">
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-3 p-3 animate-pulse">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : error ? (
+              <div className="p-4 text-danger-fg text-sm">
+                {error}
+              </div>
+            ) : people.length === 0 && fields.length === 0 ? (
+              <div className="p-4 text-fg-muted text-sm text-center">
+                No results found
+              </div>
+            ) : (
+              <div className="p-2">
+                {/* People Section */}
+                {people.length > 0 && (
+                  <div className="mb-4">
+                    <div className="px-3 py-2 text-xs font-medium text-fg-muted uppercase tracking-wide">
+                      People
+                    </div>
+                    <div className="space-y-1">
+                      {people.map((person, index) => (
+                        <button
+                          key={person.id}
+                          onClick={() => handleItemClick('person', person)}
+                          className={`w-full p-3 rounded-lg text-left transition-colors flex items-center space-x-3 ${
+                            selectedIndex === index
+                              ? 'bg-primary-100 border-primary-500'
+                              : 'hover:bg-surface-muted'
+                          }`}
+                        >
+                          <User className="w-5 h-5 text-fg-muted flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-fg-strong truncate">
+                              {person.displayName}
+                            </div>
+                            {person.bio && (
+                              <div className="text-sm text-fg-muted truncate">
+                                {person.bio}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {peopleWarnings[person.id]?.concentration && (
+                              <AlertTriangle className="w-4 h-4 text-warn-fg" />
+                            )}
+                            {peopleWarnings[person.id]?.superDelegate && (
+                              <AlertCircle className="w-4 h-4 text-danger-fg" />
+                            )}
+                            {selectedIndex === index && (
+                              <ChevronDown className="w-4 h-4 text-primary-600" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Fields Section */}
+                {fields.length > 0 && (
+                  <div>
+                    <div className="px-3 py-2 text-xs font-medium text-fg-muted uppercase tracking-wide">
+                      Fields
+                    </div>
+                    <div className="space-y-1">
+                      {fields.map((field, index) => (
+                        <button
+                          key={field.id}
+                          onClick={() => handleItemClick('field', field)}
+                          className={`w-full p-3 rounded-lg text-left transition-colors flex items-center space-x-3 ${
+                            selectedIndex === people.length + index
+                              ? 'bg-primary-100 border-primary-500'
+                              : 'hover:bg-surface-muted'
+                          }`}
+                        >
+                          <Hash className="w-5 h-5 text-fg-muted flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-fg-strong truncate">
+                              {field.label}
+                            </div>
+                            {field.description && (
+                              <div className="text-sm text-fg-muted truncate">
+                                {field.description}
+                              </div>
+                            )}
+                          </div>
+                          {selectedIndex === people.length + index && (
+                            <ChevronDown className="w-4 h-4 text-primary-600" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        
         {error && (
           <p className="mt-2 text-sm text-danger-fg">{error}</p>
         )}
-      </div>
-
-      {/* People and Fields Sections */}
-      <div className="mt-8 grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-xl font-semibold text-fg-strong mb-4">People</h2>
-          <div className="p-6 bg-surface border border-border rounded-lg min-h-[200px]">
-            {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-              </div>
-            ) : people.length > 0 ? (
-              <div className="space-y-3">
-                {people.map((person) => (
-                  <button
-                    key={person.id}
-                    onClick={() => handlePersonClick(person)}
-                    className="w-full p-3 bg-surface-muted rounded-lg border border-border hover:bg-surface-muted/80 transition-colors text-left"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium text-fg-strong">{person.displayName}</h3>
-                        {person.bio && (
-                          <p className="text-sm text-fg-muted mt-1">{person.bio}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {person.trustScore && (
-                          <span className="text-xs bg-ok-bg text-ok-fg px-2 py-1 rounded">
-                            {Math.round(person.trustScore * 100)}%
-                          </span>
-                        )}
-                        {peopleWarnings[person.id]?.concentration && (
-                          <span className="text-xs bg-warn-bg text-warn-fg px-2 py-1 rounded flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" />
-                            High concentration
-                          </span>
-                        )}
-                        {peopleWarnings[person.id]?.superDelegate && (
-                          <span className="text-xs bg-danger-bg text-danger-fg px-2 py-1 rounded flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />
-                            Super-delegate risk
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {person.domains && person.domains.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {person.domains.map((domain) => (
-                          <span key={domain} className="text-xs bg-info-bg text-info-fg px-2 py-1 rounded">
-                            {domain}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            ) : query ? (
-              <div className="text-center text-fg-muted py-8">
-                <p>No people found</p>
-              </div>
-            ) : (
-              <div className="text-center text-fg-muted py-8">
-                <p>Try 'housing', 'energy', or 'climate'</p>
-              </div>
-            )}
-          </div>
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold text-fg-strong mb-4">Fields</h2>
-          <div className="p-6 bg-surface border border-border rounded-lg min-h-[200px]">
-            {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-              </div>
-            ) : fields.length > 0 ? (
-              <div className="space-y-3">
-                {fields.map((field) => (
-                  <button
-                    key={field.id}
-                    onClick={() => handleFieldClick(field)}
-                    className="w-full p-3 bg-surface-muted rounded-lg border border-border hover:bg-surface-muted/80 transition-colors text-left"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium text-fg-strong">{field.label}</h3>
-                        {field.description && (
-                          <p className="text-sm text-fg-muted mt-1">{field.description}</p>
-                        )}
-                      </div>
-                      {field.trending && (
-                        <span className="text-xs bg-warn-bg text-warn-fg px-2 py-1 rounded">
-                          Trending
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : query ? (
-              <div className="text-center text-fg-muted py-8">
-                <p>No fields found</p>
-              </div>
-            ) : (
-              <div className="text-center text-fg-muted py-8">
-                <p>Try 'housing', 'energy', or 'climate'</p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Composer Drawer */}
