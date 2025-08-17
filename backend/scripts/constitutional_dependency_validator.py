@@ -72,9 +72,9 @@ CURRENT_DEPENDENCIES = {
 # Delegation concentration monitoring thresholds (updated for new modes)
 DELEGATION_CONCENTRATION_THRESHOLDS = {
     "complexity_ceiling": {
-        "max_flows_per_module": 7,  # Increased for new target types
-        "warning_threshold": 5,
-        "high_complexity_threshold": 7
+        "max_flows_per_module": 5,  # Reduced for refactored modules
+        "warning_threshold": 3,
+        "high_complexity_threshold": 5
     },
     "maintainer_concentration": {
         "warning_threshold": 50,  # 50% commits by single maintainer
@@ -720,24 +720,30 @@ class ConstitutionalDependencyValidator:
         return concentration_result
     
     def _find_delegation_files(self) -> List[str]:
-        """Find delegation-related files in the codebase."""
+        """Find all delegation-related files in the codebase."""
         delegation_files = []
         
-        # Common delegation file patterns
-        delegation_patterns = [
-            "**/delegation*.py",
-            "**/delegations*.py",
-            "**/*delegation*.py",
+        # Search patterns for delegation files
+        search_patterns = [
+            "backend/services/delegation.py",  # Legacy single file
+            "backend/services/delegation/*.py",  # New modular structure
             "backend/api/delegations.py",
-            "backend/services/delegation*.py",
-            "backend/models/delegation*.py",
-            "backend/core/delegation*.py"
+            "backend/models/delegation.py",
+            "backend/tests/delegation/*.py",
+            "backend/tests/perf/test_override_latency_fastpath.py"
         ]
         
-        for pattern in delegation_patterns:
+        for pattern in search_patterns:
             try:
-                files = list(Path(".").glob(pattern))
-                delegation_files.extend([str(f) for f in files if f.is_file()])
+                if pattern.endswith("*.py"):
+                    # Handle glob patterns
+                    files = Path(".").glob(pattern)
+                    delegation_files.extend([str(f) for f in files if f.is_file()])
+                else:
+                    # Handle specific files
+                    file_path = Path(pattern)
+                    if file_path.exists():
+                        delegation_files.append(str(file_path))
             except Exception as e:
                 print(f"Warning: Could not search pattern {pattern}: {e}")
         
@@ -757,7 +763,13 @@ class ConstitutionalDependencyValidator:
                 r'delegation.*endpoint',
                 r'delegation.*api',
                 r'delegation.*service',
-                r'delegation.*method'
+                r'delegation.*method',
+                # New patterns for refactored modules
+                r'class\s+\w*Delegation\w*',
+                r'async\s+def\s+\w+',  # Async methods in delegation modules
+                r'def\s+resolve_chain',  # Chain resolution methods
+                r'def\s+create_delegation',  # Creation methods
+                r'def\s+revoke_delegation',  # Revocation methods
             ]
             
             flow_count = 0
@@ -765,12 +777,36 @@ class ConstitutionalDependencyValidator:
                 matches = re.findall(pattern, content, re.IGNORECASE)
                 flow_count += len(matches)
             
-            # Also count class methods that might be delegation flows
-            class_pattern = r'class\s+\w*Delegation\w*'
-            if re.search(class_pattern, content, re.IGNORECASE):
-                method_pattern = r'def\s+\w+\s*\('
-                methods = re.findall(method_pattern, content)
-                flow_count += len(methods)
+            # Special handling for different module types
+            if "chain_resolution" in file_path:
+                # Pure functions - count static methods
+                static_method_pattern = r'@staticmethod\s*\n\s*def\s+\w+'
+                static_methods = re.findall(static_method_pattern, content)
+                flow_count += len(static_methods)
+            
+            elif "repository" in file_path:
+                # Repository methods - count async methods
+                async_method_pattern = r'async\s+def\s+\w+'
+                async_methods = re.findall(async_method_pattern, content)
+                flow_count += len(async_methods)
+            
+            elif "cache" in file_path:
+                # Cache methods - count async methods
+                async_method_pattern = r'async\s+def\s+\w+'
+                async_methods = re.findall(async_method_pattern, content)
+                flow_count += len(async_methods)
+            
+            elif "telemetry" in file_path:
+                # Telemetry methods - count static methods
+                static_method_pattern = r'@staticmethod\s*\n\s*def\s+\w+'
+                static_methods = re.findall(static_method_pattern, content)
+                flow_count += len(static_methods)
+            
+            elif "dispatch" in file_path:
+                # Dispatch methods - count async methods
+                async_method_pattern = r'async\s+def\s+\w+'
+                async_methods = re.findall(async_method_pattern, content)
+                flow_count += len(async_methods)
             
             return flow_count
             
