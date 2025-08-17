@@ -3,8 +3,8 @@ import InlineTraditionalForm from "../components/delegations/InlineTraditionalFo
 import InlineCommonsForm from "../components/delegations/InlineCommonsForm";
 import TransparencyPanel from "../components/delegations/TransparencyPanel";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
-import { trackComposerOpen, trackDelegationCreated, getMyAdoptionSnapshot, getCombinedSearch } from "../api/delegationsApi";
-import { AlertTriangle, AlertCircle, Search, User, Hash, ChevronDown, ChevronUp } from "lucide-react";
+import { trackComposerOpen, getMyAdoptionSnapshot, getCombinedSearch } from "../api/delegationsApi";
+import { AlertTriangle, AlertCircle, Search, User, Hash, ChevronDown } from "lucide-react";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 

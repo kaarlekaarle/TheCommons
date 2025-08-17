@@ -19,7 +19,6 @@ export default function InlineTraditionalForm({
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null);
   const [personQuery, setPersonQuery] = useState('');
   const [people, setPeople] = useState<PersonSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expiry, setExpiry] = useState(defaults?.termDate || '');
   const [warnings, setWarnings] = useState<DelegationWarnings>({});
@@ -44,7 +43,7 @@ export default function InlineTraditionalForm({
     if (!expiry) {
       setExpiry(defaultExpiry.toISOString().split('T')[0]);
     }
-  }, [expiry, defaultExpiry]);
+  }, [expiry]);
 
   // Search people
   useEffect(() => {
