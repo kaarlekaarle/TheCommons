@@ -27,9 +27,14 @@ export default function InlineCommonsForm({
   const [warnings, setWarnings] = useState<DelegationWarnings>({});
   const { success, error: showError } = useToast();
 
-  // Emit telemetry on mount
+  // Emit telemetry on mount and focus first input
   useEffect(() => {
     trackComposerOpen('commons');
+    // Focus the field search input when form opens
+    const fieldInput = document.querySelector('input[placeholder="Search for a field..."]') as HTMLInputElement;
+    if (fieldInput) {
+      fieldInput.focus();
+    }
   }, []);
 
   // Search fields

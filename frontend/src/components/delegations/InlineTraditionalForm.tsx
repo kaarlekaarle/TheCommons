@@ -29,9 +29,14 @@ export default function InlineTraditionalForm({
   const defaultExpiry = new Date();
   defaultExpiry.setFullYear(defaultExpiry.getFullYear() + 4);
 
-  // Emit telemetry on mount
+  // Emit telemetry on mount and focus first input
   useEffect(() => {
     trackComposerOpen('traditional');
+    // Focus the person search input when form opens
+    const personInput = document.querySelector('input[placeholder="Search for a person..."]') as HTMLInputElement;
+    if (personInput) {
+      personInput.focus();
+    }
   }, []);
 
   // Set default expiry if not provided
