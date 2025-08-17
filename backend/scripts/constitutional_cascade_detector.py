@@ -643,7 +643,7 @@ class ConstitutionalCascadeDetector:
             severity = signal["severity"].upper()
 
             if signal_id == "#2":
-                value = f"{signal['value_ms']}ms"
+                value = str(signal.get("value", 0)) + "ms"
             elif signal_id == "#3":
                 value = f"{signal['flows']}flows"
             elif signal_id == "#4":
@@ -737,9 +737,7 @@ class ConstitutionalCascadeDetector:
                         f"- **Note**: Latency snapshot stale (>24h); ignoring for blocking"
                     )
                 else:
-                    md.append(
-                        f"- **P95**: {signal.get('p95_ms', signal.get('value_ms', 0))}ms"
-                    )
+                    md.append("- **P95**: " + str(signal.get("p95_ms", signal.get("value", 0))) + "ms")
                     md.append(f"- **P99**: {signal.get('p99_ms', 0)}ms")
                     md.append(
                         f"- **Cache Hit Rate**: {signal.get('cache_hit_rate', 0)}%"

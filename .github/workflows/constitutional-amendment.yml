@@ -400,7 +400,7 @@ jobs:
 
         # Collect real override latency metrics
         python3 backend/scripts/collect_override_latency.py \
-          --output reports/override_latency_stats.json
+          --json-out reports/override_latency_stats.json
 
         # Collect complexity data from dependency validator
         python3 backend/scripts/constitutional_dependency_validator.py \
