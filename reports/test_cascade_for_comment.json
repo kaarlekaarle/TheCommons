@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-08-17T15:34:37.271715",
+  "summary": "CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency",
+  "exit_code": 10,
+  "cascade_results": [
+    {
+      "rule_id": "B",
+      "decision": "block",
+      "rationale": "Opacity + complexity",
+      "window_days": 7,
+      "triggered_signals": [
+        {
+          "id": "#2",
+          "severity": "critical",
+          "value_ms": 2100,
+          "ts": "2025-08-17T15:34:37.168883"
+        }
+      ],
+      "effective_mode": "enforce",
+      "branch": "main",
+      "ts": "2025-08-17T15:34:37.271669"
+    }
+  ],
+  "signals": [
+    {
+      "id": "#2",
+      "severity": "critical",
+      "value_ms": 2100,
+      "ts": "2025-08-17T15:34:37.168883"
+    },
+    {
+      "id": "#3",
+      "severity": "info",
+      "flows": 0,
+      "module": "delegations",
+      "ts": "2025-08-17T15:34:37.222142"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "max_todo_age_days": 7,
+  "max_todo_count": 10,
+  "require_ownership": true,
+  "pattern_analysis_enabled": true
+}

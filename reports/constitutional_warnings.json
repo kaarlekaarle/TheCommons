@@ -1,0 +1,300 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-17T14:01:48.897321",
+    "total_warnings": 11,
+    "sources_processed": [
+      "cdr_integration_cli",
+      "constitutional_health",
+      "amendment_db"
+    ],
+    "missing_sources": []
+  },
+  "summary": {
+    "total_warnings": 11,
+    "by_phase": {
+      "5.5": 7,
+      "6.4": 3,
+      "6.3": 1
+    },
+    "by_category": {
+      "alert_fatigue": 2,
+      "shortcut_accumulation": 1,
+      "cultural_drift": 1,
+      "recommendation": 2,
+      "community_impact": 1,
+      "implementation_complexity": 1,
+      "transparency_erosion": 1,
+      "philosophical_integrity": 1,
+      "maintainer_burden": 1
+    },
+    "by_severity": {
+      "high": 1,
+      "medium": 6,
+      "warning": 4
+    },
+    "by_owner": {
+      "": 5,
+      "@alice": 1,
+      "@bob": 1,
+      "@charlie": 1,
+      "@diana": 1,
+      "@team": 1,
+      "@eve": 1
+    },
+    "core_principles_touched": 4,
+    "promote_to_fail_candidates": [
+      {
+        "summary": "Delegation chain visibility decreased",
+        "core_principles": [
+          "power_circulation",
+          "transparency"
+        ],
+        "current_severity": "medium"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "timestamp": "2025-08-17T13:51:59.877420",
+      "phase": "5.5",
+      "component": "cdr_integration_cli",
+      "category": "alert_fatigue",
+      "severity": "high",
+      "summary": "Alert Fatigue drift detected",
+      "details": "2 constitutional alerts suppressed",
+      "pr": "",
+      "commit": "",
+      "files": [],
+      "owner": "",
+      "mitigation_ticket": "",
+      "status": "open",
+      "impact_budget_points": 4,
+      "hard_or_soft": "hard",
+      "source": "local",
+      "tool": "cdr_integration_cli",
+      "core_principles_touched": []
+    },
+    {
+      "timestamp": "2025-08-17T13:51:59.877420",
+      "phase": "5.5",
+      "component": "cdr_integration_cli",
+      "category": "shortcut_accumulation",
+      "severity": "medium",
+      "summary": "Shortcut Accumulation drift detected",
+      "details": "3 constitutional feature flags stagnant",
+      "pr": "",
+      "commit": "",
+      "files": [],
+      "owner": "",
+      "mitigation_ticket": "",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "local",
+      "tool": "cdr_integration_cli",
+      "core_principles_touched": []
+    },
+    {
+      "timestamp": "2025-08-17T13:51:59.877420",
+      "phase": "5.5",
+      "component": "cdr_integration_cli",
+      "category": "cultural_drift",
+      "severity": "medium",
+      "summary": "Cultural Drift drift detected",
+      "details": "Constitutional mentions in reviews declined by 25.0%",
+      "pr": "",
+      "commit": "",
+      "files": [],
+      "owner": "",
+      "mitigation_ticket": "",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "local",
+      "tool": "cdr_integration_cli",
+      "core_principles_touched": []
+    },
+    {
+      "timestamp": "2025-08-17T13:51:59.877420",
+      "phase": "5.5",
+      "component": "cdr_integration_cli",
+      "category": "recommendation",
+      "severity": "medium",
+      "summary": "drift_detection recommendation",
+      "details": "Review and reactivate suppressed constitutional alerts",
+      "pr": "",
+      "commit": "",
+      "files": [],
+      "owner": "",
+      "mitigation_ticket": "",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "local",
+      "tool": "cdr_integration_cli",
+      "core_principles_touched": []
+    },
+    {
+      "timestamp": "2025-08-17T13:51:59.877420",
+      "phase": "5.5",
+      "component": "cdr_integration_cli",
+      "category": "recommendation",
+      "severity": "medium",
+      "summary": "transparency_dashboard recommendation",
+      "details": "Review and reactivate suppressed constitutional alerts",
+      "pr": "",
+      "commit": "",
+      "files": [],
+      "owner": "",
+      "mitigation_ticket": "",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "local",
+      "tool": "cdr_integration_cli",
+      "core_principles_touched": []
+    },
+    {
+      "timestamp": "2025-08-15T14:02:48.637982",
+      "phase": "6.4",
+      "component": "constitutional_dependency_validator",
+      "category": "community_impact",
+      "severity": "warning",
+      "summary": "Complexity increased for Delegation API surface",
+      "details": "Added flows increased maintainer spread risk to 28%",
+      "pr": "#421",
+      "commit": "a1b2c3d",
+      "files": [
+        "backend/api/delegations.py",
+        "backend/services/delegation.py"
+      ],
+      "owner": "@alice",
+      "mitigation_ticket": "TC-2025-001",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "ci",
+      "tool": "constitutional_dependency_validator.py",
+      "core_principles_touched": [
+        "delegation_concentration"
+      ]
+    },
+    {
+      "timestamp": "2025-08-16T14:02:48.637997",
+      "phase": "6.3",
+      "component": "constitutional_feasibility_validator",
+      "category": "implementation_complexity",
+      "severity": "warning",
+      "summary": "High complexity in delegation chain resolution",
+      "details": "Multi-hop delegation resolution exceeds recommended complexity threshold",
+      "pr": "#422",
+      "commit": "e4f5g6h",
+      "files": [
+        "backend/core/delegation.py"
+      ],
+      "owner": "@bob",
+      "mitigation_ticket": "",
+      "status": "in-progress",
+      "impact_budget_points": 2,
+      "hard_or_soft": "soft",
+      "source": "ci",
+      "tool": "constitutional_feasibility_validator.py",
+      "core_principles_touched": []
+    },
+    {
+      "timestamp": "2025-08-17T08:02:48.638000",
+      "phase": "5.5",
+      "component": "constitutional_drift_detector",
+      "category": "transparency_erosion",
+      "severity": "medium",
+      "summary": "Delegation chain visibility decreased",
+      "details": "Override latency increased to 2.3s, exceeding 2s threshold",
+      "pr": "#423",
+      "commit": "i7j8k9l",
+      "files": [
+        "backend/api/delegations.py"
+      ],
+      "owner": "@charlie",
+      "mitigation_ticket": "TC-2025-002",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "ci",
+      "tool": "constitutional_drift_detector.py",
+      "core_principles_touched": [
+        "power_circulation",
+        "transparency"
+      ]
+    },
+    {
+      "timestamp": "2025-08-17T11:02:48.638003",
+      "phase": "6.4",
+      "component": "constitutional_principle_matrix",
+      "category": "philosophical_integrity",
+      "severity": "warning",
+      "summary": "Potential hierarchy introduction in delegation flow",
+      "details": "New 'super-delegate' pattern detected in delegation chain",
+      "pr": "#424",
+      "commit": "m0n1o2p",
+      "files": [
+        "backend/models/delegation.py"
+      ],
+      "owner": "@diana",
+      "mitigation_ticket": "TC-2025-003",
+      "status": "open",
+      "impact_budget_points": 4,
+      "hard_or_soft": "hard",
+      "source": "ci",
+      "tool": "constitutional_principle_matrix.py",
+      "core_principles_touched": [
+        "anti_hierarchy",
+        "delegation_concentration"
+      ]
+    },
+    {
+      "timestamp": "2025-08-17T13:02:48.638007",
+      "phase": "5.5",
+      "component": "constitutional_alert_governance",
+      "category": "alert_fatigue",
+      "severity": "medium",
+      "summary": "Constitutional alert response rate declining",
+      "details": "Only 65% of constitutional alerts responded to within 24h",
+      "pr": "",
+      "commit": "",
+      "files": [],
+      "owner": "@team",
+      "mitigation_ticket": "",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "local",
+      "tool": "constitutional_alert_governance.py",
+      "core_principles_touched": []
+    },
+    {
+      "timestamp": "2025-08-17T14:02:48.638010",
+      "phase": "6.4",
+      "component": "constitutional_dependency_validator",
+      "category": "maintainer_burden",
+      "severity": "warning",
+      "summary": "High maintainer concentration in delegation module",
+      "details": "75% of delegation-related commits by single maintainer",
+      "pr": "#425",
+      "commit": "q3r4s5t",
+      "files": [
+        "backend/core/delegation.py",
+        "backend/api/delegations.py"
+      ],
+      "owner": "@eve",
+      "mitigation_ticket": "TC-2025-004",
+      "status": "open",
+      "impact_budget_points": 3,
+      "hard_or_soft": "soft",
+      "source": "ci",
+      "tool": "constitutional_dependency_validator.py",
+      "core_principles_touched": [
+        "delegation_concentration"
+      ]
+    }
+  ]
+}

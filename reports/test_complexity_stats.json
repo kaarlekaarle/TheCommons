@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-08-17T15:34:28.965304",
+  "modules": {
+    "test_delegation_complexity_warning": 107,
+    "test_delegation_integration": 55,
+    "test_concurrent_delegations": 7,
+    "test_delegation_management": 9,
+    "test_multiple_delegations": 63,
+    "delegation": 1,
+    "test_delegation_api": 9,
+    "test_delegation_cycle": 7,
+    "test_delegation_valid_amendment": 10,
+    "test_delegation_chain": 39,
+    "test_delegation_super_delegate_violation": 6,
+    "test_delegation_stats_contract": 13,
+    "test_delegation": 97,
+    "delegations": 17,
+    "test_delegation_chain_offline": 39
+  },
+  "total_flows": 479,
+  "files_analyzed": 28
+}

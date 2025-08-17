@@ -35,3 +35,12 @@ export interface RemoveDelegationRequest {
   scope: "global" | "poll";
   poll_id?: string;
 }
+
+export interface DomainDelegation {
+  domainId: string;
+  domainName: string;
+  target: { kind: 'person'; id: string; name: string };
+  status: string[];
+  expiresAt?: string;
+  anonymity?: boolean;
+}

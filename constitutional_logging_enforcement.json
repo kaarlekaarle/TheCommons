@@ -1,0 +1,6 @@
+{
+  "minimum_logging_percent": 95.0,
+  "alert_threshold": 90.0,
+  "completeness_monitoring": true,
+  "pattern_analysis_enabled": true
+}

@@ -16,7 +16,21 @@ from backend.models.value import Value
 from backend.models.vote import Vote
 
 __all__ = [
-    "User", "Poll", "Option", "Vote", "Delegation", "DelegationMode", 
-    "Field", "Institution", "InstitutionKind", "ActivityLog", "Comment", 
-    "CommentReaction", "ReactionType", "Label", "poll_labels", "Value", "Idea"
+    "User",
+    "Poll",
+    "Option",
+    "Vote",
+    "Delegation",
+    "DelegationMode",
+    "Field",
+    "Institution",
+    "InstitutionKind",
+    "ActivityLog",
+    "Comment",
+    "CommentReaction",
+    "ReactionType",
+    "Label",
+    "poll_labels",
+    "Value",
+    "Idea",
 ]

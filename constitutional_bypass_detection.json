@@ -1,0 +1,12 @@
+{
+  "detection_patterns": [
+    "# bypass.*constitutional",
+    "# skip.*constitutional",
+    "# temporary.*exception",
+    "constitutional.*disabled",
+    "guardrail.*bypass"
+  ],
+  "max_bypass_duration_hours": 24,
+  "alert_on_detection": true,
+  "pattern_analysis_enabled": true
+}

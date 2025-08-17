@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
-from sqlalchemy import and_, delete, desc, func, or_, select, text, bindparam
+from sqlalchemy import and_, bindparam, delete, desc, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.exceptions import ResourceNotFoundError
@@ -17,23 +17,23 @@ from backend.core.exceptions.delegation import (
     InvalidDelegationPeriodError,
     SelfDelegationError,
 )
+from backend.core.logging_config import get_logger
 from backend.models.delegation import Delegation, DelegationMode
+from backend.models.delegation_stats import DelegationStats
 from backend.models.field import Field
 from backend.models.institution import Institution
 from backend.models.vote import Vote
-from backend.core.logging_config import get_logger
-from backend.models.delegation_stats import DelegationStats
 
 logger = get_logger(__name__)
 
 
 class DelegationTarget:
     """Represents a delegation target with type and ID."""
-    
+
     def __init__(self, target_type: str, target_id: UUID):
         self.type = target_type
         self.id = target_id
-    
+
     def __repr__(self) -> str:
         return f"DelegationTarget(type='{self.type}', id='{self.id}')"
 
@@ -44,6 +44,7 @@ class DelegationService:
         self.stats_cache_ttl = timedelta(minutes=5)
         # Import here to avoid circular dependency with StatsCalculationTask
         from backend.core.background_tasks import StatsCalculationTask
+
         self.stats_task = StatsCalculationTask(db, self)
 
     async def create_delegation(
@@ -98,18 +99,20 @@ class DelegationService:
         # Set default dates if not provided
         if start_date is None:
             start_date = datetime.utcnow()
-        
+
         # Handle legacy mode term end date
         if mode == DelegationMode.LEGACY_FIXED_TERM:
             if legacy_term_ends_at is None:
-                legacy_term_ends_at = start_date + timedelta(days=4*365)  # 4 years
-            elif legacy_term_ends_at > start_date + timedelta(days=4*365):
+                legacy_term_ends_at = start_date + timedelta(days=4 * 365)  # 4 years
+            elif legacy_term_ends_at > start_date + timedelta(days=4 * 365):
                 raise InvalidDelegationPeriodError(
                     message="Legacy term cannot exceed 4 years",
                     details={
                         "start_date": start_date.isoformat(),
                         "legacy_term_ends_at": legacy_term_ends_at.isoformat(),
-                        "max_allowed": (start_date + timedelta(days=4*365)).isoformat(),
+                        "max_allowed": (
+                            start_date + timedelta(days=4 * 365)
+                        ).isoformat(),
                     },
                 )
 
@@ -139,7 +142,9 @@ class DelegationService:
 
         # Check for circular delegation and depth limits
         try:
-            if await self._would_create_circular_delegation(delegator_id, delegatee_id, poll_id):
+            if await self._would_create_circular_delegation(
+                delegator_id, delegatee_id, poll_id
+            ):
                 raise CircularDelegationError(str(delegator_id), str(delegatee_id))
         except DelegationDepthExceededError as e:
             # Re-raise as DelegationError to match test expectation
@@ -160,28 +165,32 @@ class DelegationService:
             or_(
                 # New delegation starts during existing one
                 and_(
-                    Delegation.start_date <= bindparam('start_date'),
+                    Delegation.start_date <= bindparam("start_date"),
                     or_(
                         Delegation.end_date.is_(None),
-                        Delegation.end_date > bindparam('start_date'),
+                        Delegation.end_date > bindparam("start_date"),
                     ),
                 ),
                 # New delegation ends during existing one
                 and_(
-                    Delegation.start_date <= bindparam('end_date') if end_date else now,
+                    Delegation.start_date <= bindparam("end_date") if end_date else now,
                     or_(
                         Delegation.end_date.is_(None),
-                        Delegation.end_date > bindparam('end_date') if end_date else now,
+                        (
+                            Delegation.end_date > bindparam("end_date")
+                            if end_date
+                            else now
+                        ),
                     ),
                 ),
                 # New delegation completely contains existing one
                 and_(
-                    Delegation.start_date >= bindparam('start_date'),
+                    Delegation.start_date >= bindparam("start_date"),
                     or_(
                         Delegation.end_date.is_(None),
                         and_(
                             end_date is not None,
-                            Delegation.end_date <= bindparam('end_date'),
+                            Delegation.end_date <= bindparam("end_date"),
                         ),
                     ),
                 ),
@@ -193,36 +202,36 @@ class DelegationService:
             conditions.append(Delegation.poll_id == poll_id)
         else:
             conditions.append(Delegation.poll_id.is_(None))
-            
+
         if label_id is not None:
             conditions.append(Delegation.label_id == label_id)
         else:
             conditions.append(Delegation.label_id.is_(None))
-            
+
         if field_id is not None:
             conditions.append(Delegation.field_id == field_id)
         else:
             conditions.append(Delegation.field_id.is_(None))
-            
+
         if institution_id is not None:
             conditions.append(Delegation.institution_id == institution_id)
         else:
             conditions.append(Delegation.institution_id.is_(None))
-            
+
         if value_id is not None:
             conditions.append(Delegation.value_id == value_id)
         else:
             conditions.append(Delegation.value_id.is_(None))
-            
+
         if idea_id is not None:
             conditions.append(Delegation.idea_id == idea_id)
         else:
             conditions.append(Delegation.idea_id.is_(None))
 
         query = select(Delegation).where(and_(*conditions))
-        params = {'start_date': start_date}
+        params = {"start_date": start_date}
         if end_date:
-            params['end_date'] = end_date
+            params["end_date"] = end_date
         result = await self.db.execute(query.params(**params))
         existing = result.scalar_one_or_none()
 
@@ -234,7 +243,9 @@ class DelegationService:
                     "existing_delegation_id": str(existing.id),
                     "mode": existing.mode,
                     "start_date": existing.start_date.isoformat(),
-                    "end_date": existing.end_date.isoformat() if existing.end_date else None,
+                    "end_date": (
+                        existing.end_date.isoformat() if existing.end_date else None
+                    ),
                 },
             )
 
@@ -271,7 +282,7 @@ class DelegationService:
                 "delegatee_id": str(delegatee_id),
                 "mode": mode,
                 "target_type": delegation.target_type,
-            }
+            },
         )
 
         return delegation
@@ -286,7 +297,7 @@ class DelegationService:
         """Validate mode-specific constraints."""
         if mode == DelegationMode.LEGACY_FIXED_TERM:
             if start_date and legacy_term_ends_at:
-                max_allowed = start_date + timedelta(days=4*365)
+                max_allowed = start_date + timedelta(days=4 * 365)
                 if legacy_term_ends_at > max_allowed:
                     raise InvalidDelegationPeriodError(
                         message="Legacy term cannot exceed 4 years from start date",
@@ -322,13 +333,15 @@ class DelegationService:
                 "delegation_id": str(delegation_id),
                 "mode": delegation.mode,
                 "target_type": delegation.target_type,
-            }
+            },
         )
 
         # Trigger stats recalculation
         await self.stats_task.calculate_stats(delegation.poll_id)
 
-    async def revoke_user_delegation(self, delegator_id: UUID, poll_id: Optional[UUID] = None) -> None:
+    async def revoke_user_delegation(
+        self, delegator_id: UUID, poll_id: Optional[UUID] = None
+    ) -> None:
         """Revoke a user's active delegation.
 
         Args:
@@ -340,7 +353,9 @@ class DelegationService:
         """
         delegation = await self.get_active_delegation(delegator_id, poll_id)
         if not delegation:
-            raise DelegationNotFoundError(f"No active delegation found for user {delegator_id}")
+            raise DelegationNotFoundError(
+                f"No active delegation found for user {delegator_id}"
+            )
 
         await self.revoke_delegation(delegation.id)
 
@@ -349,7 +364,7 @@ class DelegationService:
     ) -> Optional[Delegation]:
         """Get active delegation for a user and optional poll."""
         now = datetime.utcnow()
-        
+
         # Base conditions for active delegation
         conditions = [
             Delegation.delegator_id == user_id,
@@ -394,10 +409,10 @@ class DelegationService:
         max_depth: int = 10,
     ) -> List[Delegation]:
         """Resolve delegation chain for a user with mode-aware resolution.
-        
+
         This method respects the constitutional principle that user overrides
         must stop chain resolution immediately, regardless of delegation mode.
-        
+
         Args:
             user_id: ID of the user to resolve chain for
             poll_id: Optional poll ID for poll-specific resolution
@@ -407,26 +422,23 @@ class DelegationService:
             value_id: Optional value ID for value-specific resolution
             idea_id: Optional idea ID for idea-specific resolution
             max_depth: Maximum chain depth to prevent infinite loops
-            
+
         Returns:
             List[Delegation]: Chain of delegations ending at the final delegatee
         """
         chain = []
         current_user_id = user_id
         depth = 0
-        
+
         while depth < max_depth:
-            # Find active delegation for current user
+            # Lean query: select only needed columns for chain resolution
+            # Uses the new composite index for fast lookup
             conditions = [
                 Delegation.delegator_id == current_user_id,
                 Delegation.is_deleted == False,
                 Delegation.revoked_at.is_(None),
-                or_(
-                    Delegation.end_date.is_(None),
-                    Delegation.end_date > func.now(),
-                ),
             ]
-            
+
             # Add target-specific conditions
             if poll_id is not None:
                 conditions.append(Delegation.poll_id == poll_id)
@@ -442,35 +454,83 @@ class DelegationService:
                 conditions.append(Delegation.idea_id == idea_id)
             else:
                 # Global delegation (no specific target)
-                conditions.extend([
-                    Delegation.poll_id.is_(None),
-                    Delegation.label_id.is_(None),
-                    Delegation.field_id.is_(None),
-                    Delegation.institution_id.is_(None),
-                    Delegation.value_id.is_(None),
-                    Delegation.idea_id.is_(None),
-                ])
-            
-            # Order by mode priority: hybrid_seed (global fallback) first, then specific
+                conditions.extend(
+                    [
+                        Delegation.poll_id.is_(None),
+                        Delegation.label_id.is_(None),
+                        Delegation.field_id.is_(None),
+                        Delegation.institution_id.is_(None),
+                        Delegation.value_id.is_(None),
+                        Delegation.idea_id.is_(None),
+                    ]
+                )
+
+            # Add active date conditions
+            conditions.extend(
+                [
+                    or_(
+                        Delegation.end_date.is_(None),
+                        Delegation.end_date > func.now(),
+                    ),
+                    or_(
+                        Delegation.start_date.is_(None),
+                        Delegation.start_date <= func.now(),
+                    ),
+                ]
+            )
+
+            # Lean query: select only columns needed for chain resolution
             query = (
-                select(Delegation)
+                select(
+                    Delegation.id,
+                    Delegation.delegator_id,
+                    Delegation.delegatee_id,
+                    Delegation.mode,
+                    Delegation.poll_id,
+                    Delegation.label_id,
+                    Delegation.field_id,
+                    Delegation.institution_id,
+                    Delegation.value_id,
+                    Delegation.idea_id,
+                    Delegation.start_date,
+                    Delegation.end_date,
+                    Delegation.legacy_term_ends_at,
+                    Delegation.created_at,
+                )
                 .where(and_(*conditions))
                 .order_by(
                     # Hybrid seed (global fallback) first, then specific delegations
                     Delegation.mode == DelegationMode.HYBRID_SEED.desc(),
-                    Delegation.created_at.asc()
+                    Delegation.created_at.asc(),
                 )
                 .limit(1)
             )
-            
+
             result = await self.db.execute(query)
-            delegation = result.scalar_one_or_none()
-            
-            if not delegation:
+            delegation_row = result.fetchone()
+
+            if not delegation_row:
                 break  # No active delegation found
-                
+
+            # Convert row to Delegation object for chain consistency
+            delegation = Delegation()
+            delegation.id = delegation_row.id
+            delegation.delegator_id = delegation_row.delegator_id
+            delegation.delegatee_id = delegation_row.delegatee_id
+            delegation.mode = delegation_row.mode
+            delegation.poll_id = delegation_row.poll_id
+            delegation.label_id = delegation_row.label_id
+            delegation.field_id = delegation_row.field_id
+            delegation.institution_id = delegation_row.institution_id
+            delegation.value_id = delegation_row.value_id
+            delegation.idea_id = delegation_row.idea_id
+            delegation.start_date = delegation_row.start_date
+            delegation.end_date = delegation_row.end_date
+            delegation.legacy_term_ends_at = delegation_row.legacy_term_ends_at
+            delegation.created_at = delegation_row.created_at
+
             chain.append(delegation)
-            
+
             # Check if this delegation is expired (legacy mode)
             if delegation.is_expired:
                 logger.warning(
@@ -480,17 +540,25 @@ class DelegationService:
                         "delegator_id": str(delegation.delegator_id),
                         "delegatee_id": str(delegation.delegatee_id),
                         "mode": delegation.mode,
-                    }
+                    },
                 )
                 break  # Stop at expired delegation
-                
+
             # Move to next delegatee
             current_user_id = delegation.delegatee_id
             depth += 1
-            
+
             # Constitutional protection: stop immediately on user override
             # This ensures user intent supremacy regardless of delegation mode
-            if await self._has_user_override(current_user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id):
+            if await self._has_user_override(
+                current_user_id,
+                poll_id,
+                label_id,
+                field_id,
+                institution_id,
+                value_id,
+                idea_id,
+            ):
                 logger.info(
                     f"Stopping chain resolution due to user override for {current_user_id}",
                     extra={
@@ -498,13 +566,15 @@ class DelegationService:
                         "poll_id": str(poll_id) if poll_id else None,
                         "label_id": str(label_id) if label_id else None,
                         "field_id": str(field_id) if field_id else None,
-                        "institution_id": str(institution_id) if institution_id else None,
+                        "institution_id": (
+                            str(institution_id) if institution_id else None
+                        ),
                         "value_id": str(value_id) if value_id else None,
                         "idea_id": str(idea_id) if idea_id else None,
-                    }
+                    },
                 )
                 break
-        
+
         if depth >= max_depth:
             logger.warning(
                 f"Delegation chain depth limit reached for user {user_id}",
@@ -512,9 +582,9 @@ class DelegationService:
                     "user_id": str(user_id),
                     "max_depth": max_depth,
                     "chain_length": len(chain),
-                }
+                },
             )
-            
+
         return chain
 
     async def _has_user_override(
@@ -528,7 +598,7 @@ class DelegationService:
         idea_id: Optional[UUID] = None,
     ) -> bool:
         """Check if user has an override (direct vote/action) for the given context.
-        
+
         This implements the constitutional principle that user overrides
         must stop delegation chain resolution immediately.
         """
@@ -619,24 +689,26 @@ class DelegationService:
 
         return formatted_stats
 
-    async def _get_cached_stats(
-        self, poll_id: Optional[UUID] = None
-    ) -> Optional[Any]:
+    async def _get_cached_stats(self, poll_id: Optional[UUID] = None) -> Optional[Any]:
         """Get cached delegation stats if they exist and are still valid."""
-        query = select(DelegationStats).where(
-            DelegationStats.poll_id == poll_id
-        )
+        query = select(DelegationStats).where(DelegationStats.poll_id == poll_id)
         result = await self.db.execute(query)
         stats = result.scalar_one_or_none()
         if not stats:
             return None
         # Check if cache is still valid
         now = datetime.utcnow()
-        if stats.calculated_at and (now - stats.calculated_at).total_seconds() > self.stats_cache_ttl.total_seconds():
+        if (
+            stats.calculated_at
+            and (now - stats.calculated_at).total_seconds()
+            > self.stats_cache_ttl.total_seconds()
+        ):
             return None
         return stats
 
-    def _format_stats(self, stats: Dict[str, Any], poll_id: Optional[UUID] = None) -> Dict[str, Any]:
+    def _format_stats(
+        self, stats: Dict[str, Any], poll_id: Optional[UUID] = None
+    ) -> Dict[str, Any]:
         """Format delegation statistics with type coercion and defaults.
 
         Args:
@@ -646,17 +718,19 @@ class DelegationService:
         Returns:
             Dict[str, Any]: Formatted statistics with complete structure and correct types
         """
-        def as_int(v): 
-            try: 
+
+        def as_int(v):
+            try:
                 return int(v)
-            except Exception: 
+            except Exception:
                 return 0
+
         def as_float(v):
-            try: 
+            try:
                 return float(v)
-            except Exception: 
+            except Exception:
                 return 0.0
-        
+
         top = stats.get("top_delegatees") or []
         # normalize top_delegatees to list[tuple[str,int]]
         norm_top = []
@@ -695,7 +769,9 @@ class DelegationService:
             poll_id=poll_id,
             active_delegations=stats["active_delegations"],
             avg_chain_length=stats["avg_chain_length"],
-            longest_chain=stats["max_chain_length"],  # Use max_chain_length from new structure
+            longest_chain=stats[
+                "max_chain_length"
+            ],  # Use max_chain_length from new structure
             top_delegatees=stats["top_delegatees"],
             calculated_at=datetime.utcnow(),
         )
@@ -713,7 +789,9 @@ class DelegationService:
         Returns:
             Dict[str, Any]: Complete statistics with all required fields
         """
-        from sqlalchemy import distinct, func as sql_func
+        from sqlalchemy import distinct
+        from sqlalchemy import func as sql_func
+
         from backend.models.user import User
 
         # For testing purposes, simplify the conditions to just check if delegation exists
@@ -734,18 +812,24 @@ class DelegationService:
         active_delegations = result.scalar() or 0
 
         # 2. Unique delegators count
-        delegators_query = select(sql_func.count(distinct(Delegation.delegator_id))).where(and_(*conditions))
+        delegators_query = select(
+            sql_func.count(distinct(Delegation.delegator_id))
+        ).where(and_(*conditions))
         result = await self.db.execute(delegators_query)
         unique_delegators = result.scalar() or 0
 
         # 3. Unique delegatees count
-        delegatees_query = select(sql_func.count(distinct(Delegation.delegatee_id))).where(and_(*conditions))
+        delegatees_query = select(
+            sql_func.count(distinct(Delegation.delegatee_id))
+        ).where(and_(*conditions))
         result = await self.db.execute(delegatees_query)
         unique_delegatees = result.scalar() or 0
 
         # 4. Top delegatees (most delegated to)
         top_delegatees_query = (
-            select(Delegation.delegatee_id, sql_func.count(Delegation.id).label('count'))
+            select(
+                Delegation.delegatee_id, sql_func.count(Delegation.id).label("count")
+            )
             .where(and_(*conditions))
             .group_by(Delegation.delegatee_id)
             .order_by(sql_func.count(Delegation.id).desc())
@@ -759,12 +843,7 @@ class DelegationService:
         orphaned_delegator_query = (
             select(sql_func.count(Delegation.id))
             .outerjoin(User, Delegation.delegator_id == User.id)
-            .where(
-                and_(
-                    *conditions,
-                    User.id.is_(None)  # delegator doesn't exist
-                )
-            )
+            .where(and_(*conditions, User.id.is_(None)))  # delegator doesn't exist
         )
         result = await self.db.execute(orphaned_delegator_query)
         orphaned_delegators = result.scalar() or 0
@@ -772,12 +851,7 @@ class DelegationService:
         orphaned_delegatee_query = (
             select(sql_func.count(Delegation.id))
             .outerjoin(User, Delegation.delegatee_id == User.id)
-            .where(
-                and_(
-                    *conditions,
-                    User.id.is_(None)  # delegatee doesn't exist
-                )
-            )
+            .where(and_(*conditions, User.id.is_(None)))  # delegatee doesn't exist
         )
         result = await self.db.execute(orphaned_delegatee_query)
         orphaned_delegatees = result.scalar() or 0
@@ -805,9 +879,7 @@ class DelegationService:
             for delegator_id in sample_delegators:
                 try:
                     chain = await self.resolve_delegation_chain(
-                        delegator_id,
-                        poll_id,
-                        max_depth=10
+                        delegator_id, poll_id, max_depth=10
                     )
                     chain_length = len(chain) - 1  # Subtract 1 to exclude the delegator
                     chain_lengths.append(chain_length)
@@ -834,7 +906,9 @@ class DelegationService:
             "top_delegatees": top_delegatees,
         }
 
-    async def get_delegation_stats(self, poll_id: Optional[UUID] = None) -> Dict[str, Any]:
+    async def get_delegation_stats(
+        self, poll_id: Optional[UUID] = None
+    ) -> Dict[str, Any]:
         """Get formatted delegation statistics.
 
         Args:
@@ -864,15 +938,15 @@ class DelegationService:
 
     async def expire_legacy_delegations(self) -> Dict[str, Any]:
         """Expire legacy fixed-term delegations that have passed their term end date.
-        
+
         This job runs periodically to automatically expire legacy delegations
         and generate nudges for renewal or remapping.
-        
+
         Returns:
             Dict[str, Any]: Summary of expired delegations and nudges generated
         """
         now = datetime.utcnow()
-        
+
         # Find expired legacy delegations
         expired_query = select(Delegation).where(
             and_(
@@ -882,24 +956,24 @@ class DelegationService:
                 Delegation.revoked_at.is_(None),
             )
         )
-        
+
         result = await self.db.execute(expired_query)
         expired_delegations = result.scalars().all()
-        
+
         expired_count = 0
         nudges_generated = 0
-        
+
         for delegation in expired_delegations:
             # Mark as expired by setting end_date to legacy_term_ends_at
             delegation.end_date = delegation.legacy_term_ends_at
             await self.db.flush()
-            
+
             expired_count += 1
-            
+
             # Generate renewal/remap nudge
             await self._generate_legacy_expiry_nudge(delegation)
             nudges_generated += 1
-            
+
             logger.info(
                 f"Expired legacy delegation {delegation.id}",
                 extra={
@@ -907,9 +981,9 @@ class DelegationService:
                     "delegator_id": str(delegation.delegator_id),
                     "delegatee_id": str(delegation.delegatee_id),
                     "legacy_term_ends_at": delegation.legacy_term_ends_at.isoformat(),
-                }
+                },
             )
-        
+
         return {
             "expired_count": expired_count,
             "nudges_generated": nudges_generated,
@@ -918,7 +992,7 @@ class DelegationService:
 
     async def _generate_legacy_expiry_nudge(self, delegation: Delegation) -> None:
         """Generate a nudge for legacy delegation expiry.
-        
+
         This creates a constitutional nudge suggesting the user consider
         moving from legacy mode to hybrid or flexible domain mode.
         """
@@ -931,5 +1005,5 @@ class DelegationService:
                 "delegator_id": str(delegation.delegator_id),
                 "nudge_type": "legacy_expiry",
                 "suggestion": "Consider moving from legacy mode to hybrid or flexible domain mode",
-            }
+            },
         )

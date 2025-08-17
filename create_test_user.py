@@ -21,31 +21,31 @@ async def create_test_user():
     async with async_session_maker() as session:
         # Check if user already exists
         from sqlalchemy import select
-        result = await session.execute(select(User).where(User.username == "testuser"))
+        result = await session.execute(select(User).where(User.username == "mayor"))
         existing_user = result.scalar_one_or_none()
         
         if existing_user:
-            print("Test user already exists!")
+            print("Mayor user already exists!")
             print(f"Username: {existing_user.username}")
             print(f"Email: {existing_user.email}")
-            print("Password: password")
+            print("Password: mayor123")
             return
         
-        # Create new test user
+        # Create new mayor user
         test_user = User(
-            email="test@example.com",
-            username="testuser",
-            hashed_password=get_password_hash("password"),
+            email="mayor@springfield.example",
+            username="mayor",
+            hashed_password=get_password_hash("mayor123"),
             is_active=True
         )
         
         session.add(test_user)
         await session.commit()
         
-        print("Test user created successfully!")
-        print("Username: testuser")
-        print("Email: test@example.com")
-        print("Password: password")
+        print("Mayor user created successfully!")
+        print("Username: mayor")
+        print("Email: mayor@springfield.example")
+        print("Password: mayor123")
         print("\nYou can now log in at http://localhost:5173/auth")
 
 

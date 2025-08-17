@@ -1,0 +1,6 @@
+{
+  "minimum_awareness_percent": 80.0,
+  "alert_threshold": 75.0,
+  "reinforcement_enabled": true,
+  "pattern_analysis_enabled": true
+}

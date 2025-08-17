@@ -1,0 +1,6 @@
+{
+  "max_skip_duration_hours": 48,
+  "require_approval": true,
+  "escalation_threshold": 3,
+  "monitoring_enabled": true
+}

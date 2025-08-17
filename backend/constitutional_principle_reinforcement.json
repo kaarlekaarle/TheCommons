@@ -1,0 +1,6 @@
+{
+  "reinforcement_interval_days": 7,
+  "discussion_encouragement": true,
+  "drift_detection_enabled": true,
+  "pattern_analysis_enabled": true
+}

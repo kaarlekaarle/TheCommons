@@ -1,0 +1,6 @@
+{
+  "max_suppression_duration_hours": 24,
+  "require_approval": true,
+  "escalation_threshold": 2,
+  "monitoring_enabled": true
+}

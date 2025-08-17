@@ -14,6 +14,7 @@ import TopicPage from './pages/TopicPage';
 import TopicsRouteWrapper from './components/TopicsRouteWrapper';
 import ActivityFeed from './components/ActivityFeed';
 import DebugOverlay from './components/DebugOverlay';
+const DelegationsPage = React.lazy(() => import('./pages/DelegationsPage'));
 import { flags } from './config/flags';
 
 // Lazy load the WhyTwoLevels page
@@ -208,6 +209,7 @@ export default function App() {
                     <Route path="/proposals/new" element={<ProposalNew />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/activity" element={<ActivityFeed />} />
+                    <Route path="/delegations" element={<DelegationsPage />} />
                     <Route path="/t/:slug" element={<TopicPage />} />
                     <Route path="/topics" element={<TopicsRouteWrapper />} />
                     <Route path="/topics/disabled" element={<TopicsRouteWrapper />} />

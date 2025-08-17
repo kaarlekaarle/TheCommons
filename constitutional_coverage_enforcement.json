@@ -1,0 +1,6 @@
+{
+  "minimum_coverage_percent": 90.0,
+  "regression_threshold": 5.0,
+  "alert_on_decline": true,
+  "block_on_regression": true
+}

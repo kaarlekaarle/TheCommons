@@ -1,0 +1,16 @@
+# Delegation system requires 2 reviewers to prevent maintainer concentration
+backend/**/delegation* @alice @bob @charlie
+backend/services/delegation* @alice @bob @charlie
+backend/api/delegations.py @alice @bob @charlie
+backend/models/delegation* @alice @bob @charlie
+backend/core/delegation* @alice @bob @charlie
+
+# Constitutional enforcement files
+backend/scripts/constitutional_* @alice @bob @charlie
+backend/config/constitutional_* @alice @bob @charlie
+.github/workflows/constitutional-* @alice @bob @charlie
+docs/cascade_rules.md @alice @bob @charlie
+docs/constitutional_* @alice @bob @charlie
+
+# Default owners
+* @alice @bob

@@ -1,0 +1,6 @@
+{
+  "minimum_visibility_percent": 90.0,
+  "alert_threshold": 85.0,
+  "restoration_enabled": true,
+  "pattern_analysis_enabled": true
+}

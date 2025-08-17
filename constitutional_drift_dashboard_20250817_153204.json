@@ -1,0 +1,997 @@
+{
+  "timestamp": "2025-08-17T15:31:51.876760",
+  "overall_health": "critical",
+  "metrics": {
+    "test_coverage_health": 85.0,
+    "alert_status": {
+      "active_alerts": 2,
+      "muted_alerts": 0,
+      "suppressed_alerts": 0
+    },
+    "delegation_concentration": {
+      "current_level": 3.2,
+      "threshold": 5.0,
+      "status": "healthy"
+    },
+    "transparency_chain_visibility": {
+      "score": 92.0,
+      "status": "excellent"
+    },
+    "constitutional_test_health": {
+      "total_tests": 29,
+      "passing_tests": 25,
+      "failing_tests": 4,
+      "skip_rate": 25.0
+    },
+    "feature_flag_health": {
+      "total_flags": 6,
+      "active_flags": 4,
+      "stagnant_flags": 2,
+      "disabled_flags": 0
+    },
+    "philosophical_integrity": {
+      "overall_score": 97.5,
+      "intact_principles": 6,
+      "at_risk_principles": 2,
+      "compromised_principles": 0
+    },
+    "cascade_health": {
+      "last_decision": 10,
+      "last_updated": "2025-08-17T14:37:05.476918",
+      "active_rules": 2,
+      "status": "critical",
+      "14_day_events": 0,
+      "blocked_prs": 0,
+      "emergency_overrides": 0
+    }
+  },
+  "alerts": [
+    {
+      "level": "critical",
+      "category": "drift_detection",
+      "message": "High constitutional drift risk detected",
+      "timestamp": "2025-08-17T15:32:04.894011"
+    },
+    {
+      "level": "warning",
+      "category": "test_coverage",
+      "message": "Test coverage below threshold: 85.0%",
+      "timestamp": "2025-08-17T15:32:04.894016"
+    },
+    {
+      "level": "warning",
+      "category": "feature_flags",
+      "message": "Stagnant feature flags detected: 2",
+      "timestamp": "2025-08-17T15:32:04.894018"
+    }
+  ],
+  "recommendations": [
+    "Review and reactivate suppressed constitutional alerts",
+    "Improve constitutional alert response rate",
+    "Activate stagnant constitutional feature flags",
+    "CRITICAL: Remove constitutional bypasses",
+    "Reinforce constitutional awareness in code reviews",
+    "URGENT: Restore no_permanent_delegations",
+    "Increase constitutional test coverage to above 90%",
+    "Monitor delegation concentration and promote diversity",
+    "Activate stagnant constitutional feature flags"
+  ],
+  "trends": {
+    "test_coverage_trend": {
+      "direction": "stable",
+      "change_rate": 0.5,
+      "last_week": 85.0,
+      "this_week": 85.0
+    },
+    "delegation_concentration_trend": {
+      "direction": "increasing",
+      "change_rate": 0.8,
+      "last_week": 2.4,
+      "this_week": 3.2
+    },
+    "philosophical_integrity_trend": {
+      "direction": "stable",
+      "change_rate": 0.2,
+      "last_week": 87.3,
+      "this_week": 87.5
+    },
+    "alert_frequency_trend": {
+      "direction": "decreasing",
+      "change_rate": -0.3,
+      "last_week": 3,
+      "this_week": 2
+    }
+  },
+  "drift_detection": {
+    "timestamp": "2025-08-17T15:31:51.876775",
+    "overall_risk_level": "high",
+    "categories": {
+      "test_neglect": {
+        "category": "test_neglect",
+        "signals": {},
+        "risk_level": "low",
+        "recommendations": []
+      },
+      "alert_fatigue": {
+        "category": "alert_fatigue",
+        "signals": {
+          "alert_suppression": {
+            "severity": "high",
+            "value": 2,
+            "description": "2 constitutional alerts suppressed"
+          },
+          "low_response_rate": {
+            "severity": "medium",
+            "value": 75.0,
+            "description": "Only 75.0% of constitutional alerts responded to"
+          }
+        },
+        "risk_level": "high",
+        "recommendations": [
+          "Review and reactivate suppressed constitutional alerts",
+          "Improve constitutional alert response rate"
+        ]
+      },
+      "shortcut_accumulation": {
+        "category": "shortcut_accumulation",
+        "signals": {
+          "feature_flag_stagnation": {
+            "severity": "medium",
+            "value": 3,
+            "description": "3 constitutional feature flags stagnant"
+          },
+          "bypass_accumulation": {
+            "severity": "high",
+            "value": 10,
+            "description": "10 constitutional bypasses detected"
+          }
+        },
+        "risk_level": "high",
+        "recommendations": [
+          "Activate stagnant constitutional feature flags",
+          "CRITICAL: Remove constitutional bypasses"
+        ]
+      },
+      "hierarchy_creep": {
+        "category": "hierarchy_creep",
+        "signals": {},
+        "risk_level": "low",
+        "recommendations": []
+      },
+      "transparency_erosion": {
+        "category": "transparency_erosion",
+        "signals": {},
+        "risk_level": "low",
+        "recommendations": []
+      },
+      "cultural_drift": {
+        "category": "cultural_drift",
+        "signals": {
+          "constitutional_awareness_decline": {
+            "severity": "medium",
+            "value": 25.0,
+            "description": "Constitutional mentions in reviews declined by 25.0%"
+          }
+        },
+        "risk_level": "low",
+        "recommendations": [
+          "Reinforce constitutional awareness in code reviews"
+        ]
+      }
+    },
+    "critical_signals": [
+      {
+        "category": "alert_fatigue",
+        "signal": "alert_suppression",
+        "description": "2 constitutional alerts suppressed",
+        "value": 2
+      },
+      {
+        "category": "shortcut_accumulation",
+        "signal": "bypass_accumulation",
+        "description": "10 constitutional bypasses detected",
+        "value": 10
+      }
+    ],
+    "recommendations": [
+      "Review and reactivate suppressed constitutional alerts",
+      "Improve constitutional alert response rate",
+      "Activate stagnant constitutional feature flags",
+      "CRITICAL: Remove constitutional bypasses",
+      "Reinforce constitutional awareness in code reviews"
+    ]
+  },
+  "philosophical_preservation": {
+    "timestamp": "2025-08-17T15:31:53.982724",
+    "overall_integrity_score": 97.5,
+    "principles": {
+      "power_circulation": {
+        "principle_id": "power_circulation",
+        "principle_name": "Power Must Circulate",
+        "description": "Delegation is never a one-time handover. All delegated power must remain in motion.",
+        "integrity_score": 80.0,
+        "requirements_status": {
+          "no_permanent_delegations": {
+            "status": "violated",
+            "score": 0.0,
+            "description": "Found 42 potential permanent delegation indicators",
+            "evidence": [
+              "backend/tests/delegation/test_constitutional_compliance.py:    # Ensure no fields allow permanent or immutable delegations",
+              "backend/tests/delegation/test_circulation_decay.py:Tests that power must circulate, no permanents, and delegation decay mechanisms.",
+              "backend/tests/delegation/test_circulation_decay.py:    \"\"\"Test that no permanent delegation flags exist in schema.\"\"\"",
+              "backend/tests/delegation/test_circulation_decay.py:    permanent_flags = [col for col in delegation_columns if 'permanent' in col.lower()]",
+              "backend/scripts/constitutional_philosophical_hooks.py:                        r\"permanent.*delegation\","
+            ],
+            "last_assessed": "2025-08-17T15:31:55.791865"
+          },
+          "immediate_revocation_capability": {
+            "status": "satisfied",
+            "score": 100.0,
+            "description": "Found 10 immediate revocation mechanisms",
+            "evidence": [
+              "backend/scripts/constitutional_philosophical_preservation.py:            \"immediate_revocation_capability\",",
+              "backend/scripts/constitutional_philosophical_preservation.py:            \"immediate_revocation_capability\": self._assess_immediate_revocation,",
+              "backend/scripts/constitutional_philosophical_preservation.py:    def _assess_immediate_revocation(self) -> Dict[str, Any]:"
+            ],
+            "last_assessed": "2025-08-17T15:31:57.187952"
+          },
+          "continuous_motion_requirement": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for continuous_motion_requirement",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:57.187983"
+          },
+          "circulation_monitoring": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for circulation_monitoring",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:57.187986"
+          }
+        },
+        "constraints_violations": [
+          "no_permanent_delegations"
+        ],
+        "preservation_status": "at_risk",
+        "recommendations": [
+          "URGENT: Restore no_permanent_delegations"
+        ]
+      },
+      "values_as_delegates": {
+        "principle_id": "values_as_delegates",
+        "principle_name": "Values Are Delegates Too",
+        "description": "Delegation must support both person-to-person and value-to-principle delegation.",
+        "integrity_score": 100.0,
+        "requirements_status": {
+          "value_delegation_support": {
+            "status": "satisfied",
+            "score": 100.0,
+            "description": "Found 24 value delegation support indicators",
+            "evidence": [
+              "backend/tests/test_delegation_stats_contract.py:    # Verify expected values for single delegation",
+              "backend/tests/delegation/test_values_delegates.py:Tests that people, values, and ideas are equally supported as delegation targets.",
+              "backend/tests/delegation/test_values_delegates.py:    # TODO: Implement backend support for value-based delegation"
+            ],
+            "last_assessed": "2025-08-17T15:31:58.095965"
+          },
+          "idea_delegation_support": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for idea_delegation_support",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:58.096006"
+          },
+          "unified_delegation_schema": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for unified_delegation_schema",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:58.096008"
+          },
+          "cross_type_resolution": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for cross_type_resolution",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:58.096010"
+          }
+        },
+        "constraints_violations": [],
+        "preservation_status": "intact",
+        "recommendations": []
+      },
+      "interruption_rights": {
+        "principle_id": "interruption_rights",
+        "principle_name": "Interruption Is a Right",
+        "description": "At any point, if a delegate acts against a user's values, the system must allow immediate override.",
+        "integrity_score": 100.0,
+        "requirements_status": {
+          "immediate_override_capability": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for immediate_override_capability",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:58.096019"
+          },
+          "user_intent_supremacy": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for user_intent_supremacy",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:58.096021"
+          },
+          "chain_termination_ability": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for chain_termination_ability",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:58.096023"
+          },
+          "race_condition_protection": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for race_condition_protection",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:58.096025"
+          }
+        },
+        "constraints_violations": [],
+        "preservation_status": "intact",
+        "recommendations": []
+      },
+      "anti_hierarchy": {
+        "principle_id": "anti_hierarchy",
+        "principle_name": "Prevent New Hierarchies",
+        "description": "The system must actively resist concentration of delegations into super-representatives.",
+        "integrity_score": 100.0,
+        "requirements_status": {
+          "concentration_monitoring": {
+            "status": "satisfied",
+            "score": 100.0,
+            "description": "Found 34 concentration monitoring indicators",
+            "evidence": [
+              "backend/tests/delegation/test_anti_hierarchy.py:    # TODO: Implement backend support for delegation concentration monitoring",
+              "backend/tests/delegation/test_anti_hierarchy.py:    # TODO: Create concentration monitoring service",
+              "backend/tests/delegation/test_anti_hierarchy.py:    assert False, \"TODO: Implement delegation concentration monitoring and alerts\""
+            ],
+            "last_assessed": "2025-08-17T15:31:59.144275"
+          },
+          "diversity_enforcement": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for diversity_enforcement",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:59.144314"
+          },
+          "power_distribution_tracking": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for power_distribution_tracking",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:59.144316"
+          },
+          "hierarchy_prevention_mechanisms": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for hierarchy_prevention_mechanisms",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:31:59.144318"
+          }
+        },
+        "constraints_violations": [],
+        "preservation_status": "intact",
+        "recommendations": []
+      },
+      "ideas_beyond_names": {
+        "principle_id": "ideas_beyond_names",
+        "principle_name": "Ideas Matter Beyond Names",
+        "description": "Trust is not only in people but in proposals and their proven value.",
+        "integrity_score": 100.0,
+        "requirements_status": {
+          "anonymous_delegation_support": {
+            "status": "satisfied",
+            "score": 100.0,
+            "description": "Found 28 anonymous delegation support indicators",
+            "evidence": [
+              "backend/tests/delegation/test_transparency_anonymity.py:async def test_anonymous_delegation(db_session: AsyncSession, test_user: User):",
+              "backend/tests/delegation/test_transparency_anonymity.py:    \"\"\"Test anonymous delegation flows.\"\"\"",
+              "backend/tests/delegation/test_transparency_anonymity.py:    # TODO: Implement backend support for anonymous delegation"
+            ],
+            "last_assessed": "2025-08-17T15:32:00.359954"
+          },
+          "idea_first_flows": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for idea_first_flows",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:00.359982"
+          },
+          "merit_based_delegation": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for merit_based_delegation",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:00.359985"
+          },
+          "identity_blind_modes": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for identity_blind_modes",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:00.359986"
+          }
+        },
+        "constraints_violations": [],
+        "preservation_status": "intact",
+        "recommendations": []
+      },
+      "ecology_of_trust": {
+        "principle_id": "ecology_of_trust",
+        "principle_name": "Ecology of Trust",
+        "description": "Delegation lives inside a broader ecology of signals: expertise, track record, shared values.",
+        "integrity_score": 100.0,
+        "requirements_status": {
+          "trust_signal_integration": {
+            "status": "satisfied",
+            "score": 100.0,
+            "description": "Found 9 trust integration indicators",
+            "evidence": [
+              "backend/scripts/constitutional_philosophical_preservation.py:            \"Cannot isolate delegation from trust signals\",",
+              "backend/scripts/constitutional_philosophical_preservation.py:            \"trust.*signals\",",
+              "backend/scripts/constitutional_health.py:    print(\"6. Ecology of Trust - Integration with trust signals\")"
+            ],
+            "last_assessed": "2025-08-17T15:32:01.677965"
+          },
+          "expertise_tracking": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for expertise_tracking",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:01.677993"
+          },
+          "value_alignment_metrics": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for value_alignment_metrics",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:01.677996"
+          },
+          "peer_review_support": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for peer_review_support",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:01.677997"
+          }
+        },
+        "constraints_violations": [],
+        "preservation_status": "intact",
+        "recommendations": []
+      },
+      "feedback_loops": {
+        "principle_id": "feedback_loops",
+        "principle_name": "Feedback and Correction Loops",
+        "description": "The system must continuously check for distortions in delegation chains.",
+        "integrity_score": 100.0,
+        "requirements_status": {
+          "distortion_detection": {
+            "status": "satisfied",
+            "score": 100.0,
+            "description": "Found 13 distortion detection indicators",
+            "evidence": [
+              "backend/scripts/constitutional_philosophical_preservation.py:            \"distortion_detection\",",
+              "backend/scripts/constitutional_philosophical_preservation.py:            \"distortion_detection\": self._assess_distortion_detection,",
+              "backend/scripts/constitutional_philosophical_preservation.py:    def _assess_distortion_detection(self) -> Dict[str, Any]:"
+            ],
+            "last_assessed": "2025-08-17T15:32:03.546801"
+          },
+          "correction_mechanisms": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for correction_mechanisms",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:03.546835"
+          },
+          "feedback_delivery": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for feedback_delivery",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:03.546838"
+          },
+          "loop_repair_capabilities": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for loop_repair_capabilities",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:03.546839"
+          }
+        },
+        "constraints_violations": [],
+        "preservation_status": "intact",
+        "recommendations": []
+      },
+      "radical_transparency": {
+        "principle_id": "radical_transparency",
+        "principle_name": "Radical Transparency",
+        "description": "All delegation flows must be visible and understandable.",
+        "integrity_score": 100.0,
+        "requirements_status": {
+          "full_chain_visibility": {
+            "status": "satisfied",
+            "score": 100.0,
+            "description": "Found 31 chain visibility indicators",
+            "evidence": [
+              "backend/tests/delegation/test_transparency_anonymity.py:    \"\"\"Test complete delegation chain visibility.\"\"\"",
+              "backend/tests/test_promote_to_fail.py:                \"summary\": \"Delegation chain visibility decreased\",",
+              "backend/tests/test_promote_to_fail.py:                \"summary\": \"Delegation chain visibility decreased\","
+            ],
+            "last_assessed": "2025-08-17T15:32:04.887827"
+          },
+          "no_hidden_layers": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for no_hidden_layers",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:04.887872"
+          },
+          "transparent_flows": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for transparent_flows",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:04.887874"
+          },
+          "accountability_tracking": {
+            "status": "unknown",
+            "score": 50.0,
+            "description": "Assessment method not implemented for accountability_tracking",
+            "evidence": [],
+            "last_assessed": "2025-08-17T15:32:04.887876"
+          }
+        },
+        "constraints_violations": [],
+        "preservation_status": "intact",
+        "recommendations": []
+      }
+    },
+    "compromised_principles": [],
+    "at_risk_principles": [
+      "power_circulation"
+    ],
+    "intact_principles": [
+      "values_as_delegates",
+      "interruption_rights",
+      "anti_hierarchy",
+      "ideas_beyond_names",
+      "ecology_of_trust",
+      "feedback_loops",
+      "radical_transparency"
+    ],
+    "recommendations": [
+      "URGENT: Restore no_permanent_delegations"
+    ]
+  },
+  "drift_resistance": {
+    "timestamp": "2025-08-17T15:32:04.887948",
+    "overall_status": "implemented",
+    "categories": {
+      "test_protection": {
+        "category": "test_protection",
+        "mechanisms": {
+          "skip_prevention": {
+            "name": "Skip Prevention",
+            "implemented": true,
+            "description": "Prevents constitutional tests from being skipped without escalation",
+            "rules": [
+              "Constitutional tests cannot be skipped without explicit approval",
+              "Skip requests require constitutional review",
+              "Skipped tests must be addressed within 48 hours",
+              "Skip patterns are monitored and flagged"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_skip_prevention.json"
+          },
+          "coverage_enforcement": {
+            "name": "Coverage Enforcement",
+            "implemented": true,
+            "description": "Enforces minimum constitutional test coverage requirements",
+            "rules": [
+              "Constitutional test coverage must remain above 90%",
+              "Coverage declines trigger immediate alerts",
+              "New features require proportional test coverage",
+              "Coverage regression blocks merges"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_coverage_enforcement.json"
+          },
+          "todo_tracking": {
+            "name": "TODO Tracking",
+            "implemented": true,
+            "description": "Tracks and manages TODO items in constitutional tests",
+            "rules": [
+              "Constitutional test TODOs must be addressed within 7 days",
+              "TODO accumulation triggers alerts",
+              "TODOs require explicit ownership assignment",
+              "TODO patterns are analyzed for drift signals"
+            ],
+            "enforcement": "monitored",
+            "config_file": "constitutional_todo_tracking.json"
+          }
+        },
+        "status": "active",
+        "actions_taken": [
+          "Skip prevention mechanism activated",
+          "Coverage enforcement mechanism activated",
+          "TODO tracking mechanism activated"
+        ]
+      },
+      "alert_protection": {
+        "category": "alert_protection",
+        "mechanisms": {
+          "suppression_prevention": {
+            "name": "Alert Suppression Prevention",
+            "implemented": true,
+            "description": "Prevents constitutional alerts from being suppressed without escalation",
+            "rules": [
+              "Constitutional alerts cannot be suppressed without approval",
+              "Suppression requests require constitutional review",
+              "Suppressed alerts must be reactivated within 24 hours",
+              "Suppression patterns are monitored and flagged"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_suppression_prevention.json"
+          },
+          "threshold_protection": {
+            "name": "Threshold Protection",
+            "implemented": true,
+            "description": "Protects constitutional alert thresholds from being raised",
+            "rules": [
+              "Constitutional alert thresholds cannot be raised without approval",
+              "Threshold increases require constitutional review",
+              "Threshold changes are tracked and monitored",
+              "Threshold patterns are analyzed for drift signals"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_threshold_protection.json"
+          }
+        },
+        "status": "active",
+        "actions_taken": [
+          "Alert suppression prevention activated",
+          "Threshold protection mechanism activated"
+        ]
+      },
+      "shortcut_prevention": {
+        "category": "shortcut_prevention",
+        "mechanisms": {
+          "feature_flag_enforcement": {
+            "name": "Feature Flag Enforcement",
+            "implemented": true,
+            "description": "Enforces activation of constitutional feature flags",
+            "rules": [
+              "Constitutional feature flags must be activated within 30 days",
+              "Flag stagnation triggers alerts",
+              "Flag deactivation requires constitutional review",
+              "Flag patterns are monitored for drift signals"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_feature_flag_enforcement.json"
+          },
+          "bypass_detection": {
+            "name": "Bypass Detection",
+            "implemented": true,
+            "description": "Detects and flags constitutional bypasses",
+            "rules": [
+              "Constitutional bypasses are automatically detected",
+              "Bypasses trigger immediate alerts",
+              "Bypass patterns are analyzed for drift signals",
+              "Bypasses must be removed within 24 hours"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_bypass_detection.json"
+          }
+        },
+        "status": "active",
+        "actions_taken": [
+          "Feature flag enforcement activated",
+          "Bypass detection mechanism activated"
+        ]
+      },
+      "hierarchy_prevention": {
+        "category": "hierarchy_prevention",
+        "mechanisms": {
+          "concentration_monitoring": {
+            "name": "Concentration Monitoring",
+            "implemented": true,
+            "description": "Monitors delegation power concentration to prevent hierarchy",
+            "rules": [
+              "Delegation concentration is continuously monitored",
+              "Concentration increases trigger alerts",
+              "Concentration patterns are analyzed for drift signals",
+              "Concentration limits are enforced automatically"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_concentration_monitoring.json"
+          },
+          "diversity_enforcement": {
+            "name": "Diversity Enforcement",
+            "implemented": true,
+            "description": "Enforces delegation diversity to prevent hierarchy",
+            "rules": [
+              "Delegation diversity is continuously monitored",
+              "Diversity declines trigger alerts",
+              "Diversity patterns are analyzed for drift signals",
+              "Diversity promotion mechanisms are activated automatically"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_diversity_enforcement.json"
+          }
+        },
+        "status": "active",
+        "actions_taken": [
+          "Concentration monitoring activated",
+          "Diversity enforcement activated"
+        ]
+      },
+      "transparency_protection": {
+        "category": "transparency_protection",
+        "mechanisms": {
+          "logging_enforcement": {
+            "name": "Logging Enforcement",
+            "implemented": true,
+            "description": "Enforces comprehensive logging for transparency",
+            "rules": [
+              "All delegation operations must be logged",
+              "Logging completeness is continuously monitored",
+              "Logging reductions trigger alerts",
+              "Logging patterns are analyzed for drift signals"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_logging_enforcement.json"
+          },
+          "visibility_monitoring": {
+            "name": "Visibility Monitoring",
+            "implemented": true,
+            "description": "Monitors transparency and visibility of delegation flows",
+            "rules": [
+              "Delegation chain visibility is continuously monitored",
+              "Visibility declines trigger alerts",
+              "Visibility patterns are analyzed for drift signals",
+              "Transparency restoration mechanisms are activated automatically"
+            ],
+            "enforcement": "automated",
+            "config_file": "constitutional_visibility_monitoring.json"
+          }
+        },
+        "status": "active",
+        "actions_taken": [
+          "Logging enforcement activated",
+          "Visibility monitoring activated"
+        ]
+      },
+      "cultural_preservation": {
+        "category": "cultural_preservation",
+        "mechanisms": {
+          "awareness_monitoring": {
+            "name": "Awareness Monitoring",
+            "implemented": true,
+            "description": "Monitors team awareness of constitutional principles",
+            "rules": [
+              "Constitutional awareness is continuously monitored",
+              "Awareness declines trigger alerts",
+              "Awareness patterns are analyzed for drift signals",
+              "Awareness reinforcement mechanisms are activated automatically"
+            ],
+            "enforcement": "monitored",
+            "config_file": "constitutional_awareness_monitoring.json"
+          },
+          "principle_reinforcement": {
+            "name": "Principle Reinforcement",
+            "implemented": true,
+            "description": "Reinforces commitment to constitutional principles",
+            "rules": [
+              "Constitutional principles are regularly reinforced",
+              "Principle discussions are encouraged and tracked",
+              "Principle drift triggers reinforcement mechanisms",
+              "Principle patterns are analyzed for cultural drift signals"
+            ],
+            "enforcement": "cultural",
+            "config_file": "constitutional_principle_reinforcement.json"
+          }
+        },
+        "status": "active",
+        "actions_taken": [
+          "Awareness monitoring activated",
+          "Principle reinforcement activated"
+        ]
+      }
+    },
+    "total_mechanisms": 13,
+    "implemented_mechanisms": 13,
+    "actions_taken": [
+      "Skip prevention mechanism activated",
+      "Coverage enforcement mechanism activated",
+      "TODO tracking mechanism activated",
+      "Alert suppression prevention activated",
+      "Threshold protection mechanism activated",
+      "Feature flag enforcement activated",
+      "Bypass detection mechanism activated",
+      "Concentration monitoring activated",
+      "Diversity enforcement activated",
+      "Logging enforcement activated",
+      "Visibility monitoring activated",
+      "Awareness monitoring activated",
+      "Principle reinforcement activated"
+    ]
+  },
+  "cascade_data": {
+    "timestamp": "2025-08-17T14:37:05.476918",
+    "signals": [
+      {
+        "id": "#2",
+        "severity": "critical",
+        "value_ms": 2100,
+        "ts": "2025-08-17T14:37:05.383995",
+        "meta": {
+          "thresholds": {
+            "critical": 2000,
+            "high": 1600,
+            "warn": 1200
+          }
+        }
+      },
+      {
+        "id": "#3",
+        "severity": "high",
+        "flows": 7,
+        "module": "delegations",
+        "ts": "2025-08-17T14:37:05.431124",
+        "meta": {
+          "all_modules": {
+            "delegations": 7,
+            "delegation_service": 5,
+            "delegation_model": 3
+          },
+          "thresholds": {
+            "critical": 8,
+            "high": 7,
+            "warn": 4
+          }
+        }
+      }
+    ],
+    "cascade_results": [
+      {
+        "rule_id": "B",
+        "decision": "block",
+        "rationale": "Opacity + complexity",
+        "window_days": 7,
+        "triggered_signals": [
+          {
+            "id": "#2",
+            "severity": "critical",
+            "value_ms": 2100,
+            "ts": "2025-08-17T14:37:05.383995",
+            "meta": {
+              "thresholds": {
+                "critical": 2000,
+                "high": 1600,
+                "warn": 1200
+              }
+            }
+          },
+          {
+            "id": "#3",
+            "severity": "high",
+            "flows": 7,
+            "module": "delegations",
+            "ts": "2025-08-17T14:37:05.431124",
+            "meta": {
+              "all_modules": {
+                "delegations": 7,
+                "delegation_service": 5,
+                "delegation_model": 3
+              },
+              "thresholds": {
+                "critical": 8,
+                "high": 7,
+                "warn": 4
+              }
+            }
+          }
+        ],
+        "ts": "2025-08-17T14:37:05.476875"
+      },
+      {
+        "rule_id": "C",
+        "decision": "block",
+        "rationale": "Knowledge silos",
+        "window_days": 14,
+        "triggered_signals": [
+          {
+            "id": "#3",
+            "severity": "high",
+            "flows": 7,
+            "module": "delegations",
+            "ts": "2025-08-17T14:37:05.431124",
+            "meta": {
+              "all_modules": {
+                "delegations": 7,
+                "delegation_service": 5,
+                "delegation_model": 3
+              },
+              "thresholds": {
+                "critical": 8,
+                "high": 7,
+                "warn": 4
+              }
+            }
+          }
+        ],
+        "ts": "2025-08-17T14:37:05.476906"
+      }
+    ],
+    "summary": "CASCADE: rule=B, signals=[#2=CRITICAL(2100ms), #3=HIGH(7flows)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency",
+    "exit_code": 10
+  },
+  "cascade_sparkline": [
+    [
+      "2025-08-04",
+      0
+    ],
+    [
+      "2025-08-05",
+      0
+    ],
+    [
+      "2025-08-06",
+      0
+    ],
+    [
+      "2025-08-07",
+      0
+    ],
+    [
+      "2025-08-08",
+      0
+    ],
+    [
+      "2025-08-09",
+      0
+    ],
+    [
+      "2025-08-10",
+      0
+    ],
+    [
+      "2025-08-11",
+      0
+    ],
+    [
+      "2025-08-12",
+      0
+    ],
+    [
+      "2025-08-13",
+      0
+    ],
+    [
+      "2025-08-14",
+      0
+    ],
+    [
+      "2025-08-15",
+      0
+    ],
+    [
+      "2025-08-16",
+      0
+    ],
+    [
+      "2025-08-17",
+      0
+    ]
+  ]
+}

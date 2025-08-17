@@ -2,22 +2,20 @@ import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Activity,
   FilePlus2,
   ListChecks,
   LogOut,
   Menu,
   X,
   Search,
-  ChevronDown,
-  Hash
+  Hash,
+  Users
 } from 'lucide-react';
 import clsx from 'clsx';
 import Button from './ui/Button';
 import { listLabels } from '../lib/api';
 import type { Label } from '../types';
 import { flags } from '../config/flags';
-import TopicsAutocomplete from './TopicsAutocomplete';
 
 
 interface LayoutProps {
@@ -28,8 +26,6 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [labels, setLabels] = useState<Label[]>([]);
-  const [topicsAutocompleteOpen, setTopicsAutocompleteOpen] = useState(false);
-
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -54,22 +50,12 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (topicsAutocompleteOpen && !(event.target as Element).closest('.topics-dropdown')) {
-        setTopicsAutocompleteOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [topicsAutocompleteOpen]);
-
   const navigation = [
     { name: 'Principles', href: '/principles', icon: ListChecks },
     { name: 'Actions', href: '/actions', icon: ListChecks },
     { name: 'Share Your Idea', href: '/proposals/new', icon: FilePlus2 },
     ...(flags.labelsEnabled ? [{ name: 'Topics', href: '/topics', icon: Hash }] : []),
+    { name: 'Delegations', href: '/delegations', icon: Users },
   ];
 
   const isActive = (href: string) => {
@@ -80,6 +66,9 @@ export default function Layout({ children }: LayoutProps) {
       return true;
     }
     if (href === '/actions' && location.pathname === '/actions') {
+      return true;
+    }
+    if (href === '/delegations' && location.pathname === '/delegations') {
       return true;
     }
     if (href === '/topics' && (location.pathname === '/topics' || location.pathname.startsWith('/t/'))) {
@@ -136,46 +125,6 @@ export default function Layout({ children }: LayoutProps) {
                   </Link>
                 );
               })}
-
-              {/* Topics Autocomplete */}
-              {flags.labelsEnabled && (
-                <div className="relative topics-dropdown">
-                  <button
-                    onClick={() => {
-                      setTopicsAutocompleteOpen(!topicsAutocompleteOpen);
-                    }}
-                    className={clsx(
-                      'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md',
-                      (topicsAutocompleteOpen || isTopicPage()) && 'text-primary-700 border-b-2 border-primary-700'
-                    )}
-                  >
-                    <span>Topics</span>
-                    <ChevronDown className="w-4 h-4 ml-1" />
-                  </button>
-
-                  {topicsAutocompleteOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-80 z-50">
-                      <TopicsAutocomplete
-                        isOpen={topicsAutocompleteOpen}
-                        onClose={() => setTopicsAutocompleteOpen(false)}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Community Activity button */}
-              <Link
-                to="/activity"
-                className={clsx(
-                  'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md',
-                  isActive('/activity') && 'text-primary-700 border-b-2 border-primary-700'
-                )}
-                title="Community Activity"
-              >
-                <Activity className="w-3.5 h-3.5 mr-1.5" />
-                <span>Activity</span>
-              </Link>
             </div>
 
             {/* User Menu */}
@@ -241,43 +190,6 @@ export default function Layout({ children }: LayoutProps) {
                 );
               })}
 
-              <Link
-                to="/activity"
-                onClick={() => setMobileMenuOpen(false)}
-                className={clsx(
-                  'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md block',
-                  isActive('/activity') && 'text-primary-700 bg-primary-50'
-                )}
-              >
-                <Activity className="w-4 h-4 mr-2" />
-                <span>Community Activity</span>
-              </Link>
-
-              {/* Mobile Topics */}
-              {flags.labelsEnabled && labels.length > 0 && (
-                <div className="border-t border-neutral-100 pt-2 mt-2">
-                  <div className="text-xs font-medium text-neutral-500 mb-2 px-3">Topics</div>
-                  {labels.slice(0, 6).map((label) => (
-                    <Link
-                      key={label.id}
-                      to={`/t/${label.slug}`}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={clsx(
-                        'flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 rounded-md block',
-                        location.pathname === `/t/${label.slug}` && 'text-primary-700 bg-primary-50'
-                      )}
-                    >
-                      <span>{label.name}</span>
-                    </Link>
-                  ))}
-                  {labels.length > 6 && (
-                    <div className="px-3 py-2 text-xs text-neutral-500">
-                      +{labels.length - 6} more topics
-                    </div>
-                  )}
-                </div>
-              )}
-
               <Button
                 onClick={() => {
                   handleLogout();
@@ -299,22 +211,7 @@ export default function Layout({ children }: LayoutProps) {
         {children}
       </main>
 
-      {/* USWDS-inspired Footer */}
-      <footer className="bg-white border-t border-neutral-200 py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <span className="text-lg font-bold text-neutral-900">The Commons</span>
-            </div>
-            <div className="flex items-center space-x-6 text-sm">
-              <Link to="/why" className="text-neutral-600 hover:text-neutral-900 transition-colors">
-                Why Two Levels?
-              </Link>
-              <span className="text-neutral-600">Deciding together, openly.</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+
 
 
     </div>

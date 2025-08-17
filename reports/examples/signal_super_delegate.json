@@ -1,0 +1,6 @@
+{
+  "super_delegate_detected": true,
+  "files": ["backend/api/delegations.py", "backend/models/delegation.py"],
+  "patterns": ["multiple override authority", "privileged delegate"],
+  "timestamp": "2025-08-17T12:00:00Z"
+}

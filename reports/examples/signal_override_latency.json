@@ -1,0 +1,5 @@
+{
+  "override_latency_ms": 2100,
+  "threshold_exceeded": true,
+  "timestamp": "2025-08-17T12:00:00Z"
+}

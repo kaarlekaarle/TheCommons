@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-08-17T17:19:56.645377",
+  "concentration_percentage": 100.0,
+  "top_maintainer": "kaarlekaarle",
+  "total_commits": 29,
+  "maintainer_stats": {
+    "kaarlekaarle": 29
+  },
+  "lookback_days": 30,
+  "files_analyzed": 29
+}

@@ -1,0 +1,6 @@
+{
+  "minimum_diversity_percent": 70.0,
+  "alert_threshold": 80.0,
+  "promotion_enabled": true,
+  "pattern_analysis_enabled": true
+}

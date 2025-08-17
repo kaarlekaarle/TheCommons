@@ -1,0 +1,6 @@
+{
+  "require_approval": true,
+  "track_changes": true,
+  "pattern_analysis_enabled": true,
+  "escalation_threshold": 3
+}

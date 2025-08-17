@@ -1,0 +1,99 @@
+{
+  "timestamp": "2025-08-17T13:53:06.421108",
+  "overall_risk_level": "high",
+  "categories": {
+    "test_neglect": {
+      "category": "test_neglect",
+      "signals": {},
+      "risk_level": "low",
+      "recommendations": []
+    },
+    "alert_fatigue": {
+      "category": "alert_fatigue",
+      "signals": {
+        "alert_suppression": {
+          "severity": "high",
+          "value": 2,
+          "description": "2 constitutional alerts suppressed"
+        },
+        "low_response_rate": {
+          "severity": "medium",
+          "value": 75.0,
+          "description": "Only 75.0% of constitutional alerts responded to"
+        }
+      },
+      "risk_level": "high",
+      "recommendations": [
+        "Review and reactivate suppressed constitutional alerts",
+        "Improve constitutional alert response rate"
+      ]
+    },
+    "shortcut_accumulation": {
+      "category": "shortcut_accumulation",
+      "signals": {
+        "feature_flag_stagnation": {
+          "severity": "medium",
+          "value": 3,
+          "description": "3 constitutional feature flags stagnant"
+        },
+        "bypass_accumulation": {
+          "severity": "high",
+          "value": 10,
+          "description": "10 constitutional bypasses detected"
+        }
+      },
+      "risk_level": "high",
+      "recommendations": [
+        "Activate stagnant constitutional feature flags",
+        "CRITICAL: Remove constitutional bypasses"
+      ]
+    },
+    "hierarchy_creep": {
+      "category": "hierarchy_creep",
+      "signals": {},
+      "risk_level": "low",
+      "recommendations": []
+    },
+    "transparency_erosion": {
+      "category": "transparency_erosion",
+      "signals": {},
+      "risk_level": "low",
+      "recommendations": []
+    },
+    "cultural_drift": {
+      "category": "cultural_drift",
+      "signals": {
+        "constitutional_awareness_decline": {
+          "severity": "medium",
+          "value": 25.0,
+          "description": "Constitutional mentions in reviews declined by 25.0%"
+        }
+      },
+      "risk_level": "low",
+      "recommendations": [
+        "Reinforce constitutional awareness in code reviews"
+      ]
+    }
+  },
+  "critical_signals": [
+    {
+      "category": "alert_fatigue",
+      "signal": "alert_suppression",
+      "description": "2 constitutional alerts suppressed",
+      "value": 2
+    },
+    {
+      "category": "shortcut_accumulation",
+      "signal": "bypass_accumulation",
+      "description": "10 constitutional bypasses detected",
+      "value": 10
+    }
+  ],
+  "recommendations": [
+    "Review and reactivate suppressed constitutional alerts",
+    "Improve constitutional alert response rate",
+    "Activate stagnant constitutional feature flags",
+    "CRITICAL: Remove constitutional bypasses",
+    "Reinforce constitutional awareness in code reviews"
+  ]
+}

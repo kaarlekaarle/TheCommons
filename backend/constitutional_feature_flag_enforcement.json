@@ -1,0 +1,6 @@
+{
+  "max_stagnation_days": 30,
+  "require_activation": true,
+  "track_patterns": true,
+  "alert_on_stagnation": true
+}

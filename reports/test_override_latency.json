@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-08-17T15:34:18.551107",
+  "source": "real_metrics",
+  "statistics": {
+    "count": 0,
+    "p50": 0,
+    "p95": 0,
+    "p99": 0,
+    "min": 0,
+    "max": 0,
+    "mean": 0,
+    "window_size": "0s"
+  },
+  "collection_method": "logs_and_redis"
+}

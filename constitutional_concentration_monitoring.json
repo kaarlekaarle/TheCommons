@@ -1,0 +1,6 @@
+{
+  "max_concentration_percent": 5.0,
+  "alert_threshold": 3.0,
+  "monitoring_interval_minutes": 60,
+  "pattern_analysis_enabled": true
+}

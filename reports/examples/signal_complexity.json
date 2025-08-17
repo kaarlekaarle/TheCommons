@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-08-17T12:00:00Z",
+  "modules": {
+    "delegations": 7,
+    "delegation_service": 5,
+    "delegation_model": 3
+  },
+  "total_flows": 15,
+  "files_analyzed": 8
+}

@@ -1,0 +1,6 @@
+{
+  "override_latency_ms": 2100,
+  "poll_id": "test-poll-123",
+  "user_id": "test-user",
+  "ts": "2025-08-17T12:34:13.3NZ"
+}

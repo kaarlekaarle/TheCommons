@@ -1,0 +1,1 @@
+Add new API endpoint for user preferences with database table and service method

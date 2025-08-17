@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-08-17T12:00:00Z",
+  "concentration_percentage": 78.5,
+  "top_maintainer": "alice",
+  "total_commits": 23,
+  "maintainer_stats": {
+    "alice": 18,
+    "bob": 3,
+    "charlie": 2
+  },
+  "lookback_days": 30,
+  "files_analyzed": 5
+}

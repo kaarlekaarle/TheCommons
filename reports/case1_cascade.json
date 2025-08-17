@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-08-17T14:36:58.428543",
+  "signals": [
+    {
+      "id": "#2",
+      "severity": "critical",
+      "value_ms": 2100,
+      "ts": "2025-08-17T14:36:58.325454",
+      "meta": {
+        "thresholds": {
+          "critical": 2000,
+          "high": 1600,
+          "warn": 1200
+        }
+      }
+    },
+    {
+      "id": "#3",
+      "severity": "high",
+      "flows": 7,
+      "module": "delegations",
+      "ts": "2025-08-17T14:36:58.371441",
+      "meta": {
+        "all_modules": {
+          "delegations": 7,
+          "delegation_service": 5,
+          "delegation_model": 3
+        },
+        "thresholds": {
+          "critical": 8,
+          "high": 7,
+          "warn": 4
+        }
+      }
+    }
+  ],
+  "cascade_results": [
+    {
+      "rule_id": "B",
+      "decision": "block",
+      "rationale": "Opacity + complexity",
+      "window_days": 7,
+      "triggered_signals": [
+        {
+          "id": "#2",
+          "severity": "critical",
+          "value_ms": 2100,
+          "ts": "2025-08-17T14:36:58.325454",
+          "meta": {
+            "thresholds": {
+              "critical": 2000,
+              "high": 1600,
+              "warn": 1200
+            }
+          }
+        },
+        {
+          "id": "#3",
+          "severity": "high",
+          "flows": 7,
+          "module": "delegations",
+          "ts": "2025-08-17T14:36:58.371441",
+          "meta": {
+            "all_modules": {
+              "delegations": 7,
+              "delegation_service": 5,
+              "delegation_model": 3
+            },
+            "thresholds": {
+              "critical": 8,
+              "high": 7,
+              "warn": 4
+            }
+          }
+        }
+      ],
+      "ts": "2025-08-17T14:36:58.428497"
+    },
+    {
+      "rule_id": "C",
+      "decision": "block",
+      "rationale": "Knowledge silos",
+      "window_days": 14,
+      "triggered_signals": [
+        {
+          "id": "#3",
+          "severity": "high",
+          "flows": 7,
+          "module": "delegations",
+          "ts": "2025-08-17T14:36:58.371441",
+          "meta": {
+            "all_modules": {
+              "delegations": 7,
+              "delegation_service": 5,
+              "delegation_model": 3
+            },
+            "thresholds": {
+              "critical": 8,
+              "high": 7,
+              "warn": 4
+            }
+          }
+        }
+      ],
+      "ts": "2025-08-17T14:36:58.428529"
+    }
+  ],
+  "summary": "CASCADE: rule=B, signals=[#2=CRITICAL(2100ms), #3=HIGH(7flows)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency",
+  "exit_code": 10
+}

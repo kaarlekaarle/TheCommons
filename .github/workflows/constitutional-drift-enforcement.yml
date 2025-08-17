@@ -1,0 +1,250 @@
+name: Constitutional Drift Resistance (CDR) Enforcement
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily drift detection at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  constitutional-drift-detection:
+    name: Constitutional Drift Detection
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+
+    - name: Constitutional Drift Detection
+      env:
+        DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        SECRET_KEY: test_secret_key
+        ALGORITHM: HS256
+        ACCESS_TOKEN_EXPIRE_MINUTES: 30
+        ENVIRONMENT: test
+        DEBUG: "false"
+        # Constitutional feature flags - all enabled for testing
+        VALUES_AS_DELEGATES_ENABLED: "true"
+        IDEA_DELEGATION_ENABLED: "true"
+        DELEGATION_EXPIRY_ENABLED: "true"
+        CONCENTRATION_MONITORING_ENABLED: "true"
+        ANONYMOUS_DELEGATION_ENABLED: "true"
+        FEEDBACK_NUDGES_ENABLED: "true"
+      run: |
+        echo "🔍 CONSTITUTIONAL DRIFT DETECTION"
+        echo "=================================="
+        echo "Running comprehensive drift analysis..."
+        echo ""
+        
+        # Run drift detection
+        python scripts/constitutional_drift_detector.py
+        
+        # Check exit code and handle accordingly
+        if [ $? -eq 1 ]; then
+          echo "🚨 CRITICAL: High drift risk detected!"
+          echo "This PR/commit shows signs of constitutional erosion."
+          echo "Merging is BLOCKED until drift is addressed."
+          exit 1
+        elif [ $? -eq 2 ]; then
+          echo "⚠️  WARNING: Medium drift risk detected!"
+          echo "This PR/commit shows potential drift signals."
+          echo "Review required before merging."
+          # Don't fail the build for medium risk, but log it
+        else
+          echo "✅ SUCCESS: Low drift risk - constitutional principles strong!"
+        fi
+
+    - name: Philosophical Preservation Check
+      env:
+        DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        SECRET_KEY: test_secret_key
+        ALGORITHM: HS256
+        ACCESS_TOKEN_EXPIRE_MINUTES: 30
+        ENVIRONMENT: test
+        DEBUG: "false"
+        VALUES_AS_DELEGATES_ENABLED: "true"
+        IDEA_DELEGATION_ENABLED: "true"
+        DELEGATION_EXPIRY_ENABLED: "true"
+        CONCENTRATION_MONITORING_ENABLED: "true"
+        ANONYMOUS_DELEGATION_ENABLED: "true"
+        FEEDBACK_NUDGES_ENABLED: "true"
+      run: |
+        echo "🏛️ PHILOSOPHICAL PRESERVATION CHECK"
+        echo "===================================="
+        echo "Assessing constitutional principle integrity..."
+        echo ""
+        
+        # Run philosophical preservation check
+        python scripts/constitutional_philosophical_preservation.py
+        
+        # Check exit code and handle accordingly
+        if [ $? -eq 1 ]; then
+          echo "🚨 CRITICAL: Philosophical integrity compromised!"
+          echo "This PR/commit violates constitutional principles."
+          echo "Merging is BLOCKED until principles are restored."
+          exit 1
+        elif [ $? -eq 2 ]; then
+          echo "⚠️  WARNING: Philosophical integrity at risk!"
+          echo "This PR/commit may impact constitutional principles."
+          echo "Review required before merging."
+          # Don't fail the build for medium risk, but log it
+        else
+          echo "✅ SUCCESS: Philosophical integrity maintained!"
+        fi
+
+    - name: Drift Resistance Status Check
+      env:
+        DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        SECRET_KEY: test_secret_key
+        ALGORITHM: HS256
+        ACCESS_TOKEN_EXPIRE_MINUTES: 30
+        ENVIRONMENT: test
+        DEBUG: "false"
+        VALUES_AS_DELEGATES_ENABLED: "true"
+        IDEA_DELEGATION_ENABLED: "true"
+        DELEGATION_EXPIRY_ENABLED: "true"
+        CONCENTRATION_MONITORING_ENABLED: "true"
+        ANONYMOUS_DELEGATION_ENABLED: "true"
+        FEEDBACK_NUDGES_ENABLED: "true"
+      run: |
+        echo "🛡️ DRIFT RESISTANCE STATUS CHECK"
+        echo "================================"
+        echo "Verifying drift resistance mechanisms..."
+        echo ""
+        
+        # Run drift resistance status check
+        python scripts/constitutional_drift_resistance.py
+        
+        echo "✅ Drift resistance mechanisms verified!"
+
+    - name: Generate Drift Report
+      if: always()
+      run: |
+        echo "📊 GENERATING DRIFT REPORT"
+        echo "=========================="
+        
+        # Generate comprehensive drift report
+        python scripts/constitutional_drift_detector.py > drift_report.txt 2>&1 || true
+        python scripts/constitutional_philosophical_preservation.py > preservation_report.txt 2>&1 || true
+        
+        echo "📄 Drift reports generated"
+
+    - name: Upload Drift Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: constitutional-drift-reports
+        path: |
+          drift_report.txt
+          preservation_report.txt
+          constitutional_drift_analysis.json
+          constitutional_philosophical_preservation.json
+        retention-days: 30
+
+    - name: Drift Alert Escalation
+      if: failure()
+      run: |
+        echo "🚨🚨🚨 CONSTITUTIONAL DRIFT ALERT 🚨🚨🚨"
+        echo "========================================="
+        echo ""
+        echo "CRITICAL: Constitutional drift detected!"
+        echo ""
+        echo "This PR/commit shows signs of constitutional erosion:"
+        echo "- Drift signals detected in delegation system"
+        echo "- Philosophical principles may be compromised"
+        echo "- Constitutional guardrails may be weakening"
+        echo ""
+        echo "ESCALATION TRIGGERED:"
+        echo "====================="
+        echo "1. PR merge is BLOCKED"
+        echo "2. Team notification sent"
+        echo "3. Constitutional review required"
+        echo "4. Drift resistance mechanisms activated"
+        echo ""
+        echo "REQUIRED ACTIONS:"
+        echo "================="
+        echo "1. Review drift detection report"
+        echo "2. Address identified drift signals"
+        echo "3. Restore constitutional principles"
+        echo "4. Verify drift resistance before re-submitting"
+        echo ""
+        echo "The Delegation Constitution is ABSOLUTE."
+        echo "No exceptions, no bypasses, no compromises."
+        echo ""
+        echo "🔒 MERGE BLOCKED - CONSTITUTIONAL DRIFT DETECTED 🔒"
+
+  constitutional-drift-gate:
+    name: Constitutional Drift Gate
+    runs-on: ubuntu-latest
+    needs: constitutional-drift-detection
+    if: always()
+    
+    steps:
+    - name: Constitutional Drift Gate Check
+      run: |
+        if [ "${{ needs.constitutional-drift-detection.result }}" != "success" ]; then
+          echo "🚨 CONSTITUTIONAL DRIFT GATE FAILED"
+          echo "==================================="
+          echo ""
+          echo "Constitutional drift has been detected."
+          echo "This PR/commit cannot be merged."
+          echo ""
+          echo "Drift resistance is MANDATORY."
+          echo "No exceptions will be granted."
+          echo ""
+          echo "🔒 MERGE BLOCKED - CONSTITUTIONAL DRIFT DETECTED 🔒"
+          exit 1
+        else
+          echo "✅ CONSTITUTIONAL DRIFT GATE PASSED"
+          echo "==================================="
+          echo ""
+          echo "No constitutional drift detected."
+          echo "This PR/commit may proceed to merge."
+          echo ""
+          echo "Constitutional principles are protected."
+          echo "Power continues to circulate freely."
+          echo ""
+          echo "🔓 MERGE ALLOWED - NO DRIFT DETECTED 🔓"
+        fi
