@@ -143,7 +143,7 @@ export default function InlineCommonsForm({
   };
 
   return (
-    <div className="border-t border-border pt-4 mt-4" role="region" aria-labelledby="commons-title">
+    <div className="border-t border-border pt-4 mt-4 bg-surface-muted/30 rounded-lg p-4" role="region" aria-labelledby="commons-title">
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-sm font-medium text-fg-strong">Create Commons Delegation</h4>
         <button
