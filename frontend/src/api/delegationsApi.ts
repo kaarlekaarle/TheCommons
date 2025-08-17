@@ -1,3 +1,5 @@
+import api from '../lib/api';
+
 // --- Search result types ---
 export type PersonSearchResult = {
   id: string;
@@ -105,63 +107,49 @@ export async function getCombinedSearch(q: string): Promise<{ people: PersonSear
 
 // --- Delegation creation endpoint ---
 export async function createDelegation(input: CreateDelegationInput): Promise<CreateDelegationResponse> {
-  const res = await fetch('/api/delegations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: 'Failed to create delegation' }));
-    throw new Error(error.detail || 'Failed to create delegation');
+  try {
+    const response = await api.post('/api/delegations', input);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to create delegation');
   }
-
-  return res.json();
 }
 
 // --- Transparency endpoints ---
 export async function getMyChains(): Promise<any> {
-  const res = await fetch('/api/delegations/me/chain');
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: 'Failed to fetch delegation chains' }));
-    throw new Error(error.detail || 'Failed to fetch delegation chains');
+  try {
+    const response = await api.get('/api/delegations/me/chain');
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to fetch delegation chains');
   }
-  return res.json();
 }
 
 export async function getInbound(delegateeId: string, fieldId?: string): Promise<any> {
-  const params = new URLSearchParams();
-  if (fieldId) params.append('fieldId', fieldId);
-  
-  const res = await fetch(`/api/delegations/${delegateeId}/inbound?${params.toString()}`);
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: 'Failed to fetch inbound delegations' }));
-    throw new Error(error.detail || 'Failed to fetch inbound delegations');
+  try {
+    const params = new URLSearchParams();
+    if (fieldId) params.append('fieldId', fieldId);
+    
+    const response = await api.get(`/api/delegations/${delegateeId}/inbound?${params.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to fetch inbound delegations');
   }
-  return res.json();
 }
 
 export async function getHealthSummary(): Promise<any> {
-  const res = await fetch('/api/delegations/health/summary');
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: 'Failed to fetch health summary' }));
-    throw new Error(error.detail || 'Failed to fetch health summary');
+  try {
+    const response = await api.get('/api/delegations/health/summary');
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to fetch health summary');
   }
-  return res.json();
 }
 
 // --- Telemetry endpoints ---
 export async function trackComposerOpen(mode: string): Promise<void> {
   try {
-    await fetch('/api/telemetry/composer-open', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ mode }),
-    });
+    await api.post('/api/telemetry/composer-open', { mode });
   } catch (err) {
     // Silently fail - telemetry is non-critical
     console.debug('Failed to track composer open:', err);
@@ -170,13 +158,7 @@ export async function trackComposerOpen(mode: string): Promise<void> {
 
 export async function trackDelegationCreated(mode: string): Promise<void> {
   try {
-    await fetch('/api/telemetry/delegation-created', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ mode }),
-    });
+    await api.post('/api/telemetry/delegation-created', { mode });
   } catch (err) {
     // Silently fail - telemetry is non-critical
     console.debug('Failed to track delegation created:', err);
@@ -187,11 +169,8 @@ export async function getMyAdoptionSnapshot(): Promise<{
   last30d: { legacyPct: number; commonsPct: number };
 }> {
   try {
-    const res = await fetch('/api/delegations/adoption/stats?days=30');
-    if (!res.ok) {
-      throw new Error('Failed to fetch adoption stats');
-    }
-    const data = await res.json();
+    const response = await api.get('/api/delegations/adoption/stats?days=30');
+    const data = response.data;
     
     return {
       last30d: {
