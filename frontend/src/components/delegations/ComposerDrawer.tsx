@@ -3,7 +3,7 @@ import { X, Calendar, User, Hash, AlertTriangle } from 'lucide-react';
 import { useToast } from '../ui/useToast';
 import { createDelegation } from '../../api/delegationsApi';
 import { searchPeople, searchFields } from '../../api/delegationsApi';
-import type { PersonSearchResult, FieldSearchResult, CreateDelegationInput } from '../../api/delegationsApi';
+import type { PersonSearchResult, FieldSearchResult, CreateDelegationInput, DelegationWarnings } from '../../api/delegationsApi';
 import Button from '../ui/Button';
 
 interface ComposerDrawerProps {
@@ -14,11 +14,6 @@ interface ComposerDrawerProps {
 }
 
 type TabType = 'traditional' | 'commons';
-
-interface DelegationWarnings {
-  concentration?: boolean;
-  superDelegateRisk?: boolean;
-}
 
 export default function ComposerDrawer({
   open,
@@ -218,25 +213,45 @@ export default function ComposerDrawer({
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
             {/* Constitutional Warnings */}
-            {(warnings.concentration || warnings.superDelegateRisk) && (
+            {(warnings.concentration?.active || warnings.superDelegateRisk?.active) && (
               <div className="mb-6 space-y-3">
-                {warnings.concentration && (
+                {warnings.concentration?.active && (
                   <div className="p-3 bg-warn-bg border border-warn-fg/20 rounded-lg">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-warn-fg mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-warn-fg">
-                        <strong>High concentration detected</strong> in this area. Consider adding a second delegate for checks.
-                      </p>
+                      <div className="flex-1">
+                        <p className="text-sm text-warn-fg">
+                          <strong>High concentration:</strong> {(warnings.concentration.percent * 100).toFixed(1)}% of delegations flow to this person here.
+                        </p>
+                        <a 
+                          href="/docs/cascade_rules" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-warn-fg/80 hover:text-warn-fg underline mt-1 inline-block"
+                        >
+                          Learn more
+                        </a>
+                      </div>
                     </div>
                   </div>
                 )}
-                {warnings.superDelegateRisk && (
+                {warnings.superDelegateRisk?.active && (
                   <div className="p-3 bg-warn-bg border border-warn-fg/20 rounded-lg">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-warn-fg mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-warn-fg">
-                        <strong>Super-delegate risk</strong> - This selection could create 'super-delegate' patterns. Consider scoping or adding counter-balance.
-                      </p>
+                      <div className="flex-1">
+                        <p className="text-sm text-warn-fg">
+                          <strong>Potential super-delegate pattern:</strong> {warnings.superDelegateRisk.reason}
+                        </p>
+                        <a 
+                          href="/docs/cascade_rules" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-warn-fg/80 hover:text-warn-fg underline mt-1 inline-block"
+                        >
+                          Learn more
+                        </a>
+                      </div>
                     </div>
                   </div>
                 )}

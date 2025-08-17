@@ -24,6 +24,24 @@ export type CreateDelegationInput = {
   expiry?: string; // ISO date string
 };
 
+export type DelegationWarnings = {
+  concentration?: { 
+    active: boolean; 
+    level: 'warn' | 'high'; 
+    percent: number; 
+  };
+  superDelegateRisk?: { 
+    active: boolean; 
+    reason: string; 
+    stats?: Record<string, unknown>; 
+  };
+};
+
+export type CreateDelegationResponse = { 
+  delegation: any; 
+  warnings?: DelegationWarnings; 
+};
+
 // --- Search endpoints ---
 // NOTE: these can hit your real backend later.
 // For now they'll call mock endpoints if not present.
@@ -55,7 +73,7 @@ export async function searchFields(q: string): Promise<FieldSearchResult[]> {
 }
 
 // --- Delegation creation endpoint ---
-export async function createDelegation(input: CreateDelegationInput): Promise<any> {
+export async function createDelegation(input: CreateDelegationInput): Promise<CreateDelegationResponse> {
   const res = await fetch('/api/delegations', {
     method: 'POST',
     headers: {
