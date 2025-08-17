@@ -6,12 +6,21 @@ including key generation, cache operations, and invalidation.
 
 import hashlib
 import json
-from typing import Any, Dict, List, Optional, Set
+import random
+from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import UUID
 
 import redis.asyncio as redis
 
 from backend.models.delegation import Delegation
+
+# Try to import msgpack, fallback to JSON if not available
+try:
+    import msgpack
+    MSGPACK_AVAILABLE = True
+except ImportError:
+    MSGPACK_AVAILABLE = False
+    msgpack = None
 
 
 class DelegationCache:
@@ -22,6 +31,109 @@ class DelegationCache:
         self.ttl_seconds = ttl_seconds
         # Fast-path cache TTL (shorter for override path)
         self.fast_path_ttl = 90  # 90 seconds
+        # Sample rate for telemetry (1%)
+        self.telemetry_sample_rate = 0.01
+
+    def _should_sample_telemetry(self) -> bool:
+        """Determine if we should sample telemetry for this operation."""
+        return random.random() < self.telemetry_sample_rate
+
+    def _serialize_data(self, data: Any, sample_telemetry: bool = False) -> Tuple[bytes, str, Dict[str, Any]]:
+        """Serialize data using msgpack with JSON fallback.
+        
+        Returns:
+            Tuple of (serialized_data, format_used, telemetry_info)
+        """
+        telemetry_info = {}
+        start_time = None
+        
+        if sample_telemetry:
+            import time
+            start_time = time.time()
+        
+        if MSGPACK_AVAILABLE:
+            try:
+                serialized = msgpack.packb(data, use_bin_type=True)
+                format_used = "msgpack"
+                
+                if sample_telemetry and start_time:
+                    telemetry_info = {
+                        "serialization_time_ms": int((time.time() - start_time) * 1000),
+                        "payload_size_bytes": len(serialized),
+                        "format": format_used,
+                    }
+                
+                return serialized, format_used, telemetry_info
+            except Exception:
+                # Fallback to JSON if msgpack fails
+                pass
+        
+        # JSON fallback
+        try:
+            serialized = json.dumps(data).encode('utf-8')
+            format_used = "json"
+            
+            if sample_telemetry and start_time:
+                telemetry_info = {
+                    "serialization_time_ms": int((time.time() - start_time) * 1000),
+                    "payload_size_bytes": len(serialized),
+                    "format": format_used,
+                }
+            
+            return serialized, format_used, telemetry_info
+        except Exception as e:
+            raise ValueError(f"Failed to serialize data: {e}")
+
+    def _deserialize_data(self, data: bytes, sample_telemetry: bool = False) -> Tuple[Any, str, Dict[str, Any]]:
+        """Deserialize data, trying msgpack first, then JSON.
+        
+        Returns:
+            Tuple of (deserialized_data, format_used, telemetry_info)
+        """
+        telemetry_info = {}
+        start_time = None
+        
+        if sample_telemetry:
+            import time
+            start_time = time.time()
+        
+        # Try msgpack first (if available)
+        if MSGPACK_AVAILABLE:
+            try:
+                deserialized = msgpack.unpackb(data, raw=False)
+                format_used = "msgpack"
+                
+                if sample_telemetry and start_time:
+                    telemetry_info = {
+                        "deserialization_time_ms": int((time.time() - start_time) * 1000),
+                        "payload_size_bytes": len(data),
+                        "format": format_used,
+                    }
+                
+                return deserialized, format_used, telemetry_info
+            except Exception:
+                # Fallback to JSON
+                pass
+        
+        # JSON fallback
+        try:
+            deserialized = json.loads(data.decode('utf-8'))
+            format_used = "json"
+            
+            if sample_telemetry and start_time:
+                telemetry_info = {
+                    "deserialization_time_ms": int((time.time() - start_time) * 1000),
+                    "payload_size_bytes": len(data),
+                    "format": format_used,
+                }
+            
+            return deserialized, format_used, telemetry_info
+        except Exception as e:
+            raise ValueError(f"Failed to deserialize data: {e}")
+
+    def _add_format_suffix(self, key: str, format_used: str) -> str:
+        """Add format suffix to cache key."""
+        return f"{key}:fmt={format_used[:2]}"
 
     def generate_cache_key(
         self,
@@ -87,10 +199,43 @@ class DelegationCache:
     async def get_cached_chain(self, cache_key: str) -> Optional[List[Dict[str, Any]]]:
         """Get cached delegation chain."""
         try:
+            # Try msgpack format first
+            msgpack_key = self._add_format_suffix(cache_key, "msgpack")
+            cached_data = await self.redis.get(msgpack_key)
+            
+            if cached_data:
+                sample_telemetry = self._should_sample_telemetry()
+                chain_data, format_used, telemetry_info = self._deserialize_data(cached_data, sample_telemetry)
+                
+                if sample_telemetry:
+                    self._log_cache_telemetry("get_cached_chain", telemetry_info)
+                
+                return chain_data
+            
+            # Try JSON format (backward compatibility)
+            json_key = self._add_format_suffix(cache_key, "json")
+            cached_data = await self.redis.get(json_key)
+            
+            if cached_data:
+                sample_telemetry = self._should_sample_telemetry()
+                chain_data, format_used, telemetry_info = self._deserialize_data(cached_data, sample_telemetry)
+                
+                if sample_telemetry:
+                    self._log_cache_telemetry("get_cached_chain", telemetry_info)
+                
+                return chain_data
+            
+            # Try legacy format (no suffix)
             cached_data = await self.redis.get(cache_key)
             if cached_data:
-                chain_data = json.loads(cached_data)
+                sample_telemetry = self._should_sample_telemetry()
+                chain_data, format_used, telemetry_info = self._deserialize_data(cached_data, sample_telemetry)
+                
+                if sample_telemetry:
+                    self._log_cache_telemetry("get_cached_chain", telemetry_info)
+                
                 return chain_data
+                
         except Exception:
             # Log error but don't fail the operation
             pass
@@ -111,9 +256,44 @@ class DelegationCache:
             fast_path_key = self.generate_fast_path_key(
                 user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
             )
+            
+            # Try msgpack format first
+            msgpack_key = self._add_format_suffix(fast_path_key, "msgpack")
+            cached_data = await self.redis.get(msgpack_key)
+            
+            if cached_data:
+                sample_telemetry = self._should_sample_telemetry()
+                result, format_used, telemetry_info = self._deserialize_data(cached_data, sample_telemetry)
+                
+                if sample_telemetry:
+                    self._log_cache_telemetry("get_fast_path_result", telemetry_info)
+                
+                return result
+            
+            # Try JSON format (backward compatibility)
+            json_key = self._add_format_suffix(fast_path_key, "json")
+            cached_data = await self.redis.get(json_key)
+            
+            if cached_data:
+                sample_telemetry = self._should_sample_telemetry()
+                result, format_used, telemetry_info = self._deserialize_data(cached_data, sample_telemetry)
+                
+                if sample_telemetry:
+                    self._log_cache_telemetry("get_fast_path_result", telemetry_info)
+                
+                return result
+            
+            # Try legacy format (no suffix)
             cached_data = await self.redis.get(fast_path_key)
             if cached_data:
-                return json.loads(cached_data)
+                sample_telemetry = self._should_sample_telemetry()
+                result, format_used, telemetry_info = self._deserialize_data(cached_data, sample_telemetry)
+                
+                if sample_telemetry:
+                    self._log_cache_telemetry("get_fast_path_result", telemetry_info)
+                
+                return result
+                
         except Exception:
             # Log error but don't fail the operation
             pass
@@ -135,9 +315,18 @@ class DelegationCache:
             fast_path_key = self.generate_fast_path_key(
                 user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
             )
-            await self.redis.setex(
-                fast_path_key, self.fast_path_ttl, json.dumps(result)
-            )
+            
+            # Use msgpack serialization with telemetry sampling
+            sample_telemetry = self._should_sample_telemetry()
+            serialized_data, format_used, telemetry_info = self._serialize_data(result, sample_telemetry)
+            
+            # Store with format suffix
+            formatted_key = self._add_format_suffix(fast_path_key, format_used)
+            await self.redis.setex(formatted_key, self.fast_path_ttl, serialized_data)
+            
+            if sample_telemetry:
+                self._log_cache_telemetry("cache_fast_path_result", telemetry_info)
+                
         except Exception:
             # Log error but don't fail the operation
             pass
@@ -228,7 +417,17 @@ class DelegationCache:
                     }
                 )
 
-            await self.redis.setex(cache_key, self.ttl_seconds, json.dumps(chain_data))
+            # Use msgpack serialization with telemetry sampling
+            sample_telemetry = self._should_sample_telemetry()
+            serialized_data, format_used, telemetry_info = self._serialize_data(chain_data, sample_telemetry)
+            
+            # Store with format suffix
+            formatted_key = self._add_format_suffix(cache_key, format_used)
+            await self.redis.setex(formatted_key, self.ttl_seconds, serialized_data)
+            
+            if sample_telemetry:
+                self._log_cache_telemetry("cache_chain", telemetry_info)
+                
         except Exception:
             # Log error but don't fail the operation
             pass
@@ -236,8 +435,11 @@ class DelegationCache:
     async def invalidate_user_cache(self, user_id: UUID) -> None:
         """Invalidate all chain cache entries for a user."""
         try:
-            # Invalidate both chain cache and fast-path cache
+            # Invalidate both chain cache and fast-path cache with format suffixes
             patterns = [
+                f"delegation:chain:{user_id}:*fmt=*",
+                f"delegation:fastpath:{user_id}:*fmt=*",
+                # Also invalidate legacy format (no suffix) for backward compatibility
                 f"delegation:chain:{user_id}:*",
                 f"delegation:fastpath:{user_id}:*",
             ]
@@ -253,7 +455,13 @@ class DelegationCache:
     async def invalidate_all_chain_cache(self) -> None:
         """Invalidate all chain cache entries (use sparingly)."""
         try:
-            patterns = [f"delegation:chain:*", f"delegation:fastpath:*"]
+            patterns = [
+                f"delegation:chain:*fmt=*", 
+                f"delegation:fastpath:*fmt=*",
+                # Also invalidate legacy format (no suffix) for backward compatibility
+                f"delegation:chain:*", 
+                f"delegation:fastpath:*"
+            ]
 
             for pattern in patterns:
                 keys = await self.redis.keys(pattern)
@@ -283,7 +491,12 @@ class DelegationCache:
             fast_path_key = self.generate_fast_path_key(
                 user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
             )
-            await self.redis.delete(fast_path_key)
+            
+            # Invalidate both msgpack and JSON formats
+            msgpack_key = self._add_format_suffix(fast_path_key, "msgpack")
+            json_key = self._add_format_suffix(fast_path_key, "json")
+            
+            await self.redis.delete(msgpack_key, json_key, fast_path_key)
         except Exception:
             # Log error but don't fail the operation
             pass
@@ -291,26 +504,60 @@ class DelegationCache:
     async def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         try:
-            chain_pattern = f"delegation:chain:*"
-            fast_path_pattern = f"delegation:fastpath:*"
+            # Count different formats
+            msgpack_chain_pattern = "delegation:chain:*fmt=ms"
+            json_chain_pattern = "delegation:chain:*fmt=js"
+            legacy_chain_pattern = "delegation:chain:*"
+            
+            msgpack_fast_pattern = "delegation:fastpath:*fmt=ms"
+            json_fast_pattern = "delegation:fastpath:*fmt=js"
+            legacy_fast_pattern = "delegation:fastpath:*"
 
-            chain_keys = await self.redis.keys(chain_pattern)
-            fast_path_keys = await self.redis.keys(fast_path_pattern)
+            msgpack_chain_keys = await self.redis.keys(msgpack_chain_pattern)
+            json_chain_keys = await self.redis.keys(json_chain_pattern)
+            legacy_chain_keys = await self.redis.keys(legacy_chain_pattern)
+            
+            msgpack_fast_keys = await self.redis.keys(msgpack_fast_pattern)
+            json_fast_keys = await self.redis.keys(json_fast_pattern)
+            legacy_fast_keys = await self.redis.keys(legacy_fast_pattern)
 
             return {
-                "chain_keys": len(chain_keys),
-                "fast_path_keys": len(fast_path_keys),
-                "total_keys": len(chain_keys) + len(fast_path_keys),
-                "cache_size": (
-                    sum(len(k) for k in chain_keys + fast_path_keys)
-                    if chain_keys or fast_path_keys
-                    else 0
-                ),
+                "chain_keys": {
+                    "msgpack": len(msgpack_chain_keys),
+                    "json": len(json_chain_keys),
+                    "legacy": len(legacy_chain_keys),
+                    "total": len(msgpack_chain_keys) + len(json_chain_keys) + len(legacy_chain_keys),
+                },
+                "fast_path_keys": {
+                    "msgpack": len(msgpack_fast_keys),
+                    "json": len(json_fast_keys),
+                    "legacy": len(legacy_fast_keys),
+                    "total": len(msgpack_fast_keys) + len(json_fast_keys) + len(legacy_fast_keys),
+                },
+                "msgpack_available": MSGPACK_AVAILABLE,
+                "telemetry_sample_rate": self.telemetry_sample_rate,
             }
         except Exception:
             return {
-                "chain_keys": 0,
-                "fast_path_keys": 0,
-                "total_keys": 0,
-                "cache_size": 0,
+                "chain_keys": {"total": 0},
+                "fast_path_keys": {"total": 0},
+                "msgpack_available": MSGPACK_AVAILABLE,
+                "telemetry_sample_rate": self.telemetry_sample_rate,
             }
+
+    def _log_cache_telemetry(self, operation: str, telemetry_info: Dict[str, Any]) -> None:
+        """Log cache telemetry information."""
+        try:
+            from backend.core.logging_config import get_logger
+            logger = get_logger(__name__)
+            
+            logger.debug(
+                f"Cache {operation} telemetry",
+                extra={
+                    "operation": operation,
+                    "telemetry": telemetry_info,
+                }
+            )
+        except Exception:
+            # Don't fail if logging fails
+            pass
