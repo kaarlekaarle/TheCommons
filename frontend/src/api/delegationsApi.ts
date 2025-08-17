@@ -151,3 +151,28 @@ export async function trackDelegationCreated(mode: string): Promise<void> {
     console.debug('Failed to track delegation created:', err);
   }
 }
+
+export async function getMyAdoptionSnapshot(): Promise<{
+  last30d: { legacyPct: number; commonsPct: number };
+}> {
+  try {
+    const res = await fetch('/api/delegations/adoption/stats?days=30');
+    if (!res.ok) {
+      throw new Error('Failed to fetch adoption stats');
+    }
+    const data = await res.json();
+    
+    return {
+      last30d: {
+        legacyPct: data.mode_percentages?.legacy_fixed_term || 0,
+        commonsPct: data.mode_percentages?.flexible_domain || 0,
+      }
+    };
+  } catch (err) {
+    console.debug('Failed to fetch adoption snapshot:', err);
+    // Return neutral defaults if API fails
+    return {
+      last30d: { legacyPct: 0, commonsPct: 0 }
+    };
+  }
+}

@@ -11,6 +11,7 @@ interface ComposerDrawerProps {
   onClose: () => void;
   defaultPerson?: PersonSearchResult;
   defaultField?: FieldSearchResult;
+  defaultTab?: TabType;
 }
 
 type TabType = 'traditional' | 'commons';
@@ -19,9 +20,10 @@ export default function ComposerDrawer({
   open,
   onClose,
   defaultPerson,
-  defaultField
+  defaultField,
+  defaultTab
 }: ComposerDrawerProps) {
-  const [activeTab, setActiveTab] = useState<TabType>(defaultField ? 'commons' : 'traditional');
+  const [activeTab, setActiveTab] = useState<TabType>(defaultTab || (defaultField ? 'commons' : 'traditional'));
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(defaultPerson || null);
   const [selectedField, setSelectedField] = useState<FieldSearchResult | null>(defaultField || null);
   const [personQuery, setPersonQuery] = useState('');
@@ -48,11 +50,14 @@ export default function ComposerDrawer({
         setSelectedField(defaultField);
         setActiveTab('commons');
       }
+      if (defaultTab) {
+        setActiveTab(defaultTab);
+      }
       if (activeTab === 'traditional' && !expiry) {
         setExpiry(defaultExpiry.toISOString().split('T')[0]);
       }
     }
-  }, [open, defaultPerson, defaultField, activeTab, expiry]);
+  }, [open, defaultPerson, defaultField, defaultTab, activeTab, expiry]);
 
   // Search people
   useEffect(() => {

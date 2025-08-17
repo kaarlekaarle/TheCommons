@@ -3,9 +3,10 @@ import { useUnifiedDelegationSearch } from "../hooks/useUnifiedDelegationSearch"
 import ComposerDrawer from "../components/delegations/ComposerDrawer";
 import TransparencyPanel from "../components/delegations/TransparencyPanel";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
-import { trackComposerOpen, trackDelegationCreated } from "../api/delegationsApi";
+import { trackComposerOpen, trackDelegationCreated, getMyAdoptionSnapshot } from "../api/delegationsApi";
 import { AlertTriangle, AlertCircle } from "lucide-react";
 import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 
 interface CascadeHealth {
   ruleB: string;
@@ -21,6 +22,8 @@ export default function DelegationsPage() {
   const [cascadeHealth, setCascadeHealth] = useState<CascadeHealth | null>(null);
   const [peopleWarnings, setPeopleWarnings] = useState<Record<string, { concentration?: boolean; superDelegate?: boolean }>>({});
   const [transparencyOpen, setTransparencyOpen] = useState(false);
+  const [adoptionSnapshot, setAdoptionSnapshot] = useState<{ last30d: { legacyPct: number; commonsPct: number } } | null>(null);
+  const [nudgeTab, setNudgeTab] = useState<'traditional' | 'commons' | undefined>(undefined);
 
   // Fetch cascade health on mount
   useEffect(() => {
@@ -37,6 +40,20 @@ export default function DelegationsPage() {
     }
 
     fetchCascadeHealth();
+  }, []);
+
+  // Fetch adoption snapshot on mount
+  useEffect(() => {
+    async function fetchAdoptionSnapshot() {
+      try {
+        const snapshot = await getMyAdoptionSnapshot();
+        setAdoptionSnapshot(snapshot);
+      } catch (err) {
+        console.error('Failed to fetch adoption snapshot:', err);
+      }
+    }
+
+    fetchAdoptionSnapshot();
   }, []);
 
   const handlePersonClick = (person: PersonSearchResult) => {
@@ -59,6 +76,7 @@ export default function DelegationsPage() {
     setDrawerOpen(false);
     setSelectedPerson(undefined);
     setSelectedField(undefined);
+    setNudgeTab(undefined);
   };
 
   // Check if performance banner should be shown
@@ -117,6 +135,42 @@ export default function DelegationsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Your Delegation Mode Nudge */}
+      {adoptionSnapshot && (adoptionSnapshot.last30d.legacyPct > 0 || adoptionSnapshot.last30d.commonsPct > 0) && (
+        <Card className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-fg-strong mb-1">Your delegation mode</h3>
+              <p className="text-sm text-fg-muted">
+                {adoptionSnapshot.last30d.legacyPct > adoptionSnapshot.last30d.commonsPct ? (
+                  "You're mostly using Traditional (4-year) delegations. Curious to try domain-based, revocable Commons?"
+                ) : (
+                  "You're mostly using Commons (by field, revocable). Prefer one person for everything?"
+                )}
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                const suggestedTab = adoptionSnapshot.last30d.legacyPct > adoptionSnapshot.last30d.commonsPct ? 'commons' : 'traditional';
+                setNudgeTab(suggestedTab);
+                setDrawerOpen(true);
+                setSelectedPerson(undefined);
+                setSelectedField(undefined);
+                // Track the nudge click
+                trackComposerOpen(suggestedTab);
+              }}
+              size="sm"
+            >
+              {adoptionSnapshot.last30d.legacyPct > adoptionSnapshot.last30d.commonsPct ? (
+                "Try Commons delegation"
+              ) : (
+                "Create 4-year delegation"
+              )}
+            </Button>
+          </div>
+        </Card>
       )}
 
       {/* Page Title */}
@@ -273,6 +327,7 @@ export default function DelegationsPage() {
         onClose={handleCloseDrawer}
         defaultPerson={selectedPerson}
         defaultField={selectedField}
+        defaultTab={nudgeTab}
       />
 
       {/* Transparency Panel */}
