@@ -49,6 +49,7 @@ from backend.api import (
     options,
     polls,
     reactions,
+    telemetry,
     users,
     votes,
     websocket,
@@ -388,6 +389,12 @@ app.include_router(
     labels.public_router,
     prefix="/api/labels",
     tags=["labels"],
+)
+app.include_router(
+    telemetry.router,
+    prefix="/api/telemetry",
+    tags=["telemetry"],
+    # dependencies=[authenticated_rate_limiter],  # Temporarily disabled for Redis issues
 )
 logger.info("Routers registered successfully")
 
