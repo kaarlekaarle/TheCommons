@@ -238,6 +238,8 @@ class ConstitutionalCascadeDetector:
                         "is_blocking": False,  # Mark as non-blocking if stale
                         "file_used": newest_file,
                         "file_age_hours": round(age_hours, 1),
+                        "latency_source": newest_file,
+                        "latency_timestamp": newest_timestamp.isoformat() if newest_timestamp else None,
                         "ts": datetime.now().isoformat(),
                     }
 
@@ -292,6 +294,8 @@ class ConstitutionalCascadeDetector:
                     "is_blocking": is_blocking,
                     "file_used": newest_file,
                     "file_age_hours": round(age_hours, 1),
+                    "latency_source": newest_file,
+                    "latency_timestamp": newest_timestamp.isoformat() if newest_timestamp else None,
                     "p50_ms": p50,
                     "p95_ms": p95,
                     "p99_ms": p99,
@@ -769,7 +773,15 @@ class ConstitutionalCascadeDetector:
                     md.append(
                         f"- **Cache Hit Rate**: {signal.get('cache_hit_rate', 0)}%"
                     )
-                    if signal.get("file_used"):
+                    if signal.get("latency_source"):
+                        md.append(
+                            f"- **Source**: {signal.get('latency_source')}"
+                        )
+                        if signal.get("latency_timestamp"):
+                            md.append(
+                                f"- **Timestamp**: {signal.get('latency_timestamp')}"
+                            )
+                    elif signal.get("file_used"):
                         md.append(
                             f"- **Snapshot**: {signal.get('file_used')} (age: {signal.get('file_age_hours', 0):.1f}h)"
                         )

@@ -374,6 +374,9 @@ jobs:
         echo "✅ Performance snapshot refreshed!"
         echo "📊 Fresh latency data available for cascade detector"
 
+    - name: Show perf snapshot
+      run: cat reports/override_latency.json || true
+
     - name: Cascade Detector (shadow/warn/enforce)
       run: |
         # Export branch information for cascade detector
