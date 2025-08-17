@@ -71,6 +71,19 @@ class Settings(BaseSettings):
     LABELS_ENABLED: bool = os.getenv("LABELS_ENABLED", "true").lower() == "true"
     ALLOW_PUBLIC_LABELS: bool = os.getenv("ALLOW_PUBLIC_LABELS", "false").lower() == "true"
     
+    # Constitutional delegation features
+    VALUES_AS_DELEGATES_ENABLED: bool = os.getenv("VALUES_AS_DELEGATES_ENABLED", "false").lower() == "true"
+    IDEA_DELEGATION_ENABLED: bool = os.getenv("IDEA_DELEGATION_ENABLED", "false").lower() == "true"
+    DELEGATION_EXPIRY_ENABLED: bool = os.getenv("DELEGATION_EXPIRY_ENABLED", "false").lower() == "true"
+    CONCENTRATION_MONITORING_ENABLED: bool = os.getenv("CONCENTRATION_MONITORING_ENABLED", "false").lower() == "true"
+    ANONYMOUS_DELEGATION_ENABLED: bool = os.getenv("ANONYMOUS_DELEGATION_ENABLED", "false").lower() == "true"
+    FEEDBACK_NUDGES_ENABLED: bool = os.getenv("FEEDBACK_NUDGES_ENABLED", "false").lower() == "true"
+    
+    # Delegation mode features (transition philosophy)
+    LEGACY_MODE_ENABLED: bool = os.getenv("LEGACY_MODE_ENABLED", "true").lower() == "true"
+    UNIFIED_SEARCH_ENABLED: bool = os.getenv("UNIFIED_SEARCH_ENABLED", "true").lower() == "true"
+    INSTITUTIONS_ENABLED: bool = os.getenv("INSTITUTIONS_ENABLED", "true").lower() == "true"
+    
     # Testing
     TESTING: bool = os.getenv("TESTING", "false").lower() == "true"
     
