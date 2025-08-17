@@ -1,6 +1,6 @@
 # Constitutional Cascade Report
 
-**Generated**: 2025-08-17T17:43:57.354481
+**Generated**: 2025-08-17T17:59:17.550147
 
 ## Cascade Summary
 
@@ -24,7 +24,7 @@ CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=
 
 - **Type**: Maintainer concentration
 - **Percentage**: 100.0%
-- **Commits**: 33
+- **Commits**: 30
 
 ### Signal #5: INFO
 

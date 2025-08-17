@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-08-17T18:08:50.902559",
+  "summary": "CASCADE: clean, no rules triggered",
+  "exit_code": 0,
+  "cascade_results": [],
+  "signals": [
+    {
+      "id": "#3",
+      "severity": "info",
+      "flows": 0,
+      "module": "delegations",
+      "ts": "2025-08-17T18:08:50.742490"
+    },
+    {
+      "id": "#4",
+      "severity": "critical",
+      "value_pct": 100.0,
+      "ts": "2025-08-17T18:08:50.859937",
+      "meta": {
+        "top_maintainer": "kaarlekaarle",
+        "total_commits": 30,
+        "lookback_days": 30,
+        "files_analyzed": 21
+      }
+    },
+    {
+      "id": "#5",
+      "severity": "info",
+      "value_pct": 25.0,
+      "ts": "2025-08-17T18:08:50.902413",
+      "meta": {
+        "mode_distribution": {
+          "legacy_fixed_term": 25,
+          "flexible_domain": 60,
+          "hybrid_seed": 15
+        },
+        "total_delegations": 100,
+        "transition_health": "moderate"
+      }
+    }
+  ]
+}

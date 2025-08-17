@@ -143,24 +143,121 @@ class ConstitutionalCascadeDetector:
         print("🔍 Collecting signal #2: Override latency...")
 
         try:
-            # Check if override latency data is stale (>48h old)
-            override_latency_file = "reports/override_latency.json"
-            if os.path.exists(override_latency_file):
-                file_stat = os.stat(override_latency_file)
-                file_age_hours = (datetime.now().timestamp() - file_stat.st_mtime) / 3600
+            # Look for override latency files and pick the newest by timestamp
+            override_latency_files = [
+                "reports/override_latency.json",
+                "reports/test_override_latency.json",
+                "reports/signal_override_latency.json"
+            ]
+            
+            newest_file = None
+            newest_timestamp = None
+            
+            for file_path in override_latency_files:
+                if os.path.exists(file_path):
+                    try:
+                        with open(file_path, "r") as f:
+                            data = json.load(f)
+                        
+                        # Check if file has a timestamp field
+                        file_timestamp = data.get("timestamp")
+                        if file_timestamp:
+                            # Parse ISO8601 timestamp
+                            try:
+                                dt = datetime.fromisoformat(file_timestamp.replace('Z', '+00:00'))
+                                if newest_timestamp is None or dt > newest_timestamp:
+                                    newest_timestamp = dt
+                                    newest_file = file_path
+                            except ValueError:
+                                # Fallback to file modification time
+                                file_stat = os.stat(file_path)
+                                file_mtime = datetime.fromtimestamp(file_stat.st_mtime)
+                                if newest_timestamp is None or file_mtime > newest_timestamp:
+                                    newest_timestamp = file_mtime
+                                    newest_file = file_path
+                        else:
+                            # No timestamp in file, use modification time
+                            file_stat = os.stat(file_path)
+                            file_mtime = datetime.fromtimestamp(file_stat.st_mtime)
+                            if newest_timestamp is None or file_mtime > newest_timestamp:
+                                newest_timestamp = file_mtime
+                                newest_file = file_path
+                    except (json.JSONDecodeError, IOError):
+                        continue
+            
+            if newest_file and newest_timestamp:
+                # Check if data is stale (>48h old)
+                now = datetime.now()
+                if newest_timestamp.tzinfo is None:
+                    # Assume local time if no timezone
+                    now = now.replace(tzinfo=None)
+                else:
+                    # Convert now to UTC for comparison
+                    now = now.astimezone()
                 
-                if file_age_hours > 48:
+                age_hours = (now - newest_timestamp).total_seconds() / 3600
+                
+                if age_hours > 48:
                     print(f"⚠️  Latency signal stale (>48h); not blocking.")
                     return {
                         "id": "#2",
+                        "metric": "Override latency",
+                        "value": "STALE",
+                        "unit": "ms",
                         "severity": "info",
-                        "value_ms": 0,
-                        "status": "stale",
-                        "age_hours": file_age_hours,
+                        "description": f"Latency signal stale (>48h); not blocking.",
+                        "is_blocking": False,  # Mark as non-blocking if stale
+                        "file_used": newest_file,
+                        "file_age_hours": round(age_hours, 1),
                         "ts": datetime.now().isoformat(),
                     }
 
-            # Call constitutional_drift_detector.py
+                # Read fresh override latency data
+                with open(newest_file, "r") as f:
+                    data = json.load(f)
+
+                # Extract latency metrics
+                p50 = data.get("p50_ms", data.get("statistics", {}).get("p50", 0))
+                p95 = data.get("p95_ms", data.get("statistics", {}).get("p95", 0))
+                p99 = data.get("p99_ms", data.get("statistics", {}).get("p99", 0))
+                
+                # Use p95 for severity determination (primary SLO metric)
+                latency_ms = p95
+
+                # Determine severity based on SLOs
+                severity = "ok"
+                description = f"P95: {p95}ms, P99: {p99}ms"
+                is_blocking = False
+
+                if p95 > 1500:
+                    severity = "warn"
+                    description += " (P95 > 1.5s)"
+                if p99 > 2000:
+                    severity = "critical"
+                    description += " (P99 > 2.0s)"
+                    is_blocking = True  # Blocking if critical
+
+                print(f"📊 Using {newest_file} (age: {age_hours:.1f}h)")
+                print(f"   P50: {p50}ms, P95: {p95}ms, P99: {p99}ms")
+
+                return {
+                    "id": "#2",
+                    "metric": "Override latency",
+                    "value": p95,
+                    "unit": "ms",
+                    "severity": severity,
+                    "description": description,
+                    "is_blocking": is_blocking,
+                    "file_used": newest_file,
+                    "file_age_hours": round(age_hours, 1),
+                    "p50_ms": p50,
+                    "p95_ms": p95,
+                    "p99_ms": p99,
+                    "ts": datetime.now().isoformat(),
+                }
+
+            # Fallback: Call constitutional_drift_detector.py if no fresh data
+            print("⚠️  No fresh override latency data found, using drift detector...")
             subprocess.run(
                 [
                     "python3",
@@ -202,8 +299,17 @@ class ConstitutionalCascadeDetector:
             return None
 
         except Exception as e:
-            print(f"Warning: Could not collect override latency signal: {e}")
-            return None
+            print(f"❌ Error collecting signal #2: {e}")
+            return {
+                "id": "#2",
+                "metric": "Override latency",
+                "value": "ERROR",
+                "unit": "ms",
+                "severity": "error",
+                "description": f"Error collecting latency: {e}",
+                "is_blocking": True,
+                "ts": datetime.now().isoformat(),
+            }
 
     def collect_signal_3_complexity(self) -> Optional[Dict[str, Any]]:
         """Collect signal #3: Delegation API complexity."""

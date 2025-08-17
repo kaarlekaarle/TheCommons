@@ -126,6 +126,24 @@ class Delegation(SQLAlchemyBase):
             "revoked_at",
             postgresql_where="is_deleted = false AND revoked_at IS NULL",
         ),
+        # New: Optimized index for chain resolution with scope filtering
+        Index(
+            "idx_chain_resolution_optimized",
+            "delegator_id",
+            "is_deleted",
+            "revoked_at",
+            "poll_id",
+            "label_id",
+            "field_id",
+            "institution_id",
+            "value_id",
+            "idea_id",
+            "mode",
+            "start_date",
+            "end_date",
+            "created_at",
+            postgresql_where="is_deleted = false AND revoked_at IS NULL",
+        ),
     )
 
     # Relationships

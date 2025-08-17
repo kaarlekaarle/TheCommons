@@ -1,0 +1,13 @@
+{
+  "override_latency_ms": 1511.0047308104015,
+  "p50_ms": 610.0461085080059,
+  "p95_ms": 1511.0047308104015,
+  "p99_ms": 2328.9952644418236,
+  "total_requests": 400,
+  "cache_hit_rate": 80.0,
+  "slo_compliance": {
+    "p95_target_1_5s": false,
+    "p99_target_2_0s": false
+  },
+  "timestamp": "2025-08-17T18:09:51.044896"
+}

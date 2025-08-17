@@ -9,7 +9,9 @@ to monitor SLO compliance and identify performance bottlenecks.
 import re
 import json
 import argparse
-from datetime import datetime, timedelta
+import tempfile
+import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import statistics
@@ -21,6 +23,7 @@ class OverrideLatencyCollector:
             "total_requests": 0,
             "cache_hits": 0,
             "cache_misses": 0,
+            "fast_path_hits": 0,
             "latencies": {
                 "total": [],
                 "db": [],
@@ -36,11 +39,13 @@ class OverrideLatencyCollector:
     
     def collect_metrics(self, hours_back: int = 24) -> Dict[str, Any]:
         """Collect metrics from log file for the specified time period."""
-        cutoff_time = datetime.now() - timedelta(hours=hours_back)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
         
         # Log patterns for chain resolution
         cache_hit_pattern = r'Chain resolution cache hit: ([\d.]+)s total \(cache: ([\d.]+)s, deserialize: ([\d.]+)s\)'
         cache_miss_pattern = r'Chain resolution completed: ([\d.]+)s total \(db: ([\d.]+)s, cache: ([\d.]+)s, queries: (\d+)\)'
+        override_pattern = r'Override resolution completed: ([\d.]+)s total \(db: ([\d.]+)s, cache: ([\d.]+)s\)'
+        fast_path_pattern = r'Override fast-path cache hit: ([\d.]+)s total \(cache: ([\d.]+)s\)'
         
         with open(self.log_file, 'r') as f:
             for line in f:
@@ -49,6 +54,10 @@ class OverrideLatencyCollector:
                     self._parse_cache_hit(line, cache_hit_pattern, cutoff_time)
                 elif 'Chain resolution completed:' in line:
                     self._parse_cache_miss(line, cache_miss_pattern, cutoff_time)
+                elif 'Override resolution completed:' in line:
+                    self._parse_override_resolution(line, override_pattern, cutoff_time)
+                elif 'Override fast-path cache hit:' in line:
+                    self._parse_fast_path_hit(line, fast_path_pattern, cutoff_time)
         
         return self._calculate_statistics()
     
@@ -125,6 +134,75 @@ class OverrideLatencyCollector:
             except json.JSONDecodeError:
                 pass
     
+    def _parse_override_resolution(self, line: str, pattern: str, cutoff_time: datetime) -> None:
+        """Parse override resolution log line."""
+        match = re.search(pattern, line)
+        if not match:
+            return
+        
+        # Extract timestamps and check if within time window
+        timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', line)
+        if timestamp_match:
+            try:
+                log_time = datetime.strptime(timestamp_match.group(1), '%Y-%m-%d %H:%M:%S')
+                if log_time < cutoff_time:
+                    return
+            except ValueError:
+                pass
+        
+        total_time = float(match.group(1))
+        db_time = float(match.group(2))
+        cache_time = float(match.group(3))
+        
+        self.metrics["total_requests"] += 1
+        self.metrics["latencies"]["total"].append(total_time)
+        self.metrics["latencies"]["db"].append(db_time)
+        self.metrics["latencies"]["cache"].append(cache_time)
+        
+        # Extract additional metrics from JSON
+        json_match = re.search(r'\{.*\}', line)
+        if json_match:
+            try:
+                extra_data = json.loads(json_match.group())
+                self.metrics["chain_lengths"].append(extra_data.get("chain_length", 0))
+                if extra_data.get("fast_path_hit", False):
+                    self.metrics["fast_path_hits"] += 1
+            except json.JSONDecodeError:
+                pass
+    
+    def _parse_fast_path_hit(self, line: str, pattern: str, cutoff_time: datetime) -> None:
+        """Parse fast-path cache hit log line."""
+        match = re.search(pattern, line)
+        if not match:
+            return
+        
+        # Extract timestamps and check if within time window
+        timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', line)
+        if timestamp_match:
+            try:
+                log_time = datetime.strptime(timestamp_match.group(1), '%Y-%m-%d %H:%M:%S')
+                if log_time < cutoff_time:
+                    return
+            except ValueError:
+                pass
+        
+        total_time = float(match.group(1))
+        cache_time = float(match.group(2))
+        
+        self.metrics["total_requests"] += 1
+        self.metrics["fast_path_hits"] += 1
+        self.metrics["latencies"]["total"].append(total_time)
+        self.metrics["latencies"]["cache"].append(cache_time)
+        
+        # Extract additional metrics from JSON
+        json_match = re.search(r'\{.*\}', line)
+        if json_match:
+            try:
+                extra_data = json.loads(json_match.group())
+                self.metrics["chain_lengths"].append(extra_data.get("chain_length", 0))
+            except json.JSONDecodeError:
+                pass
+    
     def _calculate_statistics(self) -> Dict[str, Any]:
         """Calculate statistics from collected metrics."""
         stats = {
@@ -193,14 +271,34 @@ def main():
     collector = OverrideLatencyCollector(args.log_file)
     stats = collector.collect_metrics(args.hours_back)
     
+    # Add UTC timestamp
+    stats["timestamp"] = datetime.now(timezone.utc).isoformat()
+    
     if args.format == "json":
         output = json.dumps(stats, indent=2)
     else:
         output = format_text_output(stats)
     
     if args.json_out:
-        with open(args.json_out, 'w') as f:
-            f.write(output)
+        # Atomic write using temporary file
+        output_path = Path(args.json_out)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Create temporary file in the same directory
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            dir=output_path.parent,
+            prefix=f"{output_path.stem}_tmp_",
+            suffix=output_path.suffix,
+            delete=False
+        ) as tmp_file:
+            tmp_file.write(output)
+            tmp_file.flush()
+            os.fsync(tmp_file.fileno())  # Ensure data is written to disk
+        
+        # Atomic rename
+        os.rename(tmp_file.name, output_path)
+        
         print(f"Metrics saved to {args.json_out}")
     else:
         print(output)

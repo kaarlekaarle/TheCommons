@@ -1,15 +1,13 @@
 {
-  "timestamp": "2025-08-17T15:34:18.551107",
-  "source": "real_metrics",
-  "statistics": {
-    "count": 0,
-    "p50": 0,
-    "p95": 0,
-    "p99": 0,
-    "min": 0,
-    "max": 0,
-    "mean": 0,
-    "window_size": "0s"
+  "override_latency_ms": 1436.287697172077,
+  "p50_ms": 665.2420619155153,
+  "p95_ms": 1436.287697172077,
+  "p99_ms": 2260.99424848836,
+  "total_requests": 50,
+  "cache_hit_rate": 78.0,
+  "slo_compliance": {
+    "p95_target_1_5s": true,
+    "p99_target_2_0s": false
   },
-  "collection_method": "logs_and_redis"
+  "timestamp": "2025-08-17T18:07:05.658305"
 }

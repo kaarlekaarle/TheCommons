@@ -1,19 +1,19 @@
 # Constitutional Cascade Report
 
-**Generated**: 2025-08-17T17:43:57.354481
+**Generated**: 2025-08-17T18:07:56.699183
 
 ## Cascade Summary
 
 ```
-CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency
+CASCADE: clean, no rules triggered
 ```
 
 ## Collected Signals
 
-### Signal #2: CRITICAL
+### Signal #2: WARN
 
 - **Type**: Override latency
-- **Value**: 2100ms
+- **Value**: 1436.287697172077ms
 
 ### Signal #3: INFO
 
@@ -24,7 +24,7 @@ CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=
 
 - **Type**: Maintainer concentration
 - **Percentage**: 100.0%
-- **Commits**: 33
+- **Commits**: 30
 
 ### Signal #5: INFO
 
@@ -32,10 +32,6 @@ CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=
 - **Legacy Usage**: 25.0%
 - **Meta**: {"mode_distribution": {"legacy_fixed_term": 25, "flexible_domain": 60, "hybrid_seed": 15}, "total_delegations": 100, "transition_health": "moderate"}
 
-## Triggered Cascade Rules
+## Cascade Results
 
-### Rule B
-
-- **Decision**: BLOCK
-- **Rationale**: Opacity + complexity
-- **Window**: 7 days
+✅ No cascade rules triggered

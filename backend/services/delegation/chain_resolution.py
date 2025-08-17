@@ -82,6 +82,63 @@ class ChainResolutionCore:
         return chain
     
     @staticmethod
+    def create_fast_path_cache_key(
+        user_id: UUID,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> str:
+        """Create a fast-path cache key for override resolution (pure function)."""
+        import hashlib
+        
+        # Create scope hash for cache key
+        scope_parts = []
+        if poll_id:
+            scope_parts.append(f"poll:{poll_id}")
+        elif label_id:
+            scope_parts.append(f"label:{label_id}")
+        elif field_id:
+            scope_parts.append(f"field:{field_id}")
+        elif institution_id:
+            scope_parts.append(f"institution:{institution_id}")
+        elif value_id:
+            scope_parts.append(f"value:{value_id}")
+        elif idea_id:
+            scope_parts.append(f"idea:{idea_id}")
+        else:
+            scope_parts.append("global")
+        
+        scope_hash = hashlib.md5(":".join(scope_parts).encode()).hexdigest()[:8]
+        return f"delegation:fastpath:{user_id}:{scope_hash}"
+    
+    @staticmethod
+    def create_fast_path_cache_result(
+        chain: List[Delegation],
+        final_delegatee_id: UUID,
+        chain_length: int,
+        resolution_time_ms: float,
+    ) -> Dict[str, Any]:
+        """Create a fast-path cache result (pure function)."""
+        return {
+            "chain": [
+                {
+                    "id": str(d.id),
+                    "delegator_id": str(d.delegator_id),
+                    "delegatee_id": str(d.delegatee_id),
+                    "mode": d.mode,
+                }
+                for d in chain
+            ],
+            "final_delegatee_id": str(final_delegatee_id),
+            "chain_length": chain_length,
+            "resolution_time_ms": resolution_time_ms,
+            "cached_at": datetime.utcnow().isoformat(),
+        }
+    
+    @staticmethod
     def _build_delegation_map(delegations: List[Delegation]) -> Dict[UUID, List[Delegation]]:
         """Build a map of delegator_id -> list of delegations for fast lookup."""
         delegation_map = {}

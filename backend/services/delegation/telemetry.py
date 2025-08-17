@@ -44,6 +44,108 @@ class DelegationTelemetry:
         return start_time
     
     @staticmethod
+    def log_override_resolution_start(
+        user_id: UUID,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> float:
+        """Log the start of override resolution and return start time."""
+        start_time = time.time()
+        logger.debug(
+            "Starting override resolution",
+            extra={
+                "user_id": str(user_id),
+                "poll_id": str(poll_id) if poll_id else None,
+                "label_id": str(label_id) if label_id else None,
+                "field_id": str(field_id) if field_id else None,
+                "institution_id": str(institution_id) if institution_id else None,
+                "value_id": str(value_id) if value_id else None,
+                "idea_id": str(idea_id) if idea_id else None,
+                "start_time": start_time,
+                "operation": "override_resolution",
+            }
+        )
+        return start_time
+    
+    @staticmethod
+    def log_override_resolution_complete(
+        user_id: UUID,
+        total_time: float,
+        db_time: float,
+        cache_time: float,
+        chain_length: int,
+        cache_hit: bool,
+        fast_path_hit: bool,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> None:
+        """Log override resolution completion with detailed timing."""
+        logger.info(
+            f"Override resolution completed: {total_time:.3f}s total (db: {db_time:.3f}s, cache: {cache_time:.3f}s)",
+            extra={
+                "user_id": str(user_id),
+                "poll_id": str(poll_id) if poll_id else None,
+                "label_id": str(label_id) if label_id else None,
+                "field_id": str(field_id) if field_id else None,
+                "institution_id": str(institution_id) if institution_id else None,
+                "value_id": str(value_id) if value_id else None,
+                "idea_id": str(idea_id) if idea_id else None,
+                "total_time_ms": int(total_time * 1000),
+                "db_time_ms": int(db_time * 1000),
+                "cache_time_ms": int(cache_time * 1000),
+                "chain_length": chain_length,
+                "cache_hit": cache_hit,
+                "fast_path_hit": fast_path_hit,
+                "operation": "override_resolution",
+                "slo_p95_target": total_time <= 1.5,  # 1.5s target
+                "slo_p99_target": total_time <= 2.0,  # 2.0s target
+            }
+        )
+    
+    @staticmethod
+    def log_fast_path_cache_hit(
+        user_id: UUID,
+        cache_time: float,
+        total_time: float,
+        chain_length: int,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> None:
+        """Log fast-path cache hit metrics."""
+        logger.info(
+            f"Override fast-path cache hit: {total_time:.3f}s total (cache: {cache_time:.3f}s)",
+            extra={
+                "user_id": str(user_id),
+                "poll_id": str(poll_id) if poll_id else None,
+                "label_id": str(label_id) if label_id else None,
+                "field_id": str(field_id) if field_id else None,
+                "institution_id": str(institution_id) if institution_id else None,
+                "value_id": str(value_id) if value_id else None,
+                "idea_id": str(idea_id) if idea_id else None,
+                "cache_time_ms": int(cache_time * 1000),
+                "total_time_ms": int(total_time * 1000),
+                "chain_length": chain_length,
+                "cache_hit": True,
+                "fast_path_hit": True,
+                "operation": "override_resolution",
+                "slo_p95_target": total_time <= 1.5,
+                "slo_p99_target": total_time <= 2.0,
+            }
+        )
+    
+    @staticmethod
     def log_cache_hit(
         cache_key: str,
         cache_time: float,
