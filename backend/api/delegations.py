@@ -30,6 +30,7 @@ from backend.schemas.delegation import (
 from backend.services.delegation import DelegationService, DelegationTarget
 from backend.services.concentration_monitor import ConcentrationMonitorService
 from backend.services.super_delegate_detector import SuperDelegateDetectorService
+from backend.services.adoption_telemetry import AdoptionTelemetryService
 from backend.config import get_settings
 from datetime import datetime
 
@@ -225,6 +226,18 @@ async def create_delegation(
         )
         
         await db.commit()
+        
+        # Track adoption telemetry
+        try:
+            telemetry_service = AdoptionTelemetryService(db)
+            context = {
+                "target_type": delegation.target_type,
+                "field_id": str(field_id) if field_id else None,
+                "has_warnings": bool(warnings.get("concentration", {}).get("active") or warnings.get("superDelegateRisk", {}).get("active"))
+            }
+            await telemetry_service.track_delegation_mode(current_user.id, mode, context)
+        except Exception as e:
+            logger.warning(f"Failed to track adoption telemetry: {e}")
         
         logger.info(
             "Delegation created successfully with mode support",
@@ -1355,3 +1368,31 @@ async def get_delegation_health_summary(
             exc_info=True,
         )
         raise ServerError("Failed to get delegation health summary")
+
+
+@router.get("/adoption/stats", response_model=dict)
+async def get_adoption_stats(
+    days: int = Query(14, ge=1, le=365, description="Number of days to look back"),
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get adoption statistics for delegation modes.
+    
+    Args:
+        days: Number of days to look back for statistics
+        
+    Returns:
+        dict: Adoption statistics including mode usage and transitions
+    """
+    try:
+        telemetry_service = AdoptionTelemetryService(db)
+        stats = await telemetry_service.get_adoption_stats(days)
+        return stats
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get adoption stats",
+            extra={"error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to get adoption stats")
