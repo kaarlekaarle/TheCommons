@@ -5,7 +5,7 @@ This document defines Service Level Objectives (SLOs) for the delegation backend
 ## Override Latency SLOs
 
 ### Primary Metrics
-- **p95 Override Latency**: < 1.5s
+- **p95 Override Latency**: < 1.5s (with 50ms grace period)
 - **p99 Override Latency**: < 2.0s
 - **Measurement Source**: `collect_override_latency.py` from backend logs and Redis
 
@@ -16,9 +16,29 @@ This document defines Service Level Objectives (SLOs) for the delegation backend
 4. **Statistics**: Calculated using `collect_override_latency.py`
 
 ### SLO Violation Response
-- **Warning**: p95 > 1.2s or p99 > 1.6s
-- **Critical**: p95 > 1.5s or p99 > 2.0s
+- **Warning**: p95 > 1.4s or p99 > 1.6s
+- **High**: p95 > 1.5s or p99 > 2.0s
+- **Critical**: p95 > 1.55s (with 50ms grace period)
 - **Action**: Immediate performance investigation and optimization
+
+### Anti-Flap Protection
+The system uses a 50ms grace period to prevent build flapping:
+- **1500-1549ms**: HIGH severity (cascade) / WARN severity (promote-to-fail)
+- **≥1550ms**: CRITICAL severity (cascade) / BLOCK (promote-to-fail)
+
+### Unified Threshold Configuration
+Performance thresholds are centrally configured in `backend/config/perf_thresholds.json`:
+```json
+{
+  "override_latency": {
+    "p95_slo_ms": 1500,
+    "grace_ms": 50,
+    "stale_hours": 24
+  }
+}
+```
+
+This ensures consistent thresholds across cascade detection and promote-to-fail guards.
 
 ## Complexity Ceiling SLOs
 
@@ -73,10 +93,10 @@ This document defines Service Level Objectives (SLOs) for the delegation backend
 
 ## SLO Targets Summary
 
-| Metric | Target | Warning | Critical | Measurement |
-|--------|--------|---------|----------|-------------|
-| Override Latency p95 | < 1.5s | > 1.2s | > 1.5s | Real backend logs |
-| Override Latency p99 | < 2.0s | > 1.6s | > 2.0s | Real backend logs |
+| Metric | Target | Warning | High | Critical | Measurement |
+|--------|--------|---------|------|----------|-------------|
+| Override Latency p95 | < 1.5s | > 1.4s | > 1.5s | > 1.55s | Real backend logs |
+| Override Latency p99 | < 2.0s | > 1.6s | > 2.0s | > 2.0s | Real backend logs |
 | Complexity (flows/module) | ≤ 5 | 6-7 | ≥ 8 | Code analysis |
 | Maintainer Concentration | ≤ 75% | 75-80% | ≥ 80% | Git history |
 
