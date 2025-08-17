@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
+import json
+import hashlib
 
 from sqlalchemy import and_, bindparam, delete, desc, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+import redis.asyncio as redis
 
 from backend.core.exceptions import ResourceNotFoundError
 from backend.core.exceptions.delegation import (
@@ -23,6 +26,7 @@ from backend.models.delegation_stats import DelegationStats
 from backend.models.field import Field
 from backend.models.institution import Institution
 from backend.models.vote import Vote
+from backend.config import get_settings
 
 logger = get_logger(__name__)
 
@@ -42,10 +46,108 @@ class DelegationService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.stats_cache_ttl = timedelta(minutes=5)
+        self.chain_cache_ttl = timedelta(minutes=10)  # 10 minute TTL for chain cache
+        
+        # Redis connection for chain caching
+        settings = get_settings()
+        self.redis = redis.from_url(settings.REDIS_URL)
+        
         # Import here to avoid circular dependency with StatsCalculationTask
         from backend.core.background_tasks import StatsCalculationTask
 
         self.stats_task = StatsCalculationTask(db, self)
+
+    def _get_chain_cache_key(self, user_id: UUID, poll_id: Optional[UUID] = None, 
+                            label_id: Optional[UUID] = None, field_id: Optional[UUID] = None,
+                            institution_id: Optional[UUID] = None, value_id: Optional[UUID] = None,
+                            idea_id: Optional[UUID] = None) -> str:
+        """Generate cache key for delegation chain."""
+        # Create scope hash for cache key
+        scope_parts = []
+        if poll_id:
+            scope_parts.append(f"poll:{poll_id}")
+        elif label_id:
+            scope_parts.append(f"label:{label_id}")
+        elif field_id:
+            scope_parts.append(f"field:{field_id}")
+        elif institution_id:
+            scope_parts.append(f"institution:{institution_id}")
+        elif value_id:
+            scope_parts.append(f"value:{value_id}")
+        elif idea_id:
+            scope_parts.append(f"idea:{idea_id}")
+        else:
+            scope_parts.append("global")
+        
+        scope_hash = hashlib.md5(":".join(scope_parts).encode()).hexdigest()[:8]
+        return f"delegation:chain:{user_id}:{scope_hash}"
+
+    async def _get_cached_chain(self, cache_key: str) -> Optional[List[Dict[str, Any]]]:
+        """Get cached delegation chain."""
+        try:
+            cached_data = await self.redis.get(cache_key)
+            if cached_data:
+                chain_data = json.loads(cached_data)
+                logger.debug(f"Cache hit for chain: {cache_key}")
+                return chain_data
+        except Exception as e:
+            logger.warning(f"Error reading from cache: {e}")
+        return None
+
+    async def _cache_chain(self, cache_key: str, chain: List[Delegation]) -> None:
+        """Cache delegation chain with TTL."""
+        try:
+            # Serialize chain to JSON-serializable format
+            chain_data = []
+            for delegation in chain:
+                chain_data.append({
+                    "id": str(delegation.id),
+                    "delegator_id": str(delegation.delegator_id),
+                    "delegatee_id": str(delegation.delegatee_id),
+                    "mode": delegation.mode,
+                    "poll_id": str(delegation.poll_id) if delegation.poll_id else None,
+                    "label_id": str(delegation.label_id) if delegation.label_id else None,
+                    "field_id": str(delegation.field_id) if delegation.field_id else None,
+                    "institution_id": str(delegation.institution_id) if delegation.institution_id else None,
+                    "value_id": str(delegation.value_id) if delegation.value_id else None,
+                    "idea_id": str(delegation.idea_id) if delegation.idea_id else None,
+                    "start_date": delegation.start_date.isoformat() if delegation.start_date else None,
+                    "end_date": delegation.end_date.isoformat() if delegation.end_date else None,
+                    "legacy_term_ends_at": delegation.legacy_term_ends_at.isoformat() if delegation.legacy_term_ends_at else None,
+                    "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
+                })
+            
+            await self.redis.setex(
+                cache_key, 
+                int(self.chain_cache_ttl.total_seconds()), 
+                json.dumps(chain_data)
+            )
+            logger.debug(f"Cached chain: {cache_key}")
+        except Exception as e:
+            logger.warning(f"Error caching chain: {e}")
+
+    async def _invalidate_chain_cache(self, user_id: UUID) -> None:
+        """Invalidate all chain cache entries for a user."""
+        try:
+            pattern = f"delegation:chain:{user_id}:*"
+            keys = await self.redis.keys(pattern)
+            if keys:
+                await self.redis.delete(*keys)
+                logger.debug(f"Invalidated {len(keys)} chain cache entries for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Error invalidating chain cache: {e}")
+
+    async def _invalidate_chain_cache_by_delegatee(self, delegatee_id: UUID) -> None:
+        """Invalidate chain cache entries that might be affected by delegatee changes."""
+        try:
+            # This is a broader invalidation - could be optimized with more specific patterns
+            pattern = f"delegation:chain:*"
+            keys = await self.redis.keys(pattern)
+            if keys:
+                await self.redis.delete(*keys)
+                logger.debug(f"Invalidated all chain cache entries due to delegatee {delegatee_id} change")
+        except Exception as e:
+            logger.warning(f"Error invalidating chain cache by delegatee: {e}")
 
     async def create_delegation(
         self,
@@ -274,6 +376,10 @@ class DelegationService:
         # Invalidate stats cache
         await self.invalidate_stats_cache(poll_id)
 
+        # Invalidate chain cache for delegator and delegatee
+        await self._invalidate_chain_cache(delegator_id)
+        await self._invalidate_chain_cache_by_delegatee(delegatee_id)
+
         logger.info(
             f"Created delegation {delegation.id} with mode {mode}",
             extra={
@@ -338,6 +444,10 @@ class DelegationService:
 
         # Trigger stats recalculation
         await self.stats_task.calculate_stats(delegation.poll_id)
+
+        # Invalidate chain cache for delegator and delegatee
+        await self._invalidate_chain_cache(delegation.delegator_id)
+        await self._invalidate_chain_cache_by_delegatee(delegation.delegatee_id)
 
     async def revoke_user_delegation(
         self, delegator_id: UUID, poll_id: Optional[UUID] = None
@@ -409,10 +519,10 @@ class DelegationService:
         max_depth: int = 10,
     ) -> List[Delegation]:
         """Resolve delegation chain for a user with mode-aware resolution.
-
+        
         This method respects the constitutional principle that user overrides
         must stop chain resolution immediately, regardless of delegation mode.
-
+        
         Args:
             user_id: ID of the user to resolve chain for
             poll_id: Optional poll ID for poll-specific resolution
@@ -422,10 +532,39 @@ class DelegationService:
             value_id: Optional value ID for value-specific resolution
             idea_id: Optional idea ID for idea-specific resolution
             max_depth: Maximum chain depth to prevent infinite loops
-
+            
         Returns:
             List[Delegation]: Chain of delegations ending at the final delegatee
         """
+        # Try to get cached chain first
+        cache_key = self._get_chain_cache_key(
+            user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        cached_chain_data = await self._get_cached_chain(cache_key)
+        
+        if cached_chain_data:
+            # Convert cached data back to Delegation objects
+            chain = []
+            for delegation_data in cached_chain_data:
+                delegation = Delegation()
+                delegation.id = UUID(delegation_data["id"])
+                delegation.delegator_id = UUID(delegation_data["delegator_id"])
+                delegation.delegatee_id = UUID(delegation_data["delegatee_id"])
+                delegation.mode = delegation_data["mode"]
+                delegation.poll_id = UUID(delegation_data["poll_id"]) if delegation_data["poll_id"] else None
+                delegation.label_id = UUID(delegation_data["label_id"]) if delegation_data["label_id"] else None
+                delegation.field_id = UUID(delegation_data["field_id"]) if delegation_data["field_id"] else None
+                delegation.institution_id = UUID(delegation_data["institution_id"]) if delegation_data["institution_id"] else None
+                delegation.value_id = UUID(delegation_data["value_id"]) if delegation_data["value_id"] else None
+                delegation.idea_id = UUID(delegation_data["idea_id"]) if delegation_data["idea_id"] else None
+                delegation.start_date = datetime.fromisoformat(delegation_data["start_date"]) if delegation_data["start_date"] else None
+                delegation.end_date = datetime.fromisoformat(delegation_data["end_date"]) if delegation_data["end_date"] else None
+                delegation.legacy_term_ends_at = datetime.fromisoformat(delegation_data["legacy_term_ends_at"]) if delegation_data["legacy_term_ends_at"] else None
+                delegation.created_at = datetime.fromisoformat(delegation_data["created_at"]) if delegation_data["created_at"] else None
+                chain.append(delegation)
+            return chain
+
+        # Cache miss - resolve chain from database
         chain = []
         current_user_id = user_id
         depth = 0
@@ -540,7 +679,7 @@ class DelegationService:
                         "delegator_id": str(delegation.delegator_id),
                         "delegatee_id": str(delegation.delegatee_id),
                         "mode": delegation.mode,
-                    },
+                    }
                 )
                 break  # Stop at expired delegation
 
@@ -550,15 +689,7 @@ class DelegationService:
 
             # Constitutional protection: stop immediately on user override
             # This ensures user intent supremacy regardless of delegation mode
-            if await self._has_user_override(
-                current_user_id,
-                poll_id,
-                label_id,
-                field_id,
-                institution_id,
-                value_id,
-                idea_id,
-            ):
+            if await self._has_user_override(current_user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id):
                 logger.info(
                     f"Stopping chain resolution due to user override for {current_user_id}",
                     extra={
@@ -566,12 +697,10 @@ class DelegationService:
                         "poll_id": str(poll_id) if poll_id else None,
                         "label_id": str(label_id) if label_id else None,
                         "field_id": str(field_id) if field_id else None,
-                        "institution_id": (
-                            str(institution_id) if institution_id else None
-                        ),
+                        "institution_id": str(institution_id) if institution_id else None,
                         "value_id": str(value_id) if value_id else None,
                         "idea_id": str(idea_id) if idea_id else None,
-                    },
+                    }
                 )
                 break
 
@@ -582,9 +711,12 @@ class DelegationService:
                     "user_id": str(user_id),
                     "max_depth": max_depth,
                     "chain_length": len(chain),
-                },
+                }
             )
 
+        # Cache the resolved chain
+        await self._cache_chain(cache_key, chain)
+        
         return chain
 
     async def _has_user_override(
