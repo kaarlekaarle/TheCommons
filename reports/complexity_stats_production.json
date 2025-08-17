@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-08-17T18:46:14.638208",
+  "modules": {
+    "dispatch": 17,
+    "repository_read": 22,
+    "dispatch_async": 8,
+    "repository_write": 14,
+    "__init__": 4,
+    "cache": 21,
+    "telemetry": 18,
+    "chain_resolution": 19,
+    "facade": 22,
+    "delegations": 43,
+    "repository": 32,
+    "delegation": 3,
+    "dispatch_sync": 14
+  },
+  "total_flows": 237,
+  "counted_files": 13,
+  "excluded_tests": 12,
+  "include_tests": false
+}

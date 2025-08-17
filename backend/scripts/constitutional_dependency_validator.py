@@ -719,35 +719,73 @@ class ConstitutionalDependencyValidator:
         
         return concentration_result
     
-    def _find_delegation_files(self) -> List[str]:
+    def _find_delegation_files(self, include_tests: bool = False) -> List[str]:
         """Find all delegation-related files in the codebase."""
         delegation_files = []
         
-        # Search patterns for delegation files
+        # Search patterns for delegation files (relative to project root)
         search_patterns = [
-            "backend/services/delegation.py",  # Legacy single file
             "backend/services/delegation/*.py",  # New modular structure
             "backend/api/delegations.py",
             "backend/models/delegation.py",
-            "backend/tests/delegation/*.py",
-            "backend/tests/perf/test_override_latency_fastpath.py"
         ]
+        
+        # Add test patterns only if include_tests is True
+        if include_tests:
+            test_patterns = [
+                "backend/tests/delegation/*.py",
+                "backend/tests/perf/test_override_latency_fastpath.py"
+            ]
+            search_patterns.extend(test_patterns)
+        
+        # Determine the project root (go up one level if we're in backend/)
+        current_dir = Path.cwd()
+        if current_dir.name == "backend":
+            project_root = current_dir.parent
+        else:
+            project_root = current_dir
         
         for pattern in search_patterns:
             try:
                 if pattern.endswith("*.py"):
                     # Handle glob patterns
-                    files = Path(".").glob(pattern)
-                    delegation_files.extend([str(f) for f in files if f.is_file()])
+                    files = project_root.glob(pattern)
+                    for f in files:
+                        if f.is_file():
+                            # Skip test files unless explicitly included
+                            if not include_tests and self._is_test_file(str(f)):
+                                continue
+                            delegation_files.append(str(f))
                 else:
                     # Handle specific files
-                    file_path = Path(pattern)
+                    file_path = project_root / pattern
                     if file_path.exists():
+                        # Skip test files unless explicitly included
+                        if not include_tests and self._is_test_file(str(file_path)):
+                            continue
                         delegation_files.append(str(file_path))
             except Exception as e:
                 print(f"Warning: Could not search pattern {pattern}: {e}")
         
         return list(set(delegation_files))  # Remove duplicates
+    
+    def _is_test_file(self, file_path: str) -> bool:
+        """Check if a file is a test file."""
+        file_path_lower = file_path.lower()
+        
+        # Test file patterns
+        test_patterns = [
+            "/tests/",
+            "test_",
+            "_test.py",
+            "/reports/",
+        ]
+        
+        for pattern in test_patterns:
+            if pattern in file_path_lower:
+                return True
+        
+        return False
     
     def _count_delegation_flows(self, file_path: str) -> int:
         """Count active delegation flows in a file."""
@@ -1057,6 +1095,12 @@ Examples:
         help='Emit maintainer concentration JSON to specified file'
     )
     
+    parser.add_argument(
+        '--include-tests',
+        action='store_true',
+        help='Include test files in complexity analysis (excluded by default)'
+    )
+    
     args = parser.parse_args()
     
     validator = ConstitutionalDependencyValidator()
@@ -1118,12 +1162,16 @@ Examples:
         # Emit complexity flows JSON
         print("📊 Emitting delegation complexity flows...")
         
-        # Find delegation files
-        delegation_files = validator._find_delegation_files()
+        # Find delegation files (including test files for counting)
+        all_delegation_files = validator._find_delegation_files(include_tests=True)
+        production_delegation_files = validator._find_delegation_files(include_tests=args.include_tests)
+        
+        # Count excluded test files
+        excluded_test_files = [f for f in all_delegation_files if f not in production_delegation_files]
         
         # Count flows per module
         modules = {}
-        for file_path in delegation_files:
+        for file_path in production_delegation_files:
             if os.path.exists(file_path):
                 flows = validator._count_delegation_flows(file_path)
                 if flows > 0:
@@ -1135,7 +1183,9 @@ Examples:
             "timestamp": datetime.now().isoformat(),
             "modules": modules,
             "total_flows": sum(modules.values()),
-            "files_analyzed": len(delegation_files)
+            "counted_files": len(production_delegation_files),
+            "excluded_tests": len(excluded_test_files),
+            "include_tests": args.include_tests
         }
         
         # Save to file
@@ -1144,16 +1194,18 @@ Examples:
         
         print(f"📄 Complexity flows saved to: {args.emit_complexity_json}")
         print(f"📊 Total flows: {complexity_data['total_flows']} across {len(modules)} modules")
+        print(f"📊 Counted files: {complexity_data['counted_files']}")
+        print(f"📊 Excluded test files: {complexity_data['excluded_tests']}")
     
     elif args.emit_maintainer_json:
         # Emit maintainer concentration JSON
         print("📊 Emitting maintainer concentration...")
         
-        # Find delegation files
-        delegation_files = validator._find_delegation_files()
+        # Find delegation files (using same filtering as complexity)
+        production_delegation_files = validator._find_delegation_files(include_tests=args.include_tests)
         
         # Analyze maintainer concentration
-        maintainer_stats = validator._analyze_maintainer_concentration(delegation_files)
+        maintainer_stats = validator._analyze_maintainer_concentration(production_delegation_files)
         
         if maintainer_stats:
             total_commits = sum(maintainer_stats.values())
@@ -1167,7 +1219,8 @@ Examples:
                 "total_commits": total_commits,
                 "maintainer_stats": maintainer_stats,
                 "lookback_days": 30,
-                "files_analyzed": len(delegation_files)
+                "files_analyzed": len(production_delegation_files),
+                "include_tests": args.include_tests
             }
         else:
             maintainer_data = {
@@ -1177,7 +1230,8 @@ Examples:
                 "total_commits": 0,
                 "maintainer_stats": {},
                 "lookback_days": 30,
-                "files_analyzed": len(delegation_files)
+                "files_analyzed": len(production_delegation_files),
+                "include_tests": args.include_tests
             }
         
         # Save to file
@@ -1186,6 +1240,7 @@ Examples:
         
         print(f"📄 Maintainer concentration saved to: {args.emit_maintainer_json}")
         print(f"📊 Top maintainer: {maintainer_data['top_maintainer']} ({maintainer_data['concentration_percentage']:.1f}%)")
+        print(f"📊 Files analyzed: {maintainer_data['files_analyzed']}")
     
     else:
         print("❌ Must specify one of: --validate, --dependencies, --list-checks, --emit-complexity-json, or --emit-maintainer-json")

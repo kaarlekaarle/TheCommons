@@ -23,69 +23,72 @@ EXIT_BLOCK = 10
 class ConstitutionalCascadeDetector:
     """Detector for constitutional cascade rules."""
 
-    def __init__(self, config_path: str = "backend/config/constitutional_cascade_rules.json"):
+    def __init__(
+        self, config_path: str = "backend/config/constitutional_cascade_rules.json"
+    ):
         """Initialize the cascade detector."""
         self.config_path = config_path
         self.config = self._load_config()
         self.signals: List[Dict[str, Any]] = []
         self.cascade_results: List[Dict[str, Any]] = []
         self.current_branch = self._detect_current_branch()
-    
+
     def _detect_current_branch(self) -> str:
         """Detect current branch from environment variables."""
         # Try GITHUB_REF_NAME first (GitHub Actions)
         branch = os.environ.get("GITHUB_REF_NAME")
         if branch:
             return branch
-        
+
         # Fallback to GITHUB_REF (remove refs/heads/ prefix)
         ref = os.environ.get("GITHUB_REF")
         if ref and ref.startswith("refs/heads/"):
             return ref[11:]  # Remove "refs/heads/" prefix
-        
+
         # Fallback to git command
         try:
             result = subprocess.run(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             if result.returncode == 0:
                 return result.stdout.strip()
         except Exception:
             pass
-        
+
         # Final fallback
         return "unknown"
-    
+
     def _is_branch_enforced(self, rule_id: str, branch: str) -> bool:
         """Check if a rule should be enforced on the current branch."""
         branch_overrides = self.config.get("branch_overrides", {})
-        
+
         if rule_id not in branch_overrides:
             return False
-        
+
         enforce_patterns = branch_overrides[rule_id].get("enforce_on", [])
-        
+
         for pattern in enforce_patterns:
             if self._matches_branch_pattern(branch, pattern):
                 return True
-        
+
         return False
-    
+
     def _matches_branch_pattern(self, branch: str, pattern: str) -> bool:
         """Check if branch matches a pattern (supports wildcards)."""
         if pattern == branch:
             return True
-        
+
         # Handle wildcard patterns like "release/*"
         if "*" in pattern:
             # Convert pattern to regex
             regex_pattern = pattern.replace("*", ".*")
             import re
+
             return bool(re.match(regex_pattern, branch))
-        
+
         return False
 
     def _load_config(self) -> Dict[str, Any]:
@@ -147,24 +150,26 @@ class ConstitutionalCascadeDetector:
             override_latency_files = [
                 "reports/override_latency.json",
                 "reports/test_override_latency.json",
-                "reports/signal_override_latency.json"
+                "reports/signal_override_latency.json",
             ]
-            
+
             newest_file = None
             newest_timestamp = None
-            
+
             for file_path in override_latency_files:
                 if os.path.exists(file_path):
                     try:
                         with open(file_path, "r") as f:
                             data = json.load(f)
-                        
+
                         # Check if file has a timestamp field
                         file_timestamp = data.get("timestamp")
                         if file_timestamp:
                             # Parse ISO8601 timestamp
                             try:
-                                dt = datetime.fromisoformat(file_timestamp.replace('Z', '+00:00'))
+                                dt = datetime.fromisoformat(
+                                    file_timestamp.replace("Z", "+00:00")
+                                )
                                 if newest_timestamp is None or dt > newest_timestamp:
                                     newest_timestamp = dt
                                     newest_file = file_path
@@ -172,19 +177,25 @@ class ConstitutionalCascadeDetector:
                                 # Fallback to file modification time
                                 file_stat = os.stat(file_path)
                                 file_mtime = datetime.fromtimestamp(file_stat.st_mtime)
-                                if newest_timestamp is None or file_mtime > newest_timestamp:
+                                if (
+                                    newest_timestamp is None
+                                    or file_mtime > newest_timestamp
+                                ):
                                     newest_timestamp = file_mtime
                                     newest_file = file_path
                         else:
                             # No timestamp in file, use modification time
                             file_stat = os.stat(file_path)
                             file_mtime = datetime.fromtimestamp(file_stat.st_mtime)
-                            if newest_timestamp is None or file_mtime > newest_timestamp:
+                            if (
+                                newest_timestamp is None
+                                or file_mtime > newest_timestamp
+                            ):
                                 newest_timestamp = file_mtime
                                 newest_file = file_path
                     except (json.JSONDecodeError, IOError):
                         continue
-            
+
             if newest_file and newest_timestamp:
                 # Check if data is stale (>48h old)
                 now = datetime.now()
@@ -194,9 +205,9 @@ class ConstitutionalCascadeDetector:
                 else:
                     # Convert now to UTC for comparison
                     now = now.astimezone()
-                
+
                 age_hours = (now - newest_timestamp).total_seconds() / 3600
-                
+
                 if age_hours > 48:
                     print(f"⚠️  Latency signal stale (>48h); not blocking.")
                     return {
@@ -220,7 +231,7 @@ class ConstitutionalCascadeDetector:
                 p50 = data.get("p50_ms", data.get("statistics", {}).get("p50", 0))
                 p95 = data.get("p95_ms", data.get("statistics", {}).get("p95", 0))
                 p99 = data.get("p99_ms", data.get("statistics", {}).get("p99", 0))
-                
+
                 # Use p95 for severity determination (primary SLO metric)
                 latency_ms = p95
 
@@ -365,34 +376,40 @@ class ConstitutionalCascadeDetector:
     def collect_signal_4_maintainer_concentration(self) -> Optional[Dict[str, Any]]:
         """Collect signal #4: Maintainer concentration in delegation code."""
         print("🔍 Collecting signal #4: Maintainer concentration...")
-        
+
         try:
             # Run dependency validator to get maintainer concentration
             result = subprocess.run(
                 [
-                    sys.executable, "backend/scripts/constitutional_dependency_validator.py",
-                    "--emit-maintainer-json", "reports/signal_maintainers.json"
+                    sys.executable,
+                    "backend/scripts/constitutional_dependency_validator.py",
+                    "--emit-maintainer-json",
+                    "reports/signal_maintainers.json",
                 ],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
-            
+
             if result.returncode != 0:
-                print(f"⚠️  Warning: Maintainer concentration check failed: {result.stderr}")
+                print(
+                    f"⚠️  Warning: Maintainer concentration check failed: {result.stderr}"
+                )
                 return None
-            
+
             # Read the maintainer concentration data
             if os.path.exists("reports/signal_maintainers.json"):
                 with open("reports/signal_maintainers.json", "r") as f:
                     data = json.load(f)
-                
+
                 concentration_pct = data.get("concentration_percentage", 0)
-                
+
                 # Determine severity based on thresholds
                 thresholds = self.config.get("thresholds", {})
-                maintainer_thresholds = thresholds.get("maintainer_concentration_pct", {})
-                
+                maintainer_thresholds = thresholds.get(
+                    "maintainer_concentration_pct", {}
+                )
+
                 if concentration_pct >= maintainer_thresholds.get("critical", 90):
                     severity = "critical"
                 elif concentration_pct >= maintainer_thresholds.get("high", 80):
@@ -401,7 +418,7 @@ class ConstitutionalCascadeDetector:
                     severity = "warn"
                 else:
                     severity = "info"
-                
+
                 return {
                     "id": "#4",
                     "severity": severity,
@@ -411,12 +428,12 @@ class ConstitutionalCascadeDetector:
                         "top_maintainer": data.get("top_maintainer", ""),
                         "total_commits": data.get("total_commits", 0),
                         "lookback_days": data.get("lookback_days", 30),
-                        "files_analyzed": data.get("files_analyzed", 0)
-                    }
+                        "files_analyzed": data.get("files_analyzed", 0),
+                    },
                 }
-            
+
             return None
-            
+
         except Exception as e:
             print(f"⚠️  Warning: Error collecting maintainer concentration signal: {e}")
             return None
@@ -424,25 +441,27 @@ class ConstitutionalCascadeDetector:
     def collect_signal_5_mode_distribution(self) -> Optional[Dict[str, Any]]:
         """Collect signal #5: Delegation mode distribution."""
         print("🔍 Collecting signal #5: Delegation mode distribution...")
-        
+
         try:
             # Run dependency validator to get mode distribution
             result = subprocess.run(
                 [
-                    sys.executable, "backend/scripts/constitutional_dependency_validator.py",
-                    "--validate", "test_mode_distribution.txt"
+                    sys.executable,
+                    "backend/scripts/constitutional_dependency_validator.py",
+                    "--validate",
+                    "test_mode_distribution.txt",
                 ],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
-            
+
             # For now, simulate mode distribution check
             # In a real implementation, this would query the database
-            
+
             # Simulate legacy mode usage based on code patterns
             legacy_usage = 25.0  # Simulated 25% legacy mode usage
-            
+
             # Determine severity based on legacy mode usage
             if legacy_usage >= 50:  # High legacy usage
                 severity = "high"
@@ -450,7 +469,7 @@ class ConstitutionalCascadeDetector:
                 severity = "warn"
             else:
                 severity = "info"
-            
+
             return {
                 "id": "#5",
                 "severity": severity,
@@ -460,13 +479,13 @@ class ConstitutionalCascadeDetector:
                     "mode_distribution": {
                         "legacy_fixed_term": 25,
                         "flexible_domain": 60,
-                        "hybrid_seed": 15
+                        "hybrid_seed": 15,
                     },
                     "total_delegations": 100,
-                    "transition_health": "moderate"
-                }
+                    "transition_health": "moderate",
+                },
             }
-            
+
         except Exception as e:
             print(f"⚠️  Warning: Error collecting mode distribution signal: {e}")
             return None
@@ -506,17 +525,17 @@ class ConstitutionalCascadeDetector:
         """Get effective mode for a specific rule, considering mode and branch overrides."""
         global_mode = self.config.get("mode", "warn")
         mode_overrides = self.config.get("mode_overrides", {})
-        
+
         # Check if there's a specific mode override for this rule
         if rule_id in mode_overrides:
             base_mode = mode_overrides[rule_id]
         else:
             base_mode = global_mode
-        
+
         # Check if this rule should be enforced on the current branch
         if self._is_branch_enforced(rule_id, self.current_branch):
             return "enforce"
-        
+
         # Return the base mode (from mode_overrides or global)
         return base_mode
 
@@ -524,7 +543,7 @@ class ConstitutionalCascadeDetector:
         """Evaluate cascade rules against collected signals."""
         print("\n🔍 EVALUATING CASCADE RULES")
         print("=" * 30)
-        
+
         # Print cascade modes summary
         print(f"Branch: {self.current_branch}")
         mode_summary = []
@@ -534,24 +553,24 @@ class ConstitutionalCascadeDetector:
             mode_summary.append(f"{rule_id}={effective_mode}")
         print(f"Cascade Modes: {' '.join(mode_summary)} on {self.current_branch}")
         print("")
-        
+
         results = []
-        
+
         for rule in self.config["rules"]:
             rule_id = rule["id"]
             rule_signals = rule["signals"]
             window_days = rule["window_days"]
             decision = rule["decision"]
             rationale = rule["rationale"]
-            
+
             # Get effective mode for this rule
             effective_mode = self._get_effective_mode(rule_id)
-            
+
             print(f"Evaluating Rule {rule_id}: {rationale} (mode: {effective_mode})")
-            
+
             # Check if rule conditions are met
             triggered_signals = self._check_rule_conditions(rule_signals)
-            
+
             if triggered_signals:
                 result = {
                     "rule_id": rule_id,
@@ -567,7 +586,7 @@ class ConstitutionalCascadeDetector:
                 print(f"  ✅ Rule {rule_id} TRIGGERED ({effective_mode.upper()})")
             else:
                 print(f"  ❌ Rule {rule_id} not triggered")
-        
+
         self.cascade_results = results
         return results
 
@@ -590,9 +609,11 @@ class ConstitutionalCascadeDetector:
                 if signal["id"] == signal_id:
                     # Check if signal is stale (for latency signals)
                     if signal.get("status") == "stale":
-                        print(f"    ⚠️  Signal {signal_id} is stale ({signal.get('age_hours', 0):.1f}h old); skipping for blocking")
+                        print(
+                            f"    ⚠️  Signal {signal_id} is stale ({signal.get('age_hours', 0):.1f}h old); skipping for blocking"
+                        )
                         continue
-                    
+
                     if severity_req is None or signal["severity"] == severity_req:
                         triggered_signals.append(signal)
                     break
@@ -670,7 +691,7 @@ class ConstitutionalCascadeDetector:
 
         # Save Markdown
         os.makedirs(os.path.dirname(md_path), exist_ok=True)
-        with open(md_path, 'w') as f:
+        with open(md_path, "w") as f:
             f.write(self._generate_markdown_report())
 
     def _generate_markdown_report(self) -> str:
