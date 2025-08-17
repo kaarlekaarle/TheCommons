@@ -1,8 +1,8 @@
-from typing import Any
+from typing import Any, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status, Request
-from sqlalchemy import and_, select
+from fastapi import APIRouter, Depends, HTTPException, Security, status, Request, Query
+from sqlalchemy import and_, select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.auth import get_current_active_user, oauth2_scheme
@@ -16,7 +16,9 @@ from backend.core.logging_config import get_logger
 from backend.core.audit_mw import audit_event
 from backend.core.metrics import increment_delegation_metric
 from backend.database import get_db
-from backend.models.delegation import Delegation
+from backend.models.delegation import Delegation, DelegationMode
+from backend.models.field import Field
+from backend.models.institution import Institution, InstitutionKind
 from backend.models.user import User
 from backend.models.label import Label
 from backend.schemas.delegation import (
@@ -25,11 +27,57 @@ from backend.schemas.delegation import (
     DelegationResponse,
     DelegationSummary,
 )
-from backend.services.delegation import DelegationService
+from backend.services.delegation import DelegationService, DelegationTarget
 from backend.config import get_settings
+from datetime import datetime
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["delegations"])
+
+
+@router.get("/modes", response_model=dict)
+async def get_delegation_modes(
+    current_user: User = Security(get_current_active_user),
+) -> dict:
+    """Get server capabilities and defaults for delegation modes.
+    
+    Returns:
+        dict: Server capabilities including enabled modes and feature flags
+    """
+    settings = get_settings()
+    
+    return {
+        "modes": {
+            "legacy_fixed_term": {
+                "enabled": getattr(settings, "LEGACY_MODE_ENABLED", True),
+                "description": "Old politics: 4-year term, always revocable",
+                "max_term_years": 4,
+                "default_term_years": 4,
+            },
+            "flexible_domain": {
+                "enabled": True,  # Always enabled
+                "description": "Commons: per-poll/label/field values",
+                "default": True,
+            },
+            "hybrid_seed": {
+                "enabled": True,  # Always enabled
+                "description": "Hybrid: global fallback + per-field refinement",
+            },
+        },
+        "targets": {
+            "user": {"enabled": True},
+            "field": {"enabled": getattr(settings, "UNIFIED_SEARCH_ENABLED", True)},
+            "institution": {"enabled": getattr(settings, "INSTITUTIONS_ENABLED", True)},
+            "value": {"enabled": True},  # Values-as-delegates
+            "idea": {"enabled": True},   # Ideas-as-delegates
+        },
+        "features": {
+            "unified_search": getattr(settings, "UNIFIED_SEARCH_ENABLED", True),
+            "institutions": getattr(settings, "INSTITUTIONS_ENABLED", True),
+            "legacy_mode": getattr(settings, "LEGACY_MODE_ENABLED", True),
+            "anonymous_delegations": True,
+        },
+    }
 
 
 @router.post("/", response_model=DelegationResponse, status_code=status.HTTP_201_CREATED)
@@ -40,7 +88,7 @@ async def create_delegation(
     current_user: User = Security(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> Delegation:
-    """Create a new delegation.
+    """Create a new delegation with mode support.
 
     Args:
         delegation_in: Delegation creation data
@@ -56,7 +104,7 @@ async def create_delegation(
         ServerError: If an unexpected error occurs
     """
     logger.info(
-        "Creating new delegation",
+        "Creating new delegation with mode support",
         extra={"delegation_data": delegation_in.model_dump(), "user_id": current_user.id},
     )
     
@@ -65,60 +113,86 @@ async def create_delegation(
         if delegation_in.delegatee_id == current_user.id:
             raise ValidationError("Cannot delegate to yourself")
         
-        # Handle label-specific delegation
+        # Validate mode if provided
+        mode = DelegationMode.FLEXIBLE_DOMAIN
+        if hasattr(delegation_in, 'mode') and delegation_in.mode:
+            try:
+                mode = DelegationMode(delegation_in.mode)
+            except ValueError:
+                raise ValidationError(f"Invalid delegation mode: {delegation_in.mode}")
+        
+        # Handle target specification
+        target = None
+        if hasattr(delegation_in, 'target') and delegation_in.target:
+            target = DelegationTarget(
+                target_type=delegation_in.target.get('type'),
+                target_id=delegation_in.target.get('id')
+            )
+        
+        # Resolve target IDs based on target specification
+        poll_id = None
         label_id = None
-        if delegation_in.label_slug:
-            # Find label by slug
-            label_result = await db.execute(
-                select(Label).where(
-                    and_(
-                        Label.slug == delegation_in.label_slug,
-                        Label.is_active == True,
-                        Label.is_deleted == False
+        field_id = None
+        institution_id = None
+        value_id = None
+        idea_id = None
+        
+        if target:
+            if target.type == 'poll':
+                poll_id = target.id
+            elif target.type == 'label':
+                # Find label by slug or ID
+                if hasattr(delegation_in, 'label_slug') and delegation_in.label_slug:
+                    label_result = await db.execute(
+                        select(Label).where(
+                            and_(
+                                Label.slug == delegation_in.label_slug,
+                                Label.is_active == True,
+                                Label.is_deleted == False
+                            )
+                        )
                     )
-                )
-            )
-            label = label_result.scalar_one_or_none()
-            if not label:
-                raise ValidationError(f"Label with slug '{delegation_in.label_slug}' not found")
-            label_id = label.id
+                    label = label_result.scalar_one_or_none()
+                    if not label:
+                        raise ValidationError(f"Label with slug '{delegation_in.label_slug}' not found")
+                    label_id = label.id
+            elif target.type == 'field':
+                field_id = target.id
+            elif target.type == 'institution':
+                institution_id = target.id
+            elif target.type == 'value':
+                value_id = target.id
+            elif target.type == 'idea':
+                idea_id = target.id
         
-        # Check for existing delegation (global or label-specific)
-        existing_query = select(Delegation).where(
-            and_(
-                Delegation.delegator_id == current_user.id,
-                Delegation.is_deleted == False
-            )
+        # Use delegation service for creation
+        delegation_service = DelegationService(db)
+        
+        delegation = await delegation_service.create_delegation(
+            delegator_id=current_user.id,
+            delegatee_id=delegation_in.delegatee_id,
+            mode=mode,
+            target=target,
+            poll_id=poll_id,
+            label_id=label_id,
+            field_id=field_id,
+            institution_id=institution_id,
+            value_id=value_id,
+            idea_id=idea_id,
+            is_anonymous=getattr(delegation_in, 'is_anonymous', False),
+            legacy_term_ends_at=getattr(delegation_in, 'legacy_term_ends_at', None),
         )
-        
-        if label_id:
-            # Label-specific delegation
-            existing_query = existing_query.where(Delegation.label_id == label_id)
-        else:
-            # Global delegation
-            existing_query = existing_query.where(Delegation.label_id.is_(None))
-        
-        existing_result = await db.execute(existing_query)
-        existing_delegation = existing_result.scalar_one_or_none()
-        
-        if existing_delegation:
-            # Update existing delegation
-            existing_delegation.delegatee_id = delegation_in.delegatee_id
-            delegation = existing_delegation
-        else:
-            # Create new delegation
-            delegation = Delegation(
-                delegator_id=current_user.id,
-                delegatee_id=delegation_in.delegatee_id,
-                label_id=label_id
-            )
-            db.add(delegation)
         
         await db.commit()
         
         logger.info(
-            "Delegation created successfully",
-            extra={"delegation_id": delegation.id, "user_id": current_user.id},
+            "Delegation created successfully with mode support",
+            extra={
+                "delegation_id": delegation.id, 
+                "user_id": current_user.id,
+                "mode": mode,
+                "target_type": delegation.target_type,
+            },
         )
         
         # Track delegation creation metric
@@ -131,6 +205,8 @@ async def create_delegation(
                 "delegation_id": str(delegation.id),
                 "delegator_id": str(delegation.delegator_id),
                 "delegatee_id": str(delegation.delegatee_id),
+                "mode": delegation.mode,
+                "target_type": delegation.target_type,
             },
             request
         )
@@ -142,16 +218,22 @@ async def create_delegation(
                 "id": str(delegation.id),
                 "delegator_id": str(delegation.delegator_id),
                 "delegatee_id": str(delegation.delegatee_id),
+                "mode": delegation.mode,
+                "target_type": delegation.target_type,
                 "created_at": delegation.created_at.isoformat() if delegation.created_at else None
             })
         except Exception as e:
             logger.warning(f"Failed to broadcast delegation creation", extra={"error": str(e)})
         
-        # Return a simple response
+        # Return enhanced response
         return {
             "id": str(delegation.id),
             "delegator_id": str(delegation.delegator_id),
             "delegatee_id": str(delegation.delegatee_id),
+            "mode": delegation.mode,
+            "target_type": delegation.target_type,
+            "is_anonymous": delegation.is_anonymous,
+            "legacy_term_ends_at": delegation.legacy_term_ends_at.isoformat() if delegation.legacy_term_ends_at else None,
             "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
             "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None
         }
@@ -159,7 +241,7 @@ async def create_delegation(
     except Exception as e:
         await db.rollback()
         logger.error(
-            "Failed to create delegation",
+            "Failed to create delegation with mode support",
             extra={"user_id": current_user.id, "error": str(e)},
             exc_info=True,
         )
@@ -539,3 +621,322 @@ async def get_my_delegation_summary(
             exc_info=True,
         )
         raise ServerError("Failed to get delegation summary")
+
+
+@router.get("/my", response_model=List[dict])
+async def get_my_delegations(
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> List[dict]:
+    """Get current user's delegations with mode information.
+    
+    Returns:
+        List[dict]: User's delegations with mode, legacy_term_ends_at, and chain_trace
+    """
+    try:
+        query = select(Delegation).where(
+            and_(
+                Delegation.delegator_id == current_user.id,
+                Delegation.is_deleted == False,
+                Delegation.revoked_at.is_(None),
+            )
+        ).order_by(Delegation.created_at.desc())
+        
+        result = await db.execute(query)
+        delegations = result.scalars().all()
+        
+        # Get chain trace for each delegation
+        delegation_service = DelegationService(db)
+        
+        response = []
+        for delegation in delegations:
+            # Resolve chain trace
+            chain = await delegation_service.resolve_delegation_chain(
+                user_id=delegation.delegator_id,
+                poll_id=delegation.poll_id,
+                label_id=delegation.label_id,
+                field_id=delegation.field_id,
+                institution_id=delegation.institution_id,
+                value_id=delegation.value_id,
+                idea_id=delegation.idea_id,
+            )
+            
+            chain_trace = []
+            for chain_delegation in chain:
+                chain_trace.append({
+                    "delegation_id": str(chain_delegation.id),
+                    "delegator_id": str(chain_delegation.delegator_id),
+                    "delegatee_id": str(chain_delegation.delegatee_id),
+                    "mode": chain_delegation.mode,
+                    "target_type": chain_delegation.target_type,
+                    "is_expired": chain_delegation.is_expired,
+                })
+            
+            response.append({
+                "id": str(delegation.id),
+                "delegator_id": str(delegation.delegator_id),
+                "delegatee_id": str(delegation.delegatee_id),
+                "mode": delegation.mode,
+                "target_type": delegation.target_type,
+                "is_anonymous": delegation.is_anonymous,
+                "legacy_term_ends_at": delegation.legacy_term_ends_at.isoformat() if delegation.legacy_term_ends_at else None,
+                "is_expired": delegation.is_expired,
+                "chain_trace": chain_trace,
+                "created_at": delegation.created_at.isoformat() if delegation.created_at else None,
+                "updated_at": delegation.updated_at.isoformat() if delegation.updated_at else None,
+            })
+        
+        return response
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get user delegations",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to get user delegations")
+
+
+@router.post("/{delegation_id}/revoke", status_code=status.HTTP_200_OK)
+async def revoke_delegation(
+    delegation_id: UUID,
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Revoke a delegation.
+    
+    All delegations are revocable by constitutional principle, regardless of mode.
+    
+    Args:
+        delegation_id: ID of the delegation to revoke
+        current_user: Currently authenticated user
+        db: Database session
+        
+    Returns:
+        dict: Success message
+    """
+    try:
+        delegation_service = DelegationService(db)
+        await delegation_service.revoke_delegation(delegation_id)
+        await db.commit()
+        
+        logger.info(
+            f"Delegation {delegation_id} revoked successfully",
+            extra={
+                "delegation_id": str(delegation_id),
+                "user_id": current_user.id,
+            },
+        )
+        
+        return {"message": "Delegation revoked successfully"}
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(
+            f"Failed to revoke delegation {delegation_id}",
+            extra={"delegation_id": str(delegation_id), "error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to revoke delegation")
+
+
+@router.get("/search/unified", response_model=List[dict])
+async def unified_search(
+    q: str = Query(..., min_length=1, description="Search query"),
+    types: str = Query("people,fields,institutions", description="Comma-separated list of target types"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of results"),
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> List[dict]:
+    """Unified search across people, fields, and institutions.
+    
+    Args:
+        q: Search query
+        types: Comma-separated list of target types to search
+        limit: Maximum number of results
+        current_user: Currently authenticated user
+        db: Database session
+        
+    Returns:
+        List[dict]: Search results with normalized shape
+    """
+    try:
+        target_types = [t.strip() for t in types.split(",")]
+        results = []
+        
+        # Search users (people)
+        if "people" in target_types:
+            user_query = select(User).where(
+                and_(
+                    User.is_deleted == False,
+                    or_(
+                        User.username.ilike(f"%{q}%"),
+                        User.display_name.ilike(f"%{q}%"),
+                        User.bio.ilike(f"%{q}%") if User.bio else False,
+                    )
+                )
+            ).limit(limit)
+            
+            user_result = await db.execute(user_query)
+            users = user_result.scalars().all()
+            
+            for user in users:
+                results.append({
+                    "type": "user",
+                    "id": str(user.id),
+                    "name": user.display_name or user.username,
+                    "slug": user.username,
+                    "description": user.bio,
+                    "meta": {
+                        "username": user.username,
+                        "email": user.email,
+                        "created_at": user.created_at.isoformat() if user.created_at else None,
+                    }
+                })
+        
+        # Search fields
+        if "fields" in target_types:
+            field_query = select(Field).where(
+                and_(
+                    Field.is_active == True,
+                    or_(
+                        Field.name.ilike(f"%{q}%"),
+                        Field.slug.ilike(f"%{q}%"),
+                        Field.description.ilike(f"%{q}%") if Field.description else False,
+                    )
+                )
+            ).limit(limit)
+            
+            field_result = await db.execute(field_query)
+            fields = field_result.scalars().all()
+            
+            for field in fields:
+                results.append({
+                    "type": "field",
+                    "id": str(field.id),
+                    "name": field.name,
+                    "slug": field.slug,
+                    "description": field.description,
+                    "meta": {
+                        "created_at": field.created_at.isoformat() if field.created_at else None,
+                    }
+                })
+        
+        # Search institutions
+        if "institutions" in target_types:
+            institution_query = select(Institution).where(
+                and_(
+                    Institution.is_active == True,
+                    or_(
+                        Institution.name.ilike(f"%{q}%"),
+                        Institution.slug.ilike(f"%{q}%"),
+                        Institution.description.ilike(f"%{q}%") if Institution.description else False,
+                    )
+                )
+            ).limit(limit)
+            
+            institution_result = await db.execute(institution_query)
+            institutions = institution_result.scalars().all()
+            
+            for institution in institutions:
+                results.append({
+                    "type": "institution",
+                    "id": str(institution.id),
+                    "name": institution.name,
+                    "slug": institution.slug,
+                    "description": institution.description,
+                    "meta": {
+                        "kind": institution.kind,
+                        "url": institution.url,
+                        "created_at": institution.created_at.isoformat() if institution.created_at else None,
+                    }
+                })
+        
+        # Sort by relevance (simple: exact matches first, then partial)
+        def relevance_score(item):
+            name = item["name"].lower()
+            query = q.lower()
+            if name == query:
+                return 3
+            elif name.startswith(query):
+                return 2
+            elif query in name:
+                return 1
+            return 0
+        
+        results.sort(key=relevance_score, reverse=True)
+        
+        return results[:limit]
+        
+    except Exception as e:
+        logger.error(
+            "Failed to perform unified search",
+            extra={"query": q, "types": types, "error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to perform unified search")
+
+
+@router.get("/telemetry/adoption", response_model=dict)
+async def get_adoption_telemetry(
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get adoption telemetry for delegation modes.
+    
+    This endpoint provides aggregate counts by mode over time for transition tracking.
+    
+    Returns:
+        dict: Adoption statistics by mode
+    """
+    try:
+        # Count delegations by mode
+        mode_counts_query = select(
+            Delegation.mode,
+            func.count(Delegation.id).label('count')
+        ).where(
+            and_(
+                Delegation.is_deleted == False,
+                Delegation.revoked_at.is_(None),
+            )
+        ).group_by(Delegation.mode)
+        
+        result = await db.execute(mode_counts_query)
+        mode_counts = {row.mode: row.count for row in result}
+        
+        # Calculate percentages
+        total_delegations = sum(mode_counts.values())
+        mode_percentages = {}
+        if total_delegations > 0:
+            mode_percentages = {
+                mode: (count / total_delegations) * 100 
+                for mode, count in mode_counts.items()
+            }
+        
+        # Count users in hybrid mode (have both global and specific delegations)
+        hybrid_users_query = select(func.count(func.distinct(Delegation.delegator_id))).where(
+            and_(
+                Delegation.mode == DelegationMode.HYBRID_SEED,
+                Delegation.is_deleted == False,
+                Delegation.revoked_at.is_(None),
+            )
+        )
+        
+        result = await db.execute(hybrid_users_query)
+        hybrid_users_count = result.scalar() or 0
+        
+        return {
+            "mode_counts": mode_counts,
+            "mode_percentages": mode_percentages,
+            "total_delegations": total_delegations,
+            "hybrid_users_count": hybrid_users_count,
+            "generated_at": datetime.utcnow().isoformat(),
+        }
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get adoption telemetry",
+            extra={"error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to get adoption telemetry")
