@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useUnifiedDelegationSearch } from "../hooks/useUnifiedDelegationSearch";
 import ComposerDrawer from "../components/delegations/ComposerDrawer";
 import type { PersonSearchResult, FieldSearchResult } from "../api/delegationsApi";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, AlertCircle } from "lucide-react";
 
 interface CascadeHealth {
   ruleB: string;
@@ -16,6 +16,7 @@ export default function DelegationsPage() {
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | undefined>(undefined);
   const [selectedField, setSelectedField] = useState<FieldSearchResult | undefined>(undefined);
   const [cascadeHealth, setCascadeHealth] = useState<CascadeHealth | null>(null);
+  const [peopleWarnings, setPeopleWarnings] = useState<Record<string, { concentration?: boolean; superDelegate?: boolean }>>({});
 
   // Fetch cascade health on mount
   useEffect(() => {
@@ -59,6 +60,39 @@ export default function DelegationsPage() {
     cascadeHealth.p95Ms &&
     cascadeHealth.effectiveBlockMs >= 1550 &&
     cascadeHealth.p95Ms >= 1480;
+
+  // Fetch warnings for people when search results change
+  useEffect(() => {
+    if (people.length > 0) {
+      fetchPeopleWarnings();
+    }
+  }, [people]);
+
+  const fetchPeopleWarnings = async () => {
+    const warnings: Record<string, { concentration?: boolean; superDelegate?: boolean }> = {};
+    
+    // Fetch inbound delegations for each person to check for warnings
+    for (const person of people) {
+      try {
+        const response = await fetch(`/api/delegations/${person.id}/inbound?limit=1`);
+        if (response.ok) {
+          const data = await response.json();
+          // Simple heuristic: if they have many inbound delegations, show warning
+          if (data.counts.total > 10) {
+            warnings[person.id] = { concentration: true };
+          }
+          if (data.counts.total > 50) {
+            warnings[person.id] = { ...warnings[person.id], superDelegate: true };
+          }
+        }
+      } catch (err) {
+        // Silently fail - warnings are optional
+        console.debug('Failed to fetch warnings for person:', person.id);
+      }
+    }
+    
+    setPeopleWarnings(warnings);
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -133,11 +167,25 @@ export default function DelegationsPage() {
                           <p className="text-sm text-fg-muted mt-1">{person.bio}</p>
                         )}
                       </div>
-                      {person.trustScore && (
-                        <span className="text-xs bg-ok-bg text-ok-fg px-2 py-1 rounded">
-                          {Math.round(person.trustScore * 100)}%
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {person.trustScore && (
+                          <span className="text-xs bg-ok-bg text-ok-fg px-2 py-1 rounded">
+                            {Math.round(person.trustScore * 100)}%
+                          </span>
+                        )}
+                        {peopleWarnings[person.id]?.concentration && (
+                          <span className="text-xs bg-warn-bg text-warn-fg px-2 py-1 rounded flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3" />
+                            High concentration
+                          </span>
+                        )}
+                        {peopleWarnings[person.id]?.superDelegate && (
+                          <span className="text-xs bg-danger-bg text-danger-fg px-2 py-1 rounded flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Super-delegate risk
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {person.domains && person.domains.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
