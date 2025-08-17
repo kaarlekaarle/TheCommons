@@ -40,6 +40,7 @@ export default function App() {
   // Validate token on app start
   useEffect(() => {
     const validateToken = async () => {
+      console.log('[AUTH DEBUG] Starting token validation...');
       const token = localStorage.getItem('token');
       console.log('[AUTH DEBUG] App initialization - Token found in storage:', !!token);
 
@@ -84,10 +85,11 @@ export default function App() {
         console.log('[AUTH DEBUG] Removing invalid token from storage');
         localStorage.removeItem('token');
         setIsAuthenticated(false);
-      } finally {
-        setIsValidating(false);
-      }
-    };
+              } finally {
+          console.log('[AUTH DEBUG] Token validation completed, isValidating set to false');
+          setIsValidating(false);
+        }
+      };
 
     validateToken();
   }, []);

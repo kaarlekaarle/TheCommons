@@ -15,12 +15,17 @@ export function useCurrentUser() {
 
         // Check if user is authenticated
         const token = localStorage.getItem('token');
+        console.log('[DEBUG] useCurrentUser: Token present:', !!token);
+
         if (!token) {
+          console.log('[DEBUG] useCurrentUser: No token, setting user to null');
           setUser(null);
           return;
         }
 
+        console.log('[DEBUG] useCurrentUser: Making API call to get current user');
         const userData = await getCurrentUser();
+        console.log('[DEBUG] useCurrentUser: API call successful, user data:', userData);
         setUser(userData);
       } catch (err: unknown) {
         const error = err as { status?: number; message?: string };
