@@ -21,7 +21,7 @@ class DelegationCache:
         self.redis = redis_client
         self.ttl_seconds = ttl_seconds
         # Fast-path cache TTL (shorter for override path)
-        self.fast_path_ttl = 120  # 2 minutes
+        self.fast_path_ttl = 90  # 90 seconds
 
     def generate_cache_key(
         self,
@@ -270,7 +270,7 @@ class DelegationCache:
 
     async def invalidate_fast_path_cache(
         self,
-        user_id: Optional[UUID] = None,
+        user_id: UUID,
         poll_id: Optional[UUID] = None,
         label_id: Optional[UUID] = None,
         field_id: Optional[UUID] = None,
@@ -278,20 +278,12 @@ class DelegationCache:
         value_id: Optional[UUID] = None,
         idea_id: Optional[UUID] = None,
     ) -> None:
-        """Invalidate fast-path cache entries."""
+        """Invalidate fast-path cache for a specific user and scope."""
         try:
-            if user_id:
-                # Invalidate specific user's fast-path cache
-                pattern = f"delegation:fastpath:{user_id}:*"
-                keys = await self.redis.keys(pattern)
-                if keys:
-                    await self.redis.delete(*keys)
-            else:
-                # Invalidate all fast-path cache
-                pattern = f"delegation:fastpath:*"
-                keys = await self.redis.keys(pattern)
-                if keys:
-                    await self.redis.delete(*keys)
+            fast_path_key = self.generate_fast_path_key(
+                user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+            )
+            await self.redis.delete(fast_path_key)
         except Exception:
             # Log error but don't fail the operation
             pass

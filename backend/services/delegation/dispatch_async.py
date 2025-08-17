@@ -50,6 +50,65 @@ class DelegationAsyncDispatch:
             user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
         )
         
+        # Early-exit fast path: Check for direct delegation case
+        fast_path_start = time.time()
+        fast_path_result = await self.cache.get_fast_path_result(
+            user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        fast_path_time = time.time() - fast_path_start
+        
+        if fast_path_result and fast_path_result.get("is_direct"):
+            # Fast path hit - return direct delegation result
+            total_time = time.time() - start_time
+            DelegationTelemetry.log_fast_path_cache_hit(
+                user_id, total_time, fast_path_time, 0, 1, True, True,
+                poll_id, label_id, field_id, institution_id, value_id, idea_id
+            )
+            
+            # Create a minimal delegation object for the direct case
+            from backend.models.delegation import Delegation
+            direct_delegation = Delegation()
+            direct_delegation.id = UUID(fast_path_result["delegation_id"])
+            direct_delegation.delegator_id = user_id
+            direct_delegation.delegatee_id = UUID(fast_path_result["delegatee_id"])
+            direct_delegation.mode = fast_path_result["mode"]
+            
+            return [direct_delegation]
+        
+        # Fast path miss - continue with normal resolution
+        DelegationTelemetry.log_fast_path_cache_miss(
+            user_id, fast_path_time, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        
+        # Check if this is a direct delegation case we can cache
+        direct_check_start = time.time()
+        direct_case = await self.repository.check_direct_delegation_case(
+            user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        direct_check_time = time.time() - direct_check_start
+        
+        if direct_case:
+            # This is a direct case - cache it and return
+            await self.cache.cache_fast_path_result(
+                user_id, direct_case, poll_id, label_id, field_id, institution_id, value_id, idea_id
+            )
+            
+            # Create delegation object and return
+            from backend.models.delegation import Delegation
+            direct_delegation = Delegation()
+            direct_delegation.id = UUID(direct_case["delegation_id"])
+            direct_delegation.delegator_id = user_id
+            direct_delegation.delegatee_id = UUID(direct_case["delegatee_id"])
+            direct_delegation.mode = direct_case["mode"]
+            
+            total_time = time.time() - start_time
+            DelegationTelemetry.log_direct_delegation_detected(
+                user_id, total_time, direct_check_time, 1, True,
+                poll_id, label_id, field_id, institution_id, value_id, idea_id
+            )
+            
+            return [direct_delegation]
+        
         # Try cache first
         cache_start = time.time()
         cache_key = self.cache.generate_cache_key(

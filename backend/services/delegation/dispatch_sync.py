@@ -117,6 +117,14 @@ class DelegationSyncDispatch:
         # Invalidate chain cache for delegator and delegatee
         await self.cache.invalidate_user_cache(delegator_id)
         await self.cache.invalidate_delegatee_cache(delegatee_id)
+        
+        # Invalidate fast-path cache for delegator and delegatee
+        await self.cache.invalidate_fast_path_cache(
+            delegator_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        await self.cache.invalidate_fast_path_cache(
+            delegatee_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
 
         # Log delegation creation
         DelegationTelemetry.log_delegation_creation(
@@ -140,6 +148,18 @@ class DelegationSyncDispatch:
         # Invalidate chain cache for delegator and delegatee
         await self.cache.invalidate_user_cache(delegation.delegator_id)
         await self.cache.invalidate_delegatee_cache(delegation.delegatee_id)
+        
+        # Invalidate fast-path cache for delegator and delegatee
+        await self.cache.invalidate_fast_path_cache(
+            delegation.delegator_id, 
+            delegation.poll_id, delegation.label_id, delegation.field_id,
+            delegation.institution_id, delegation.value_id, delegation.idea_id
+        )
+        await self.cache.invalidate_fast_path_cache(
+            delegation.delegatee_id,
+            delegation.poll_id, delegation.label_id, delegation.field_id,
+            delegation.institution_id, delegation.value_id, delegation.idea_id
+        )
 
         # Log delegation revocation
         DelegationTelemetry.log_delegation_revocation(

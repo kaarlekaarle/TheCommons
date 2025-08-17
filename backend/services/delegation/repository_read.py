@@ -5,7 +5,7 @@ separated from write operations to reduce complexity.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, or_, select
@@ -332,3 +332,48 @@ class DelegationReadRepository:
         )
         result = await self.db.execute(query)
         return result.scalars().all()
+
+    async def check_direct_delegation_case(
+        self,
+        user_id: UUID,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Check if this is a direct delegation case (single active delegate, no downstream chain).
+        
+        Returns:
+            Dict with delegation info if direct case, None otherwise
+        """
+        # Get active delegations for the user
+        user_delegations = await self.get_active_delegations_for_user(
+            user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        
+        # Must have exactly one active delegation
+        if len(user_delegations) != 1:
+            return None
+            
+        delegation = user_delegations[0]
+        delegatee_id = delegation.delegatee_id
+        
+        # Check if delegatee has any active delegations (downstream chain)
+        delegatee_delegations = await self.get_active_delegations_for_user(
+            delegatee_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        
+        # If delegatee has no active delegations, this is a direct case
+        if not delegatee_delegations:
+            return {
+                "is_direct": True,
+                "delegation_id": str(delegation.id),
+                "delegatee_id": str(delegatee_id),
+                "mode": delegation.mode,
+                "chain_length": 1,
+                "final_delegatee_id": str(delegatee_id),
+            }
+        
+        return None

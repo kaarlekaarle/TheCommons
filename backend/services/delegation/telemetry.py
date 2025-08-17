@@ -113,9 +113,12 @@ class DelegationTelemetry:
     @staticmethod
     def log_fast_path_cache_hit(
         user_id: UUID,
-        cache_time: float,
         total_time: float,
+        fast_path_time: float,
+        db_time: float,
         chain_length: int,
+        cache_hit: bool,
+        fast_path_hit: bool,
         poll_id: Optional[UUID] = None,
         label_id: Optional[UUID] = None,
         field_id: Optional[UUID] = None,
@@ -123,9 +126,9 @@ class DelegationTelemetry:
         value_id: Optional[UUID] = None,
         idea_id: Optional[UUID] = None,
     ) -> None:
-        """Log fast-path cache hit metrics."""
+        """Log fast path cache hit with timing details."""
         logger.info(
-            f"Override fast-path cache hit: {total_time:.3f}s total (cache: {cache_time:.3f}s)",
+            f"Fast path cache hit: {total_time:.3f}s total (fast_path: {fast_path_time:.3f}s)",
             extra={
                 "user_id": str(user_id),
                 "poll_id": str(poll_id) if poll_id else None,
@@ -134,14 +137,77 @@ class DelegationTelemetry:
                 "institution_id": str(institution_id) if institution_id else None,
                 "value_id": str(value_id) if value_id else None,
                 "idea_id": str(idea_id) if idea_id else None,
-                "cache_time_ms": int(cache_time * 1000),
                 "total_time_ms": int(total_time * 1000),
+                "fast_path_time_ms": int(fast_path_time * 1000),
+                "db_time_ms": int(db_time * 1000),
                 "chain_length": chain_length,
-                "cache_hit": True,
-                "fast_path_hit": True,
-                "operation": "override_resolution",
-                "slo_p95_target": total_time <= 1.5,
-                "slo_p99_target": total_time <= 2.0,
+                "cache_hit": cache_hit,
+                "fast_path_hit": fast_path_hit,
+                "operation": "fast_path_hit",
+                "slo_p95_target": total_time <= 1.5,  # 1.5s target
+                "slo_p99_target": total_time <= 2.0,  # 2.0s target
+            },
+        )
+
+    @staticmethod
+    def log_fast_path_cache_miss(
+        user_id: UUID,
+        fast_path_time: float,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> None:
+        """Log fast path cache miss."""
+        logger.debug(
+            f"Fast path cache miss: {fast_path_time:.3f}s",
+            extra={
+                "user_id": str(user_id),
+                "poll_id": str(poll_id) if poll_id else None,
+                "label_id": str(label_id) if label_id else None,
+                "field_id": str(field_id) if field_id else None,
+                "institution_id": str(institution_id) if institution_id else None,
+                "value_id": str(value_id) if value_id else None,
+                "idea_id": str(idea_id) if idea_id else None,
+                "fast_path_time_ms": int(fast_path_time * 1000),
+                "operation": "fast_path_miss",
+            },
+        )
+
+    @staticmethod
+    def log_direct_delegation_detected(
+        user_id: UUID,
+        total_time: float,
+        direct_check_time: float,
+        chain_length: int,
+        is_direct: bool,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> None:
+        """Log direct delegation detection with timing."""
+        logger.info(
+            f"Direct delegation detected: {total_time:.3f}s total (check: {direct_check_time:.3f}s)",
+            extra={
+                "user_id": str(user_id),
+                "poll_id": str(poll_id) if poll_id else None,
+                "label_id": str(label_id) if label_id else None,
+                "field_id": str(field_id) if field_id else None,
+                "institution_id": str(institution_id) if institution_id else None,
+                "value_id": str(value_id) if value_id else None,
+                "idea_id": str(idea_id) if idea_id else None,
+                "total_time_ms": int(total_time * 1000),
+                "direct_check_time_ms": int(direct_check_time * 1000),
+                "chain_length": chain_length,
+                "is_direct": is_direct,
+                "operation": "direct_delegation_detected",
+                "slo_p95_target": total_time <= 1.5,  # 1.5s target
+                "slo_p99_target": total_time <= 2.0,  # 2.0s target
             },
         )
 
