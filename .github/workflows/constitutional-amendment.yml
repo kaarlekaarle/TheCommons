@@ -377,19 +377,25 @@ jobs:
         python3 backend/scripts/collect_override_latency.py \
           --output reports/override_latency_stats.json
         
+        # Collect complexity data from dependency validator
+        python3 backend/scripts/constitutional_dependency_validator.py \
+          --emit-complexity-json --json-out reports/complexity_stats.json
+        
         # Post SLO summary to logs
         if [ -f reports/override_latency_stats.json ]; then
           echo ""
-          echo "📈 SLO SUMMARY"
-          echo "=============="
+          echo "📈 SLO SNAPSHOT"
+          echo "==============="
           echo ""
           
           # Extract SLO metrics
+          P50=$(jq -r '.statistics.p50 // 0' reports/override_latency_stats.json)
           P95=$(jq -r '.statistics.p95 // 0' reports/override_latency_stats.json)
           P99=$(jq -r '.statistics.p99 // 0' reports/override_latency_stats.json)
           COUNT=$(jq -r '.statistics.count // 0' reports/override_latency_stats.json)
           
           echo "Override Latency Metrics:"
+          echo "  p50: ${P50}ms"
           echo "  p95: ${P95}ms (target: <1500ms)"
           echo "  p99: ${P99}ms (target: <2000ms)"
           echo "  samples: ${COUNT}"
@@ -411,12 +417,74 @@ jobs:
           else
             echo "✅ SLO OK: p99 override latency < 1600ms"
           fi
-          
-          echo ""
-          echo "📄 Full SLO report: reports/override_latency_stats.json"
         else
           echo "⚠️  No override latency stats found"
+          P50=0
+          P95=0
+          P99=0
         fi
+        
+        # Extract complexity data
+        if [ -f reports/complexity_stats.json ]; then
+          echo ""
+          echo "Complexity Analysis:"
+          
+          # Get modules with >=7 flows
+          HIGH_COMPLEXITY_MODULES=$(jq -r '.modules | to_entries[] | select(.value >= 7) | "\(.key) (\(.value) flows)"' reports/complexity_stats.json 2>/dev/null || echo "")
+          
+          if [ -n "$HIGH_COMPLEXITY_MODULES" ]; then
+            echo "  Modules ≥7 flows:"
+            echo "$HIGH_COMPLEXITY_MODULES" | while read -r module; do
+              echo "    - $module"
+            done
+          else
+            echo "  ✅ No modules with ≥7 flows detected"
+          fi
+        else
+          echo "  ⚠️  No complexity stats found"
+        fi
+        
+        echo ""
+        echo "📄 SLO Documentation: docs/SLO_delegation_backend.md"
+        echo "📊 Full reports: reports/override_latency_stats.json, reports/complexity_stats.json"
+        
+        # Create SLO snapshot for PR summary
+        echo ""
+        echo "## SLO Snapshot" >> $GITHUB_STEP_SUMMARY
+        echo "**Override Latency**: p50=${P50}ms, p95=${P95}ms, p99=${P99}ms" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -n "$HIGH_COMPLEXITY_MODULES" ]; then
+          echo "**Modules ≥7 flows**: " >> $GITHUB_STEP_SUMMARY
+          echo "$HIGH_COMPLEXITY_MODULES" | while read -r module; do
+            echo "- $module" >> $GITHUB_STEP_SUMMARY
+          done
+        else
+          echo "**Modules ≥7 flows**: None" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "**SLO Targets**: p95 < 1500ms, p99 < 2000ms, ≤5 flows/module" >> $GITHUB_STEP_SUMMARY
+        echo "**Documentation**: [SLO Guide](docs/SLO_delegation_backend.md)" >> $GITHUB_STEP_SUMMARY
+
+    - name: Post Cascade Remediation Tips
+      if: always()
+      run: |
+        echo ""
+        echo "🤖 POSTING CASCADE REMEDIATION TIPS"
+        echo "==================================="
+        echo ""
+        
+        # Set PR number from GitHub context
+        export PR_NUMBER="${{ github.event.pull_request.number }}"
+        
+        # Post cascade comment if Rule B or C is triggered
+        python3 scripts/post_cascade_comment.py \
+          --cascade-file reports/constitutional_cascade.json \
+          --warnings-file reports/constitutional_warnings.json \
+          --override-latency-file reports/override_latency_stats.json \
+          --complexity-file reports/complexity_stats.json
+        
+        echo ""
+        echo "✅ Cascade remediation tips posted (if applicable)"
 
     - name: Upload Constitutional Reports
       if: always()
@@ -428,6 +496,7 @@ jobs:
           reports/constitutional_cascade.md
           reports/constitutional_warnings.json
           reports/override_latency_stats.json
+          reports/complexity_stats.json
         retention-days: 30
     
     - name: Constitutional Cascade Summary
