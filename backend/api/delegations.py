@@ -984,3 +984,296 @@ async def get_adoption_telemetry(
             exc_info=True,
         )
         raise ServerError("Failed to get adoption telemetry")
+
+
+@router.get("/me/chain", response_model=dict)
+async def get_my_delegation_chain(
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get current user's outbound delegation chain(s) by field.
+    
+    Returns:
+        dict: Delegation chains organized by field
+    """
+    try:
+        # Get user's active delegations
+        delegations_query = select(Delegation).where(
+            and_(
+                Delegation.delegator_id == current_user.id,
+                Delegation.is_deleted == False,
+                Delegation.revoked_at.is_(None),
+                Delegation.end_date.is_(None) | (Delegation.end_date > datetime.utcnow())
+            )
+        )
+        
+        result = await db.execute(delegations_query)
+        user_delegations = result.scalars().all()
+        
+        # Group by field
+        chains = {}
+        for delegation in user_delegations:
+            field_id = str(delegation.field_id) if delegation.field_id else "global"
+            
+            if field_id not in chains:
+                chains[field_id] = {
+                    "fieldId": delegation.field_id,
+                    "path": []
+                }
+            
+            # Get delegatee info
+            delegatee_result = await db.execute(
+                select(User).where(User.id == delegation.delegatee_id)
+            )
+            delegatee = delegatee_result.scalar_one_or_none()
+            
+            if delegatee:
+                chains[field_id]["path"].append({
+                    "delegator": str(delegation.delegator_id),
+                    "delegatee": str(delegation.delegatee_id),
+                    "delegateeName": delegatee.username,
+                    "mode": delegation.mode,
+                    "startsAt": delegation.start_date.isoformat() if delegation.start_date else None,
+                    "endsAt": delegation.end_date.isoformat() if delegation.end_date else None,
+                    "legacyTermEndsAt": delegation.legacy_term_ends_at.isoformat() if delegation.legacy_term_ends_at else None
+                })
+        
+        return {
+            "chains": list(chains.values()),
+            "totalChains": len(chains)
+        }
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get user delegation chain",
+            extra={"user_id": current_user.id, "error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to get delegation chain")
+
+
+@router.get("/{delegatee_id}/inbound", response_model=dict)
+async def get_delegatee_inbound_delegations(
+    delegatee_id: UUID,
+    field_id: Optional[UUID] = Query(None, description="Optional field ID to filter by"),
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of results"),
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get who has delegated to a specific person.
+    
+    Args:
+        delegatee_id: ID of the delegatee to check
+        field_id: Optional field ID to filter by
+        limit: Maximum number of results to return
+        
+    Returns:
+        dict: Inbound delegations and counts
+    """
+    try:
+        # Build base query
+        base_query = select(Delegation).where(
+            and_(
+                Delegation.delegatee_id == delegatee_id,
+                Delegation.is_deleted == False,
+                Delegation.revoked_at.is_(None),
+                Delegation.end_date.is_(None) | (Delegation.end_date > datetime.utcnow())
+            )
+        )
+        
+        # Add field filter if provided
+        if field_id:
+            base_query = base_query.where(Delegation.field_id == field_id)
+        
+        # Get delegations
+        result = await db.execute(base_query.limit(limit))
+        delegations = result.scalars().all()
+        
+        # Get delegatee info
+        delegatee_result = await db.execute(
+            select(User).where(User.id == delegatee_id)
+        )
+        delegatee = delegatee_result.scalar_one_or_none()
+        
+        if not delegatee:
+            raise ResourceNotFoundError(f"Delegatee {delegatee_id} not found")
+        
+        # Build response
+        inbound = []
+        field_counts = {}
+        
+        for delegation in delegations:
+            # Get delegator info
+            delegator_result = await db.execute(
+                select(User).where(User.id == delegation.delegator_id)
+            )
+            delegator = delegator_result.scalar_one_or_none()
+            
+            inbound_item = {
+                "delegatorId": str(delegation.delegator_id),
+                "delegatorName": delegator.username if delegator else "Unknown",
+                "fieldId": str(delegation.field_id) if delegation.field_id else None,
+                "mode": delegation.mode,
+                "createdAt": delegation.created_at.isoformat() if delegation.created_at else None,
+                "expiresAt": delegation.end_date.isoformat() if delegation.end_date else None,
+                "legacyTermEndsAt": delegation.legacy_term_ends_at.isoformat() if delegation.legacy_term_ends_at else None
+            }
+            inbound.append(inbound_item)
+            
+            # Count by field
+            field_key = str(delegation.field_id) if delegation.field_id else "global"
+            field_counts[field_key] = field_counts.get(field_key, 0) + 1
+        
+        # Get total count
+        total_result = await db.execute(
+            select(func.count()).select_from(base_query.subquery())
+        )
+        total_count = total_result.scalar() or 0
+        
+        return {
+            "delegateeId": str(delegatee_id),
+            "delegateeName": delegatee.username,
+            "inbound": inbound,
+            "counts": {
+                "total": total_count,
+                "byField": field_counts
+            }
+        }
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get inbound delegations",
+            extra={"delegatee_id": delegatee_id, "error": str(e)},
+            exc_info=True,
+        )
+        if isinstance(e, ResourceNotFoundError):
+            raise
+        raise ServerError("Failed to get inbound delegations")
+
+
+@router.get("/health/summary", response_model=dict)
+async def get_delegation_health_summary(
+    limit: int = Query(10, ge=1, le=50, description="Maximum number of top delegatees to return"),
+    current_user: User = Security(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get lightweight transparency summary of delegation patterns.
+    
+    Args:
+        limit: Maximum number of top delegatees to return per category
+        
+    Returns:
+        dict: Summary of delegation patterns and top delegatees
+    """
+    try:
+        # Get top delegatees globally
+        top_delegatees_query = select(
+            Delegation.delegatee_id,
+            func.count(Delegation.id).label('count')
+        ).where(
+            and_(
+                Delegation.is_deleted == False,
+                Delegation.revoked_at.is_(None),
+                Delegation.end_date.is_(None) | (Delegation.end_date > datetime.utcnow())
+            )
+        ).group_by(Delegation.delegatee_id).order_by(
+            func.count(Delegation.id).desc()
+        ).limit(limit)
+        
+        result = await db.execute(top_delegatees_query)
+        top_delegatees_data = result.fetchall()
+        
+        # Get total delegations for percentage calculation
+        total_result = await db.execute(
+            select(func.count(Delegation.id)).where(
+                and_(
+                    Delegation.is_deleted == False,
+                    Delegation.revoked_at.is_(None),
+                    Delegation.end_date.is_(None) | (Delegation.end_date > datetime.utcnow())
+                )
+            )
+        )
+        total_delegations = total_result.scalar() or 0
+        
+        # Build top delegatees list
+        top_delegatees = []
+        for delegatee_id, count in top_delegatees_data:
+            # Get delegatee info
+            delegatee_result = await db.execute(
+                select(User).where(User.id == delegatee_id)
+            )
+            delegatee = delegatee_result.scalar_one_or_none()
+            
+            percent = (count / total_delegations * 100) if total_delegations > 0 else 0
+            
+            top_delegatees.append({
+                "id": str(delegatee_id),
+                "name": delegatee.username if delegatee else "Unknown",
+                "count": count,
+                "percent": round(percent, 2)
+            })
+        
+        # Get top delegatees by field
+        by_field_query = select(
+            Delegation.field_id,
+            Delegation.delegatee_id,
+            func.count(Delegation.id).label('count')
+        ).where(
+            and_(
+                Delegation.is_deleted == False,
+                Delegation.revoked_at.is_(None),
+                Delegation.end_date.is_(None) | (Delegation.end_date > datetime.utcnow()),
+                Delegation.field_id.is_not(None)
+            )
+        ).group_by(Delegation.field_id, Delegation.delegatee_id).order_by(
+            Delegation.field_id,
+            func.count(Delegation.id).desc()
+        )
+        
+        result = await db.execute(by_field_query)
+        by_field_data = result.fetchall()
+        
+        # Group by field
+        by_field = {}
+        for field_id, delegatee_id, count in by_field_data:
+            field_key = str(field_id)
+            if field_key not in by_field:
+                by_field[field_key] = []
+            
+            # Get delegatee info
+            delegatee_result = await db.execute(
+                select(User).where(User.id == delegatee_id)
+            )
+            delegatee = delegatee_result.scalar_one_or_none()
+            
+            # Get field info
+            field_result = await db.execute(
+                select(Field).where(Field.id == field_id)
+            )
+            field = field_result.scalar_one_or_none()
+            
+            by_field[field_key].append({
+                "id": str(delegatee_id),
+                "name": delegatee.username if delegatee else "Unknown",
+                "count": count,
+                "fieldName": field.label if field else "Unknown Field"
+            })
+        
+        # Limit top delegatees per field
+        for field_key in by_field:
+            by_field[field_key] = by_field[field_key][:limit]
+        
+        return {
+            "topDelegatees": top_delegatees,
+            "byField": by_field,
+            "totalDelegations": total_delegations,
+            "generatedAt": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(
+            "Failed to get delegation health summary",
+            extra={"error": str(e)},
+            exc_info=True,
+        )
+        raise ServerError("Failed to get delegation health summary")
