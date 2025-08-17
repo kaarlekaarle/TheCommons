@@ -149,6 +149,242 @@ class DelegationService:
         except Exception as e:
             logger.warning(f"Error invalidating chain cache by delegatee: {e}")
 
+    async def resolve_delegation_chain_iterative(
+        self,
+        user_id: UUID,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+        max_depth: int = 10,
+    ) -> List[Delegation]:
+        """Iterative chain resolution with intra-request memoization for O(L) performance.
+        
+        This optimized version uses memoization to avoid repeated database queries
+        for the same delegatee within a single request.
+        
+        Args:
+            user_id: ID of the user to resolve chain for
+            poll_id: Optional poll ID for poll-specific resolution
+            label_id: Optional label ID for label-specific resolution
+            field_id: Optional field ID for field-specific resolution
+            institution_id: Optional institution ID for institution-specific resolution
+            value_id: Optional value ID for value-specific resolution
+            idea_id: Optional idea ID for idea-specific resolution
+            max_depth: Maximum chain depth to prevent infinite loops
+            
+        Returns:
+            List[Delegation]: Chain of delegations ending at the final delegatee
+        """
+        # Try cache first
+        cache_key = self._get_chain_cache_key(
+            user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        )
+        cached_chain_data = await self._get_cached_chain(cache_key)
+        
+        if cached_chain_data:
+            return self._deserialize_chain(cached_chain_data)
+
+        # Intra-request memoization cache
+        memoized_delegations = {}
+        chain = []
+        current_user_id = user_id
+        depth = 0
+
+        while depth < max_depth:
+            # Check memoization cache first
+            if current_user_id in memoized_delegations:
+                delegation = memoized_delegations[current_user_id]
+                if delegation is None:  # No delegation found for this user
+                    break
+            else:
+                # Query database for delegation
+                delegation = await self._get_active_delegation_for_user(
+                    current_user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+                )
+                memoized_delegations[current_user_id] = delegation
+                
+                if not delegation:
+                    break
+
+            chain.append(delegation)
+
+            # Check if this delegation is expired (legacy mode)
+            if delegation.is_expired:
+                logger.warning(
+                    f"Found expired legacy delegation {delegation.id} in chain",
+                    extra={
+                        "delegation_id": str(delegation.id),
+                        "delegator_id": str(delegation.delegator_id),
+                        "delegatee_id": str(delegation.delegatee_id),
+                        "mode": delegation.mode,
+                    }
+                )
+                break
+
+            # Move to next delegatee
+            current_user_id = delegation.delegatee_id
+            depth += 1
+
+            # Constitutional protection: stop immediately on user override
+            if await self._has_user_override(current_user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id):
+                logger.info(
+                    f"Stopping chain resolution due to user override for {current_user_id}",
+                    extra={
+                        "user_id": str(current_user_id),
+                        "poll_id": str(poll_id) if poll_id else None,
+                        "label_id": str(label_id) if label_id else None,
+                        "field_id": str(field_id) if field_id else None,
+                        "institution_id": str(institution_id) if institution_id else None,
+                        "value_id": str(value_id) if value_id else None,
+                        "idea_id": str(idea_id) if idea_id else None,
+                    }
+                )
+                break
+
+        if depth >= max_depth:
+            logger.warning(
+                f"Delegation chain depth limit reached for user {user_id}",
+                extra={
+                    "user_id": str(user_id),
+                    "max_depth": max_depth,
+                    "chain_length": len(chain),
+                }
+            )
+
+        # Cache the resolved chain
+        await self._cache_chain(cache_key, chain)
+        
+        return chain
+
+    async def _get_active_delegation_for_user(
+        self,
+        user_id: UUID,
+        poll_id: Optional[UUID] = None,
+        label_id: Optional[UUID] = None,
+        field_id: Optional[UUID] = None,
+        institution_id: Optional[UUID] = None,
+        value_id: Optional[UUID] = None,
+        idea_id: Optional[UUID] = None,
+    ) -> Optional[Delegation]:
+        """Get active delegation for a user with optimized query."""
+        conditions = [
+            Delegation.delegator_id == user_id,
+            Delegation.is_deleted == False,
+            Delegation.revoked_at.is_(None),
+        ]
+
+        # Add target-specific conditions
+        if poll_id is not None:
+            conditions.append(Delegation.poll_id == poll_id)
+        elif label_id is not None:
+            conditions.append(Delegation.label_id == label_id)
+        elif field_id is not None:
+            conditions.append(Delegation.field_id == field_id)
+        elif institution_id is not None:
+            conditions.append(Delegation.institution_id == institution_id)
+        elif value_id is not None:
+            conditions.append(Delegation.value_id == value_id)
+        elif idea_id is not None:
+            conditions.append(Delegation.idea_id == idea_id)
+        else:
+            # Global delegation (no specific target)
+            conditions.extend([
+                Delegation.poll_id.is_(None),
+                Delegation.label_id.is_(None),
+                Delegation.field_id.is_(None),
+                Delegation.institution_id.is_(None),
+                Delegation.value_id.is_(None),
+                Delegation.idea_id.is_(None),
+            ])
+
+        # Add active date conditions
+        conditions.extend([
+            or_(
+                Delegation.end_date.is_(None),
+                Delegation.end_date > func.now(),
+            ),
+            or_(
+                Delegation.start_date.is_(None),
+                Delegation.start_date <= func.now(),
+            ),
+        ])
+
+        # Optimized query with lean column selection
+        query = (
+            select(
+                Delegation.id,
+                Delegation.delegator_id,
+                Delegation.delegatee_id,
+                Delegation.mode,
+                Delegation.poll_id,
+                Delegation.label_id,
+                Delegation.field_id,
+                Delegation.institution_id,
+                Delegation.value_id,
+                Delegation.idea_id,
+                Delegation.start_date,
+                Delegation.end_date,
+                Delegation.legacy_term_ends_at,
+                Delegation.created_at,
+            )
+            .where(and_(*conditions))
+            .order_by(
+                Delegation.mode == DelegationMode.HYBRID_SEED.desc(),
+                Delegation.created_at.asc(),
+            )
+            .limit(1)
+        )
+
+        result = await self.db.execute(query)
+        delegation_row = result.fetchone()
+
+        if not delegation_row:
+            return None
+
+        # Convert row to Delegation object
+        delegation = Delegation()
+        delegation.id = delegation_row.id
+        delegation.delegator_id = delegation_row.delegator_id
+        delegation.delegatee_id = delegation_row.delegatee_id
+        delegation.mode = delegation_row.mode
+        delegation.poll_id = delegation_row.poll_id
+        delegation.label_id = delegation_row.label_id
+        delegation.field_id = delegation_row.field_id
+        delegation.institution_id = delegation_row.institution_id
+        delegation.value_id = delegation_row.value_id
+        delegation.idea_id = delegation_row.idea_id
+        delegation.start_date = delegation_row.start_date
+        delegation.end_date = delegation_row.end_date
+        delegation.legacy_term_ends_at = delegation_row.legacy_term_ends_at
+        delegation.created_at = delegation_row.created_at
+
+        return delegation
+
+    def _deserialize_chain(self, chain_data: List[Dict[str, Any]]) -> List[Delegation]:
+        """Deserialize cached chain data to Delegation objects."""
+        chain = []
+        for delegation_data in chain_data:
+            delegation = Delegation()
+            delegation.id = UUID(delegation_data["id"])
+            delegation.delegator_id = UUID(delegation_data["delegator_id"])
+            delegation.delegatee_id = UUID(delegation_data["delegatee_id"])
+            delegation.mode = delegation_data["mode"]
+            delegation.poll_id = UUID(delegation_data["poll_id"]) if delegation_data["poll_id"] else None
+            delegation.label_id = UUID(delegation_data["label_id"]) if delegation_data["label_id"] else None
+            delegation.field_id = UUID(delegation_data["field_id"]) if delegation_data["field_id"] else None
+            delegation.institution_id = UUID(delegation_data["institution_id"]) if delegation_data["institution_id"] else None
+            delegation.value_id = UUID(delegation_data["value_id"]) if delegation_data["value_id"] else None
+            delegation.idea_id = UUID(delegation_data["idea_id"]) if delegation_data["idea_id"] else None
+            delegation.start_date = datetime.fromisoformat(delegation_data["start_date"]) if delegation_data["start_date"] else None
+            delegation.end_date = datetime.fromisoformat(delegation_data["end_date"]) if delegation_data["end_date"] else None
+            delegation.legacy_term_ends_at = datetime.fromisoformat(delegation_data["legacy_term_ends_at"]) if delegation_data["legacy_term_ends_at"] else None
+            delegation.created_at = datetime.fromisoformat(delegation_data["created_at"]) if delegation_data["created_at"] else None
+            chain.append(delegation)
+        return chain
+
     async def create_delegation(
         self,
         delegator_id: UUID,
@@ -536,188 +772,10 @@ class DelegationService:
         Returns:
             List[Delegation]: Chain of delegations ending at the final delegatee
         """
-        # Try to get cached chain first
-        cache_key = self._get_chain_cache_key(
-            user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id
+        # Use the optimized iterative version
+        return await self.resolve_delegation_chain_iterative(
+            user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id, max_depth
         )
-        cached_chain_data = await self._get_cached_chain(cache_key)
-        
-        if cached_chain_data:
-            # Convert cached data back to Delegation objects
-            chain = []
-            for delegation_data in cached_chain_data:
-                delegation = Delegation()
-                delegation.id = UUID(delegation_data["id"])
-                delegation.delegator_id = UUID(delegation_data["delegator_id"])
-                delegation.delegatee_id = UUID(delegation_data["delegatee_id"])
-                delegation.mode = delegation_data["mode"]
-                delegation.poll_id = UUID(delegation_data["poll_id"]) if delegation_data["poll_id"] else None
-                delegation.label_id = UUID(delegation_data["label_id"]) if delegation_data["label_id"] else None
-                delegation.field_id = UUID(delegation_data["field_id"]) if delegation_data["field_id"] else None
-                delegation.institution_id = UUID(delegation_data["institution_id"]) if delegation_data["institution_id"] else None
-                delegation.value_id = UUID(delegation_data["value_id"]) if delegation_data["value_id"] else None
-                delegation.idea_id = UUID(delegation_data["idea_id"]) if delegation_data["idea_id"] else None
-                delegation.start_date = datetime.fromisoformat(delegation_data["start_date"]) if delegation_data["start_date"] else None
-                delegation.end_date = datetime.fromisoformat(delegation_data["end_date"]) if delegation_data["end_date"] else None
-                delegation.legacy_term_ends_at = datetime.fromisoformat(delegation_data["legacy_term_ends_at"]) if delegation_data["legacy_term_ends_at"] else None
-                delegation.created_at = datetime.fromisoformat(delegation_data["created_at"]) if delegation_data["created_at"] else None
-                chain.append(delegation)
-            return chain
-
-        # Cache miss - resolve chain from database
-        chain = []
-        current_user_id = user_id
-        depth = 0
-
-        while depth < max_depth:
-            # Lean query: select only needed columns for chain resolution
-            # Uses the new composite index for fast lookup
-            conditions = [
-                Delegation.delegator_id == current_user_id,
-                Delegation.is_deleted == False,
-                Delegation.revoked_at.is_(None),
-            ]
-
-            # Add target-specific conditions
-            if poll_id is not None:
-                conditions.append(Delegation.poll_id == poll_id)
-            elif label_id is not None:
-                conditions.append(Delegation.label_id == label_id)
-            elif field_id is not None:
-                conditions.append(Delegation.field_id == field_id)
-            elif institution_id is not None:
-                conditions.append(Delegation.institution_id == institution_id)
-            elif value_id is not None:
-                conditions.append(Delegation.value_id == value_id)
-            elif idea_id is not None:
-                conditions.append(Delegation.idea_id == idea_id)
-            else:
-                # Global delegation (no specific target)
-                conditions.extend(
-                    [
-                        Delegation.poll_id.is_(None),
-                        Delegation.label_id.is_(None),
-                        Delegation.field_id.is_(None),
-                        Delegation.institution_id.is_(None),
-                        Delegation.value_id.is_(None),
-                        Delegation.idea_id.is_(None),
-                    ]
-                )
-
-            # Add active date conditions
-            conditions.extend(
-                [
-                    or_(
-                        Delegation.end_date.is_(None),
-                        Delegation.end_date > func.now(),
-                    ),
-                    or_(
-                        Delegation.start_date.is_(None),
-                        Delegation.start_date <= func.now(),
-                    ),
-                ]
-            )
-
-            # Lean query: select only columns needed for chain resolution
-            query = (
-                select(
-                    Delegation.id,
-                    Delegation.delegator_id,
-                    Delegation.delegatee_id,
-                    Delegation.mode,
-                    Delegation.poll_id,
-                    Delegation.label_id,
-                    Delegation.field_id,
-                    Delegation.institution_id,
-                    Delegation.value_id,
-                    Delegation.idea_id,
-                    Delegation.start_date,
-                    Delegation.end_date,
-                    Delegation.legacy_term_ends_at,
-                    Delegation.created_at,
-                )
-                .where(and_(*conditions))
-                .order_by(
-                    # Hybrid seed (global fallback) first, then specific delegations
-                    Delegation.mode == DelegationMode.HYBRID_SEED.desc(),
-                    Delegation.created_at.asc(),
-                )
-                .limit(1)
-            )
-
-            result = await self.db.execute(query)
-            delegation_row = result.fetchone()
-
-            if not delegation_row:
-                break  # No active delegation found
-
-            # Convert row to Delegation object for chain consistency
-            delegation = Delegation()
-            delegation.id = delegation_row.id
-            delegation.delegator_id = delegation_row.delegator_id
-            delegation.delegatee_id = delegation_row.delegatee_id
-            delegation.mode = delegation_row.mode
-            delegation.poll_id = delegation_row.poll_id
-            delegation.label_id = delegation_row.label_id
-            delegation.field_id = delegation_row.field_id
-            delegation.institution_id = delegation_row.institution_id
-            delegation.value_id = delegation_row.value_id
-            delegation.idea_id = delegation_row.idea_id
-            delegation.start_date = delegation_row.start_date
-            delegation.end_date = delegation_row.end_date
-            delegation.legacy_term_ends_at = delegation_row.legacy_term_ends_at
-            delegation.created_at = delegation_row.created_at
-
-            chain.append(delegation)
-
-            # Check if this delegation is expired (legacy mode)
-            if delegation.is_expired:
-                logger.warning(
-                    f"Found expired legacy delegation {delegation.id} in chain",
-                    extra={
-                        "delegation_id": str(delegation.id),
-                        "delegator_id": str(delegation.delegator_id),
-                        "delegatee_id": str(delegation.delegatee_id),
-                        "mode": delegation.mode,
-                    }
-                )
-                break  # Stop at expired delegation
-
-            # Move to next delegatee
-            current_user_id = delegation.delegatee_id
-            depth += 1
-
-            # Constitutional protection: stop immediately on user override
-            # This ensures user intent supremacy regardless of delegation mode
-            if await self._has_user_override(current_user_id, poll_id, label_id, field_id, institution_id, value_id, idea_id):
-                logger.info(
-                    f"Stopping chain resolution due to user override for {current_user_id}",
-                    extra={
-                        "user_id": str(current_user_id),
-                        "poll_id": str(poll_id) if poll_id else None,
-                        "label_id": str(label_id) if label_id else None,
-                        "field_id": str(field_id) if field_id else None,
-                        "institution_id": str(institution_id) if institution_id else None,
-                        "value_id": str(value_id) if value_id else None,
-                        "idea_id": str(idea_id) if idea_id else None,
-                    }
-                )
-                break
-
-        if depth >= max_depth:
-            logger.warning(
-                f"Delegation chain depth limit reached for user {user_id}",
-                extra={
-                    "user_id": str(user_id),
-                    "max_depth": max_depth,
-                    "chain_length": len(chain),
-                }
-            )
-
-        # Cache the resolved chain
-        await self._cache_chain(cache_key, chain)
-        
-        return chain
 
     async def _has_user_override(
         self,
