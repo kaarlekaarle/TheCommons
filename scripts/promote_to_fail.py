@@ -77,14 +77,12 @@ def check_override_latency_regression(warnings: List[Dict[str, Any]]) -> Optiona
                         p99_match = re.search(
                             r"p99[:\s]*(\d+)ms", details, re.IGNORECASE
                         )
-                        p99_context = (
-                            f" (p99: {p99_match.group(1)}ms)" if p99_match else ""
-                        )
+                        p99_ms = int(p99_match.group(1)) if p99_match else 0
 
                         if p95_ms >= 1600:
                             return (
-                                f"Override latency regression: p95={p95_ms}ms >= "
-                                f"1600ms threshold{p99_context}"
+                                f"Override latency regression: p95={p95_ms}ms, "
+                                f"p99={p99_ms}ms, threshold=1600ms"
                             )
                     else:
                         # Fallback to general latency extraction
@@ -93,8 +91,8 @@ def check_override_latency_regression(warnings: List[Dict[str, Any]]) -> Optiona
                             latency_ms = int(latency_match.group(1))
                             if latency_ms >= 1600:
                                 return (
-                                    f"Override latency regression: {latency_ms}ms >= "
-                                    f"1600ms threshold"
+                                    f"Override latency regression: p95={latency_ms}ms, "
+                                    f"p99=unknown, threshold=1600ms"
                                 )
                         else:
                             return (
