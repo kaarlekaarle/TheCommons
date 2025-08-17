@@ -26,19 +26,28 @@ export type CreateDelegationInput = {
 
 export type DelegationWarnings = {
   concentration?: { 
-    active: boolean; 
     level: 'warn' | 'high'; 
     percent: number; 
   };
   superDelegateRisk?: { 
-    active: boolean; 
     reason: string; 
-    stats?: Record<string, unknown>; 
   };
 };
 
+export interface Delegation {
+  id: string;
+  delegator_id: string;
+  delegatee_id: string;
+  mode: string;
+  target_type: string;
+  field_id?: string;
+  created_at: string;
+  expires_at?: string;
+  is_active: boolean;
+}
+
 export type CreateDelegationResponse = { 
-  delegation: any; 
+  delegation: Delegation; 
   warnings?: DelegationWarnings; 
 };
 

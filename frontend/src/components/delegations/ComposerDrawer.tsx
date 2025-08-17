@@ -221,18 +221,18 @@ export default function ComposerDrawer({
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
             {/* Constitutional Warnings */}
-            {(warnings.concentration?.active || warnings.superDelegateRisk?.active) && (
+            {(warnings.concentration || warnings.superDelegateRisk) && (
               <div className="mb-6 space-y-3">
-                {warnings.concentration?.active && (
+                {warnings.concentration && (
                   <div className="p-3 bg-warn-bg border border-warn-fg/20 rounded-lg">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-warn-fg mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
                         <p className="text-sm text-warn-fg">
-                          <strong>High concentration:</strong> {(warnings.concentration.percent * 100).toFixed(1)}% of delegations flow to this person here.
+                          <strong>High concentration:</strong> ~{(warnings.concentration.percent * 100).toFixed(1)}% of delegations in this field go to this person.
                         </p>
                         <a 
-                          href="/docs/cascade_rules" 
+                          href="/docs/cascade_rules.md" 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-xs text-warn-fg/80 hover:text-warn-fg underline mt-1 inline-block"
@@ -243,16 +243,16 @@ export default function ComposerDrawer({
                     </div>
                   </div>
                 )}
-                {warnings.superDelegateRisk?.active && (
+                {warnings.superDelegateRisk && (
                   <div className="p-3 bg-warn-bg border border-warn-fg/20 rounded-lg">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-warn-fg mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
                         <p className="text-sm text-warn-fg">
-                          <strong>Potential super-delegate pattern:</strong> {warnings.superDelegateRisk.reason}
+                          <strong>Super-delegate:</strong> This could create a 'super-delegate' pattern: {warnings.superDelegateRisk.reason}
                         </p>
                         <a 
-                          href="/docs/cascade_rules" 
+                          href="/docs/cascade_rules.md" 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-xs text-warn-fg/80 hover:text-warn-fg underline mt-1 inline-block"
