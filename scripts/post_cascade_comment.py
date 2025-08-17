@@ -43,10 +43,34 @@ def extract_slo_metrics(override_latency_file: str) -> Dict[str, Any]:
     """Extract SLO metrics from override latency stats."""
     data = load_json_file(override_latency_file)
     if not data:
-        return {"p95": 0, "p99": 0, "available": False}
+        return {"p50": 0, "p95": 0, "p99": 0, "available": False}
+    
+    # Try to parse the text format if JSON structure is different
+    if isinstance(data, str):
+        # Parse text format
+        lines = data.split('\n')
+        p50 = p95 = p99 = 0
+        for line in lines:
+            if 'p50' in line.lower():
+                try:
+                    p50 = float(line.split(':')[1].strip().replace('ms', '').replace('s', ''))
+                except:
+                    pass
+            elif 'p95' in line.lower():
+                try:
+                    p95 = float(line.split(':')[1].strip().replace('ms', '').replace('s', ''))
+                except:
+                    pass
+            elif 'p99' in line.lower():
+                try:
+                    p99 = float(line.split(':')[1].strip().replace('ms', '').replace('s', ''))
+                except:
+                    pass
+        return {"p50": p50, "p95": p95, "p99": p99, "available": True}
     
     stats = data.get("statistics", {})
     return {
+        "p50": stats.get("p50", 0),
         "p95": stats.get("p95", 0),
         "p99": stats.get("p99", 0),
         "available": True
@@ -119,8 +143,32 @@ def extract_latency_tips(override_latency_file: str) -> List[str]:
     return tips[:3]
 
 
+def extract_modules_with_high_flows(complexity_file: str) -> List[str]:
+    """Extract modules with flows ≥6."""
+    data = load_json_file(complexity_file)
+    if not data:
+        return ["Complexity analysis not available"]
+    
+    modules = data.get("modules", {})
+    high_flows = [(k, v) for k, v in modules.items() if v >= 6]
+    
+    if not high_flows:
+        return ["No modules with flows ≥6"]
+    
+    # Sort by flow count descending
+    high_flows.sort(key=lambda x: x[1], reverse=True)
+    
+    # Format as list of strings
+    result = []
+    for module, flows in high_flows:
+        result.append(f"{module}: {flows} flows")
+    
+    return result
+
+
 def compose_comment(cascade_line: str, slo_metrics: Dict[str, Any], 
-                   complexity_tips: List[str], latency_tips: List[str]) -> str:
+                   complexity_tips: List[str], latency_tips: List[str],
+                   modules_with_high_flows: List[str]) -> str:
     """Compose the PR comment with cascade info and remediation tips."""
     
     comment = f"""## 🔍 Constitutional Cascade Alert
@@ -131,13 +179,22 @@ def compose_comment(cascade_line: str, slo_metrics: Dict[str, Any],
     
     if slo_metrics["available"]:
         comment += f"""
-- **Override Latency**: p95={slo_metrics['p95']}ms, p99={slo_metrics['p99']}ms
+- **Override Latency**: p50={slo_metrics['p50']}ms, p95={slo_metrics['p95']}ms, p99={slo_metrics['p99']}ms
 - **Targets**: p95 < 1500ms, p99 < 2000ms"""
     else:
         comment += "\n- **SLO Data**: Not available"
     
     comment += """
 
+### 📈 Complexity Analysis
+
+**Modules with flows ≥6:**
+"""
+    
+    for module in modules_with_high_flows:
+        comment += f"- {module}\n"
+    
+    comment += """
 ### 🛠️ Remediation Tips
 
 #### Complexity Issues:
@@ -312,9 +369,10 @@ def main():
     slo_metrics = extract_slo_metrics(args.override_latency_file)
     complexity_tips = extract_complexity_tips(args.complexity_file)
     latency_tips = extract_latency_tips(args.override_latency_file)
+    modules_with_high_flows = extract_modules_with_high_flows(args.complexity_file)
     
     # Compose comment
-    comment = compose_comment(cascade_line, slo_metrics, complexity_tips, latency_tips)
+    comment = compose_comment(cascade_line, slo_metrics, complexity_tips, latency_tips, modules_with_high_flows)
     
     if args.dry_run:
         print("\n📝 COMMENT PREVIEW:")

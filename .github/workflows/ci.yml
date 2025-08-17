@@ -69,6 +69,36 @@ jobs:
           -k "not offline and not delegation_edge" \
           --tb=short
 
+    - name: Collect constitutional metrics
+      env:
+        DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        SECRET_KEY: test_secret_key
+        ALGORITHM: HS256
+        ACCESS_TOKEN_EXPIRE_MINUTES: 30
+        ENVIRONMENT: test
+        DEBUG: "false"
+      run: |
+        # Collect override latency metrics
+        python3 backend/scripts/collect_override_latency.py --json-out reports/override_latency.json
+        
+        # Collect complexity statistics
+        python3 backend/scripts/constitutional_dependency_validator.py --emit-complexity-json reports/complexity_stats.json
+        
+        # Run cascade detector in warn mode
+        python3 backend/scripts/constitutional_cascade_detector.py --mode warn --json-out reports/cascade_after_fix.json
+
+    - name: Upload constitutional reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: constitutional-reports
+        path: |
+          reports/override_latency.json
+          reports/complexity_stats.json
+          reports/cascade_after_fix.json
+          reports/cascade_after_fix.md
+        retention-days: 30
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
