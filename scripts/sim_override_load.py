@@ -11,6 +11,8 @@ import json
 import random
 import time
 import sys
+import asyncio
+import concurrent.futures
 from datetime import datetime
 from typing import List, Dict, Any
 from pathlib import Path
@@ -33,42 +35,86 @@ except ImportError:
 class OverrideLoadSimulator:
     """Simulates override requests to generate latency metrics."""
     
-    def __init__(self, requests: int = 200, base_interval_ms: int = 35, long_tail_pct: float = 2.5):
+    def __init__(self, requests: int = 400, concurrency: int = 8, base_interval_ms: int = 35, long_tail_pct: float = 2.5):
         self.requests = requests
+        self.concurrency = concurrency
         self.base_interval_ms = base_interval_ms
         self.long_tail_pct = long_tail_pct
         self.latencies = []
         self.cache_hits = 0
         self.cache_misses = 0
+        self.fastpath_hits = 0
+        self.fastpath_misses = 0
+        self.errors = 0
         
     def simulate_override_requests(self) -> Dict[str, Any]:
         """Simulate override requests and collect latency metrics."""
         print(f"🚀 Starting override load simulation: {self.requests} requests")
+        print(f"   Concurrency: {self.concurrency} workers")
         print(f"   Base interval: {self.base_interval_ms}ms")
         print(f"   Long-tail percentage: {self.long_tail_pct}%")
         print()
         
-        for i in range(self.requests):
-            # Simulate request interval
-            if i > 0:
+        # Use ThreadPoolExecutor for concurrent requests
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.concurrency) as executor:
+            # Submit all requests
+            futures = []
+            for i in range(self.requests):
+                future = executor.submit(self._simulate_single_request, i)
+                futures.append(future)
+            
+            # Collect results
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                try:
+                    result = future.result()
+                    if result:
+                        self.latencies.append(result['latency'])
+                        if result.get('cache_hit'):
+                            self.cache_hits += 1
+                        else:
+                            self.cache_misses += 1
+                        if result.get('fastpath_hit'):
+                            self.fastpath_hits += 1
+                        else:
+                            self.fastpath_misses += 1
+                    else:
+                        self.errors += 1
+                except Exception as e:
+                    self.errors += 1
+                    print(f"   Error in request {i}: {e}")
+                
+                # Progress indicator
+                if (i + 1) % 50 == 0:
+                    print(f"   Processed {i + 1}/{self.requests} requests...")
+        
+        return self._generate_metrics()
+    
+    def _simulate_single_request(self, request_id: int) -> Dict[str, Any]:
+        """Simulate a single override request."""
+        try:
+            # Simulate request interval (small delay to prevent overwhelming)
+            if request_id > 0:
                 interval_ms = self._generate_interval()
                 time.sleep(interval_ms / 1000.0)
             
             # Simulate override latency
             latency_ms = self._simulate_override_latency()
-            self.latencies.append(latency_ms)
             
             # Simulate cache behavior
-            if random.random() < 0.8:  # 80% cache hit rate
-                self.cache_hits += 1
-            else:
-                self.cache_misses += 1
+            cache_hit = random.random() < 0.8  # 80% cache hit rate
             
-            # Progress indicator
-            if (i + 1) % 50 == 0:
-                print(f"   Processed {i + 1}/{self.requests} requests...")
-        
-        return self._generate_metrics()
+            # Simulate fastpath behavior (higher hit rate for direct delegations)
+            fastpath_hit = random.random() < 0.6  # 60% fastpath hit rate
+            
+            return {
+                'latency': latency_ms,
+                'cache_hit': cache_hit,
+                'fastpath_hit': fastpath_hit,
+                'request_id': request_id
+            }
+        except Exception as e:
+            print(f"   Error simulating request {request_id}: {e}")
+            return None
     
     def _generate_interval(self) -> float:
         """Generate interval between requests."""
@@ -111,12 +157,18 @@ class OverrideLoadSimulator:
         p95_idx = int(0.95 * n)
         p99_idx = int(0.99 * n)
         
+        total_successful = len(self.latencies)
         metrics = {
             "timestamp": datetime.now().isoformat(),
             "total_requests": self.requests,
+            "successful_requests": total_successful,
+            "errors": self.errors,
             "cache_hits": self.cache_hits,
             "cache_misses": self.cache_misses,
-            "cache_hit_rate": (self.cache_hits / self.requests) * 100,
+            "cache_hit_rate": (self.cache_hits / total_successful) * 100 if total_successful > 0 else 0,
+            "fastpath_hits": self.fastpath_hits,
+            "fastpath_misses": self.fastpath_misses,
+            "fastpath_hit_rate": (self.fastpath_hits / total_successful) * 100 if total_successful > 0 else 0,
             "latencies": {
                 "p50": sorted_latencies[p50_idx],
                 "p95": sorted_latencies[p95_idx],
@@ -142,7 +194,10 @@ class OverrideLoadSimulator:
             "p95_ms": metrics["latencies"]["p95"],
             "p99_ms": metrics["latencies"]["p99"],
             "total_requests": metrics["total_requests"],
+            "successful_requests": metrics["successful_requests"],
+            "errors": metrics["errors"],
             "cache_hit_rate": metrics["cache_hit_rate"],
+            "fastpath_hit_rate": metrics["fastpath_hit_rate"],
             "slo_compliance": metrics["slo_compliance"],
             "timestamp": metrics["timestamp"]
         }
@@ -154,18 +209,22 @@ class OverrideLoadSimulator:
             json.dump(output_data, f, indent=2)
         
         print(f"📊 Metrics saved to: {output_file}")
+        print(f"   Requests: {metrics['successful_requests']}/{metrics['total_requests']} successful ({metrics['errors']} errors)")
         print(f"   p50: {metrics['latencies']['p50']:.1f}ms")
         print(f"   p95: {metrics['latencies']['p95']:.1f}ms")
         print(f"   p99: {metrics['latencies']['p99']:.1f}ms")
         print(f"   Cache hit rate: {metrics['cache_hit_rate']:.1f}%")
+        print(f"   Fastpath hit rate: {metrics['fastpath_hit_rate']:.1f}%")
         print(f"   SLO compliance: p95≤1.5s={metrics['slo_compliance']['p95_target_1_5s']}, p99≤2.0s={metrics['slo_compliance']['p99_target_2_0s']}")
 
 
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Synthetic override load generator")
-    parser.add_argument("--requests", type=int, default=200, 
-                       help="Number of requests to simulate (default: 200)")
+    parser.add_argument("--requests", type=int, default=400, 
+                       help="Number of requests to simulate (default: 400)")
+    parser.add_argument("--concurrency", type=int, default=8,
+                       help="Number of concurrent workers (default: 8)")
     parser.add_argument("--interval", type=int, default=35,
                        help="Base interval between requests in ms (default: 35)")
     parser.add_argument("--long-tail", type=float, default=2.5,
@@ -181,6 +240,7 @@ def main():
     # Create simulator
     simulator = OverrideLoadSimulator(
         requests=args.requests,
+        concurrency=args.concurrency,
         base_interval_ms=args.interval,
         long_tail_pct=args.long_tail
     )

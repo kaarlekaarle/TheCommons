@@ -13,6 +13,7 @@ from uuid import UUID
 import redis.asyncio as redis
 
 from backend.models.delegation import Delegation
+from backend.services.delegation.telemetry import DelegationTelemetry
 
 # Try to import msgpack, fallback to JSON if not available
 try:
@@ -521,19 +522,31 @@ class DelegationCache:
             json_fast_keys = await self.redis.keys(json_fast_pattern)
             legacy_fast_keys = await self.redis.keys(legacy_fast_pattern)
 
+            chain_stats = {
+                "msgpack": len(msgpack_chain_keys),
+                "json": len(json_chain_keys),
+                "legacy": len(legacy_chain_keys),
+                "total": len(msgpack_chain_keys) + len(json_chain_keys) + len(legacy_chain_keys),
+            }
+            
+            fast_path_stats = {
+                "msgpack": len(msgpack_fast_keys),
+                "json": len(json_fast_keys),
+                "legacy": len(legacy_fast_keys),
+                "total": len(msgpack_fast_keys) + len(json_fast_keys) + len(legacy_fast_keys),
+            }
+            
+            # Log format statistics using telemetry
+            DelegationTelemetry.log_cache_format_stats(
+                msgpack_keys=chain_stats["msgpack"] + fast_path_stats["msgpack"],
+                json_keys=chain_stats["json"] + fast_path_stats["json"],
+                legacy_keys=chain_stats["legacy"] + fast_path_stats["legacy"],
+                total_keys=chain_stats["total"] + fast_path_stats["total"],
+            )
+            
             return {
-                "chain_keys": {
-                    "msgpack": len(msgpack_chain_keys),
-                    "json": len(json_chain_keys),
-                    "legacy": len(legacy_chain_keys),
-                    "total": len(msgpack_chain_keys) + len(json_chain_keys) + len(legacy_chain_keys),
-                },
-                "fast_path_keys": {
-                    "msgpack": len(msgpack_fast_keys),
-                    "json": len(json_fast_keys),
-                    "legacy": len(legacy_fast_keys),
-                    "total": len(msgpack_fast_keys) + len(json_fast_keys) + len(legacy_fast_keys),
-                },
+                "chain_keys": chain_stats,
+                "fast_path_keys": fast_path_stats,
                 "msgpack_available": MSGPACK_AVAILABLE,
                 "telemetry_sample_rate": self.telemetry_sample_rate,
             }
@@ -548,16 +561,23 @@ class DelegationCache:
     def _log_cache_telemetry(self, operation: str, telemetry_info: Dict[str, Any]) -> None:
         """Log cache telemetry information."""
         try:
-            from backend.core.logging_config import get_logger
-            logger = get_logger(__name__)
-            
-            logger.debug(
-                f"Cache {operation} telemetry",
-                extra={
-                    "operation": operation,
-                    "telemetry": telemetry_info,
-                }
-            )
+            # Use the new telemetry methods for serialization timing
+            if "serialization_time_ms" in telemetry_info:
+                DelegationTelemetry.log_serialization_timing(
+                    operation=operation,
+                    format_type=telemetry_info.get("format", "unknown"),
+                    serialization_time_ms=telemetry_info["serialization_time_ms"],
+                    payload_size_bytes=telemetry_info.get("payload_size_bytes", 0),
+                    sample_rate=self.telemetry_sample_rate,
+                )
+            elif "deserialization_time_ms" in telemetry_info:
+                DelegationTelemetry.log_serialization_timing(
+                    operation=f"{operation}_deserialize",
+                    format_type=telemetry_info.get("format", "unknown"),
+                    serialization_time_ms=telemetry_info["deserialization_time_ms"],
+                    payload_size_bytes=telemetry_info.get("payload_size_bytes", 0),
+                    sample_rate=self.telemetry_sample_rate,
+                )
         except Exception:
-            # Don't fail if logging fails
+            # Don't fail if telemetry fails
             pass

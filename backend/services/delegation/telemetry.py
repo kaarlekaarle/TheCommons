@@ -144,6 +144,7 @@ class DelegationTelemetry:
                 "cache_hit": cache_hit,
                 "fast_path_hit": fast_path_hit,
                 "operation": "fast_path_hit",
+                "counter": "fastpath.hit",
                 "slo_p95_target": total_time <= 1.5,  # 1.5s target
                 "slo_p99_target": total_time <= 2.0,  # 2.0s target
             },
@@ -173,6 +174,7 @@ class DelegationTelemetry:
                 "idea_id": str(idea_id) if idea_id else None,
                 "fast_path_time_ms": int(fast_path_time * 1000),
                 "operation": "fast_path_miss",
+                "counter": "fastpath.miss",
             },
         )
 
@@ -387,6 +389,54 @@ class DelegationTelemetry:
         logger.warning(f"Cache {operation} error: {error}")
 
     @staticmethod
+    def log_serialization_timing(
+        operation: str,
+        format_type: str,
+        serialization_time_ms: float,
+        payload_size_bytes: int,
+        sample_rate: float = 0.01,
+    ) -> None:
+        """Log serialization timing for cache operations (sampled)."""
+        import random
+        
+        # Only log 1% of operations by default
+        if random.random() > sample_rate:
+            return
+            
+        logger.info(
+            f"Cache serialization: {operation} {format_type} in {serialization_time_ms:.3f}ms ({payload_size_bytes} bytes)",
+            extra={
+                "operation": f"cache_serialization_{operation}",
+                "format_type": format_type,
+                "serialization_time_ms": serialization_time_ms,
+                "payload_size_bytes": payload_size_bytes,
+                "sample_rate": sample_rate,
+            },
+        )
+
+    @staticmethod
+    def log_cache_format_stats(
+        msgpack_keys: int,
+        json_keys: int,
+        legacy_keys: int,
+        total_keys: int,
+    ) -> None:
+        """Log cache format distribution statistics."""
+        logger.info(
+            f"Cache format stats: msgpack={msgpack_keys}, json={json_keys}, legacy={legacy_keys}, total={total_keys}",
+            extra={
+                "operation": "cache_format_stats",
+                "msgpack_keys": msgpack_keys,
+                "json_keys": json_keys,
+                "legacy_keys": legacy_keys,
+                "total_keys": total_keys,
+                "msgpack_pct": (msgpack_keys / total_keys * 100) if total_keys > 0 else 0,
+                "json_pct": (json_keys / total_keys * 100) if total_keys > 0 else 0,
+                "legacy_pct": (legacy_keys / total_keys * 100) if total_keys > 0 else 0,
+            },
+        )
+
+    @staticmethod
     def get_performance_metrics() -> Dict[str, Any]:
         """Get current performance metrics (placeholder for metrics collection)."""
         return {
@@ -394,4 +444,6 @@ class DelegationTelemetry:
             "avg_chain_resolution_time_ms": 0,
             "total_chain_resolutions": 0,
             "cache_keys_count": 0,
+            "fastpath_hit_rate": 0.0,
+            "serialization_sample_rate": 0.01,
         }

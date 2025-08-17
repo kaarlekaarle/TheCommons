@@ -119,3 +119,68 @@ This document defines Service Level Objectives (SLOs) for the delegation backend
 - [ ] Team feedback on SLO targets
 - [ ] Strategic SLO adjustments
 - [ ] Documentation updates
+
+## Local Performance Testing
+
+### How to Refresh Performance & Collect Telemetry Locally
+
+To generate fresh performance metrics and test the delegation backend locally:
+
+1. **Generate Load**: Run the synthetic load generator to simulate override requests:
+   ```bash
+   python3 scripts/sim_override_load.py --requests 400 --concurrency 8
+   ```
+
+2. **Collect Metrics**: Extract latency metrics from the generated load:
+   ```bash
+   python3 backend/scripts/collect_override_latency.py --json-out reports/override_latency.json
+   ```
+
+3. **View Results**: Check the generated metrics file for:
+   - p50/p95/p99 latency percentiles
+   - Cache hit rates (chain cache and fastpath)
+   - Fastpath hit/miss statistics
+   - Serialization timing samples (1% of operations)
+   - SLO compliance status
+
+### Load Generator Options
+
+The `sim_override_load.py` script supports the following parameters:
+
+- `--requests N`: Number of requests to simulate (default: 400)
+- `--concurrency C`: Number of concurrent workers (default: 8)
+- `--interval MS`: Base interval between requests in milliseconds (default: 35)
+- `--long-tail PCT`: Percentage of long-tail requests (default: 2.5)
+
+### Telemetry Output
+
+The system emits detailed telemetry including:
+
+- **Fastpath counters**: `fastpath.hit` and `fastpath.miss` for override path optimization
+- **Serialization timing**: Sampled at 1% rate for msgpack vs JSON performance
+- **Cache format stats**: Distribution of msgpack, JSON, and legacy cache entries
+- **SLO compliance**: Real-time tracking against p95 ≤ 1.5s and p99 ≤ 2.0s targets
+
+### Example Output
+
+```
+🚀 Starting override load simulation: 400 requests
+   Concurrency: 8 workers
+   Base interval: 35ms
+   Long-tail percentage: 2.5%
+
+   Processed 50/400 requests...
+   Processed 100/400 requests...
+   ...
+
+✅ Simulation completed in 12.3s
+
+📊 Metrics saved to: reports/override_latency.json
+   Requests: 398/400 successful (2 errors)
+   p50: 245.3ms
+   p95: 1423.7ms
+   p99: 1892.1ms
+   Cache hit rate: 78.4%
+   Fastpath hit rate: 62.1%
+   SLO compliance: p95≤1.5s=False, p99≤2.0s=True
+```
