@@ -6,13 +6,13 @@ This script implements cascade rules that escalate certain pairs/clusters of con
 into hard blockers when they indicate constitutional drift toward hierarchy or opacity.
 """
 
-import os
-import sys
-import json
-import subprocess
 import argparse
+import json
+import os
+import subprocess
+import sys
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Exit codes
 EXIT_OK = 0
@@ -23,7 +23,9 @@ EXIT_BLOCK = 10
 class ConstitutionalCascadeDetector:
     """Detector for constitutional cascade rules."""
 
-    def __init__(self, config_path: str = "backend/config/constitutional_cascade_rules.json"):
+    def __init__(
+        self, config_path: str = "backend/config/constitutional_cascade_rules.json"
+    ):
         """Initialize the cascade detector."""
         self.config_path = config_path
         self.config = self._load_config()
@@ -45,14 +47,22 @@ class ConstitutionalCascadeDetector:
 
         try:
             # Call constitutional_principle_matrix.py
-            subprocess.run([
-                "python3", "backend/scripts/constitutional_principle_matrix.py",
-                "--detect-super-delegates", "--json-out", "reports/signal_super_delegate.json"
-            ], capture_output=True, text=True, check=False)
+            subprocess.run(
+                [
+                    "python3",
+                    "backend/scripts/constitutional_principle_matrix.py",
+                    "--detect-super-delegates",
+                    "--json-out",
+                    "reports/signal_super_delegate.json",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
             # Read the JSON output
             if os.path.exists("reports/signal_super_delegate.json"):
-                with open("reports/signal_super_delegate.json", 'r') as f:
+                with open("reports/signal_super_delegate.json", "r") as f:
                     data = json.load(f)
 
                 if data.get("super_delegate_detected", False):
@@ -62,8 +72,8 @@ class ConstitutionalCascadeDetector:
                         "ts": datetime.now().isoformat(),
                         "meta": {
                             "files": data.get("files", []),
-                            "patterns": data.get("patterns", [])
-                        }
+                            "patterns": data.get("patterns", []),
+                        },
                     }
 
             return None
@@ -78,14 +88,22 @@ class ConstitutionalCascadeDetector:
 
         try:
             # Call constitutional_drift_detector.py
-            subprocess.run([
-                "python3", "backend/scripts/constitutional_drift_detector.py",
-                "--test-override-latency", "--json-out", "reports/signal_override_latency.json"
-            ], capture_output=True, text=True, check=False)
+            subprocess.run(
+                [
+                    "python3",
+                    "backend/scripts/constitutional_drift_detector.py",
+                    "--test-override-latency",
+                    "--json-out",
+                    "reports/signal_override_latency.json",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
             # Read the JSON output
             if os.path.exists("reports/signal_override_latency.json"):
-                with open("reports/signal_override_latency.json", 'r') as f:
+                with open("reports/signal_override_latency.json", "r") as f:
                     data = json.load(f)
 
                 latency_ms = data.get("override_latency_ms", 0)
@@ -105,7 +123,7 @@ class ConstitutionalCascadeDetector:
                     "id": "#2",
                     "severity": severity,
                     "value_ms": latency_ms,
-                    "ts": datetime.now().isoformat()
+                    "ts": datetime.now().isoformat(),
                 }
 
             return None
@@ -120,14 +138,22 @@ class ConstitutionalCascadeDetector:
 
         try:
             # Call constitutional_dependency_validator.py
-            subprocess.run([
-                "python3", "backend/scripts/constitutional_dependency_validator.py",
-                "--emit-complexity-json", "--json-out", "reports/signal_complexity.json"
-            ], capture_output=True, text=True, check=False)
+            subprocess.run(
+                [
+                    "python3",
+                    "backend/scripts/constitutional_dependency_validator.py",
+                    "--emit-complexity-json",
+                    "--json-out",
+                    "reports/signal_complexity.json",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
             # Read the JSON output
             if os.path.exists("reports/signal_complexity.json"):
-                with open("reports/signal_complexity.json", 'r') as f:
+                with open("reports/signal_complexity.json", "r") as f:
                     data = json.load(f)
 
                 flows_per_module = data.get("flows_per_module", 0)
@@ -148,7 +174,7 @@ class ConstitutionalCascadeDetector:
                     "severity": severity,
                     "flows": flows_per_module,
                     "module": data.get("module", "unknown"),
-                    "ts": datetime.now().isoformat()
+                    "ts": datetime.now().isoformat(),
                 }
 
             return None
@@ -163,14 +189,22 @@ class ConstitutionalCascadeDetector:
 
         try:
             # Call constitutional_dependency_validator.py
-            subprocess.run([
-                "python3", "backend/scripts/constitutional_dependency_validator.py",
-                "--emit-maintainer-json", "--json-out", "reports/signal_maintainer.json"
-            ], capture_output=True, text=True, check=False)
+            subprocess.run(
+                [
+                    "python3",
+                    "backend/scripts/constitutional_dependency_validator.py",
+                    "--emit-maintainer-json",
+                    "--json-out",
+                    "reports/signal_maintainer.json",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
             # Read the JSON output
             if os.path.exists("reports/signal_maintainer.json"):
-                with open("reports/signal_maintainer.json", 'r') as f:
+                with open("reports/signal_maintainer.json", "r") as f:
                     data = json.load(f)
 
                 concentration_pct = data.get("concentration_pct", 0)
@@ -191,7 +225,7 @@ class ConstitutionalCascadeDetector:
                     "severity": severity,
                     "pct": concentration_pct,
                     "top_maintainer": data.get("top_maintainer", "unknown"),
-                    "ts": datetime.now().isoformat()
+                    "ts": datetime.now().isoformat(),
                 }
 
             return None
@@ -343,7 +377,7 @@ class ConstitutionalCascadeDetector:
     def _generate_next_actions(self, rule: Dict[str, Any]) -> str:
         """Generate next actions based on triggered rule."""
         rule_id = rule["rule_id"]
-        
+
         if rule_id == "A":
             return "remove_hierarchy+spread_knowledge"
         elif rule_id == "B":
@@ -363,18 +397,18 @@ class ConstitutionalCascadeDetector:
             "summary": self.generate_cascade_summary(),
             "exit_code": self._determine_exit_code(),
             "cascade_results": self.cascade_results,
-            "signals": self.signals
+            "signals": self.signals,
         }
-        
+
         # Save JSON
         os.makedirs(os.path.dirname(json_path), exist_ok=True)
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             json.dump(json_output, f, indent=2)
-        
+
         # Save Markdown
         os.makedirs(os.path.dirname(md_path), exist_ok=True)
         with open(md_path, 'w') as f:
-            f.write(self.generate_markdown_report())
+            f.write(self._generate_markdown_report())
 
     def _generate_markdown_report(self) -> str:
         """Generate human-readable markdown report."""
@@ -461,26 +495,26 @@ def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         description="Constitutional Cascade Detector",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
-        '--mode',
-        choices=['shadow', 'warn', 'enforce'],
-        default='shadow',
-        help='Cascade detection mode'
+        "--mode",
+        choices=["shadow", "warn", "enforce"],
+        default="shadow",
+        help="Cascade detection mode",
     )
 
     parser.add_argument(
-        '--json-out',
-        default='reports/constitutional_cascade.json',
-        help='Output JSON file path'
+        "--json-out",
+        default="reports/constitutional_cascade.json",
+        help="Output JSON file path",
     )
 
     parser.add_argument(
-        '--config',
-        default='backend/config/constitutional_cascade_rules.json',
-        help='Cascade rules configuration file'
+        "--config",
+        default="backend/config/constitutional_cascade_rules.json",
+        help="Cascade rules configuration file",
     )
 
     args = parser.parse_args()
@@ -503,7 +537,7 @@ def main() -> None:
     print(f"\n🔍 Evaluated {len(results)} cascade rules")
 
     # Save results
-    md_out = args.json_out.replace('.json', '.md')
+    md_out = args.json_out.replace(".json", ".md")
     detector.save_results(args.json_out, md_out)
 
     # Determine exit code
