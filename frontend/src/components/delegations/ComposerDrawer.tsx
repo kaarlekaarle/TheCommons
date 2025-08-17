@@ -197,21 +197,27 @@ export default function ComposerDrawer({
           {/* Tabs */}
           <div className="flex border-b border-border">
             <button
-              onClick={() => setActiveTab('traditional')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              onClick={() => {
+                console.log('Traditional tab clicked');
+                setActiveTab('traditional');
+              }}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === 'traditional'
-                  ? 'text-primary-600 border-b-2 border-primary-600'
-                  : 'text-fg-muted hover:text-fg'
+                  ? 'text-primary-600 border-b-2 border-primary-600 bg-blue-50'
+                  : 'text-fg-muted hover:text-fg hover:bg-gray-50'
               }`}
             >
               Delegate All (Traditional)
             </button>
             <button
-              onClick={() => setActiveTab('commons')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              onClick={() => {
+                console.log('Commons tab clicked');
+                setActiveTab('commons');
+              }}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === 'commons'
-                  ? 'text-primary-600 border-b-2 border-primary-600'
-                  : 'text-fg-muted hover:text-fg'
+                  ? 'text-primary-600 border-b-2 border-primary-600 bg-blue-50'
+                  : 'text-fg-muted hover:text-fg hover:bg-gray-50'
               }`}
             >
               Delegate by Field (Commons)
