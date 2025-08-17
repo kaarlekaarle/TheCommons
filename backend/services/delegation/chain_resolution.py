@@ -109,10 +109,10 @@ class ChainResolutionCore:
         user_delegations = delegation_map[user_id]
         now = datetime.utcnow()
         
-        # Filter active delegations
+        # Filter active delegations (including expired legacy ones for chain termination)
         active_delegations = []
         for delegation in user_delegations:
-            if ChainResolutionCore._is_delegation_active(delegation, now):
+            if ChainResolutionCore._is_delegation_active_or_expired_legacy(delegation, now):
                 active_delegations.append(delegation)
         
         if not active_delegations:
@@ -135,6 +135,27 @@ class ChainResolutionCore:
         )
         
         return target_delegations[0] if target_delegations else None
+    
+    @staticmethod
+    def _is_delegation_active_or_expired_legacy(delegation: Delegation, now: datetime) -> bool:
+        """Check if delegation is currently active or an expired legacy delegation."""
+        if delegation.is_deleted or delegation.revoked_at is not None:
+            return False
+        
+        # Check start date
+        if delegation.start_date and now < delegation.start_date:
+            return False
+        
+        # Check end date
+        if delegation.end_date and now > delegation.end_date:
+            return False
+        
+        # For legacy delegations, include them even if expired (for chain termination)
+        if delegation.is_legacy_fixed_term and delegation.legacy_term_ends_at:
+            # Include expired legacy delegations for chain termination
+            return True
+        
+        return True
     
     @staticmethod
     def _is_delegation_active(delegation: Delegation, now: datetime) -> bool:
