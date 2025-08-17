@@ -2,20 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, BarChart3, MessageCircle, CheckCircle, XCircle, Minus, Compass, Target, Users, Link as LinkIcon } from 'lucide-react';
-import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults, getMyDelegation } from '../lib/api';
-import type { Poll, PollOption, Vote, PollResults, Label, DelegationSummary } from '../types';
-import type { DelegationInfo } from '../types/delegation';
+import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults } from '../lib/api';
+import type { Poll, PollOption, Vote, PollResults, Label } from '../types';
 import Button from '../components/ui/Button';
 import CommentsPanel from '../components/comments/CommentsPanel';
 import { useToast } from '../components/ui/useToast';
-import DelegationStatus from '../components/delegation/DelegationStatus';
-import ManageDelegationModal from '../components/delegation/ManageDelegationModal';
-import { delegationCopy } from '../i18n/en/delegation';
-import { canUseDelegation } from '../lib/featureAccess';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import LabelChip from '../components/ui/LabelChip';
 import LinkedPrinciplesDrawer from '../components/LinkedPrinciplesDrawer';
-import DelegationPath from '../components/DelegationPath';
 import { flags } from '../config/flags';
 import { useNavigate } from 'react-router-dom';
 import PrincipleProposal from '../components/principle/PrincipleProposal';
@@ -31,9 +25,7 @@ export default function ProposalDetail() {
   const [results, setResults] = useState<PollResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
-  const [delegationInfo, setDelegationInfo] = useState<DelegationInfo | null>(null);
-  const [delegationSummary, setDelegationSummary] = useState<DelegationSummary | null>(null);
-  const [delegationModalOpen, setDelegationModalOpen] = useState(false);
+
   const [linkedDrawerOpen, setLinkedDrawerOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<Label | null>(null);
   const { success, error: showError } = useToast();
@@ -88,10 +80,8 @@ export default function ProposalDetail() {
           setOptions(hardcodedOptions);
           setMyVote(hardcodedVote);
 
-          // For hardcoded data, we don't have real results or delegation data
+          // For hardcoded data, we don't have real results
           setResults(null);
-          setDelegationInfo(null);
-          setDelegationSummary(null);
 
           console.log('[DEBUG] Hardcoded proposal data loaded successfully');
           return;
@@ -129,25 +119,7 @@ export default function ProposalDetail() {
         setResults(null);
       }
 
-      try {
-        const delegationData = await getMyDelegation();
-        setDelegationInfo(delegationData);
-      } catch (delegationError) {
-        console.log('[DEBUG] Could not fetch delegation data:', delegationError);
-        setDelegationInfo(null);
-      }
 
-      // Fetch delegation summary for path preview
-      if (flags.labelsEnabled) {
-        try {
-          const { getDelegationSummary } = await import('../lib/api');
-          const summaryData = await getDelegationSummary();
-          setDelegationSummary(summaryData);
-        } catch (summaryError) {
-          console.log('[DEBUG] Could not fetch delegation summary:', summaryError);
-          setDelegationSummary(null);
-        }
-      }
 
       console.log('[DEBUG] Proposal data loaded successfully');
     } catch (err: unknown) {
@@ -458,49 +430,9 @@ export default function ProposalDetail() {
         <div className="lg:col-span-1">
           <div className="sticky top-8">
             <div className="p-6 bg-surface border border-border rounded-lg space-y-4">
-              {/* Delegation Path Preview */}
-              <DelegationPath
-                poll={poll}
-                delegationSummary={delegationSummary}
-                currentUserId={user?.id}
-              />
+              <h3 className="font-semibold text-strong">Vote</h3>
 
-                              <h3 className="font-semibold text-strong">Vote</h3>
 
-                      {/* Delegation Banner */}
-                      {(() => {
-                        const allowed = canUseDelegation(user?.email);
-                        return allowed && delegationInfo?.poll?.active ? (
-                          <div className="mb-4 banner-info rounded-lg">
-                            <div className="flex items-start gap-2">
-                              <Users className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm text-strong font-medium">
-                                  {delegationCopy.poll_banner_title.replace(
-                                    '{name}',
-                                    delegationInfo.poll.to_user_name || delegationInfo.poll.to_user_id.slice(0, 8)
-                                  )}
-                                </p>
-                                <p className="text-xs text-body mt-1">
-                                  {delegationCopy.poll_banner_subtitle}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : null;
-                      })()}
-
-              {(() => {
-                const allowed = canUseDelegation(user?.email);
-                return allowed ? (
-                  <div className="mb-4 p-3 bg-surface/50 border border-border rounded-lg">
-                    <DelegationStatus
-                      pollId={poll.id}
-                      onOpenModal={() => setDelegationModalOpen(true)}
-                    />
-                  </div>
-                ) : null;
-              })()}
               {isVoted ? (
                 <div className="text-center py-4">
                   <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
@@ -571,18 +503,7 @@ export default function ProposalDetail() {
         </div>
       )}
 
-      {/* Delegation Modal */}
-      {(() => {
-        const allowed = canUseDelegation(user?.email);
-        return allowed ? (
-          <ManageDelegationModal
-            open={delegationModalOpen}
-            onClose={() => setDelegationModalOpen(false)}
-            pollId={poll?.id}
-            onDelegationChange={setDelegationInfo}
-          />
-        ) : null;
-      })()}
+
 
       {/* Linked Principles Drawer */}
       {selectedLabel && (
