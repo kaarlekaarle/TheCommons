@@ -296,6 +296,9 @@ class ConstitutionalCascadeDetector:
                     "file_age_hours": round(age_hours, 1),
                     "latency_source": newest_file,
                     "latency_timestamp": newest_timestamp.isoformat() if newest_timestamp else None,
+                    "slo_ms": slo,
+                    "grace_ms": grace,
+                    "effective_block_ms": slo + grace,
                     "p50_ms": p50,
                     "p95_ms": p95,
                     "p99_ms": p99,
@@ -773,6 +776,10 @@ class ConstitutionalCascadeDetector:
                     md.append(
                         f"- **Cache Hit Rate**: {signal.get('cache_hit_rate', 0)}%"
                     )
+                    if signal.get("slo_ms"):
+                        md.append(f"- **SLO**: {signal.get('slo_ms')}ms")
+                        md.append(f"- **Grace**: {signal.get('grace_ms')}ms")
+                        md.append(f"- **Effective Block**: {signal.get('effective_block_ms')}ms")
                     if signal.get("latency_source"):
                         md.append(
                             f"- **Source**: {signal.get('latency_source')}"
