@@ -5,7 +5,7 @@ for delegation operations, including performance metrics and logging.
 """
 
 import time
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from backend.core.logging_config import get_logger
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 class DelegationTelemetry:
     """Telemetry hooks for delegation operations."""
-    
+
     @staticmethod
     def log_chain_resolution_start(
         user_id: UUID,
@@ -39,10 +39,10 @@ class DelegationTelemetry:
                 "value_id": str(value_id) if value_id else None,
                 "idea_id": str(idea_id) if idea_id else None,
                 "start_time": start_time,
-            }
+            },
         )
         return start_time
-    
+
     @staticmethod
     def log_override_resolution_start(
         user_id: UUID,
@@ -67,10 +67,10 @@ class DelegationTelemetry:
                 "idea_id": str(idea_id) if idea_id else None,
                 "start_time": start_time,
                 "operation": "override_resolution",
-            }
+            },
         )
         return start_time
-    
+
     @staticmethod
     def log_override_resolution_complete(
         user_id: UUID,
@@ -107,9 +107,9 @@ class DelegationTelemetry:
                 "operation": "override_resolution",
                 "slo_p95_target": total_time <= 1.5,  # 1.5s target
                 "slo_p99_target": total_time <= 2.0,  # 2.0s target
-            }
+            },
         )
-    
+
     @staticmethod
     def log_fast_path_cache_hit(
         user_id: UUID,
@@ -142,9 +142,9 @@ class DelegationTelemetry:
                 "operation": "override_resolution",
                 "slo_p95_target": total_time <= 1.5,
                 "slo_p99_target": total_time <= 2.0,
-            }
+            },
         )
-    
+
     @staticmethod
     def log_cache_hit(
         cache_key: str,
@@ -167,9 +167,9 @@ class DelegationTelemetry:
                 "chain_length": chain_length,
                 "cache_hit": True,
                 "cache_key": cache_key,
-            }
+            },
         )
-    
+
     @staticmethod
     def log_cache_miss(
         db_time: float,
@@ -194,9 +194,9 @@ class DelegationTelemetry:
                 "chain_length": chain_length,
                 "cache_hit": False,
                 "memoization_hits": memoization_hits,
-            }
+            },
         )
-    
+
     @staticmethod
     def log_delegation_creation(
         delegation_id: UUID,
@@ -214,9 +214,9 @@ class DelegationTelemetry:
                 "delegatee_id": str(delegatee_id),
                 "mode": mode,
                 "target_type": target_type,
-            }
+            },
         )
-    
+
     @staticmethod
     def log_delegation_revocation(
         delegation_id: UUID,
@@ -230,9 +230,9 @@ class DelegationTelemetry:
                 "delegation_id": str(delegation_id),
                 "mode": mode,
                 "target_type": target_type,
-            }
+            },
         )
-    
+
     @staticmethod
     def log_expired_legacy_delegation(
         delegation_id: UUID,
@@ -248,9 +248,9 @@ class DelegationTelemetry:
                 "delegator_id": str(delegator_id),
                 "delegatee_id": str(delegatee_id),
                 "mode": mode,
-            }
+            },
         )
-    
+
     @staticmethod
     def log_user_override(
         user_id: UUID,
@@ -272,15 +272,15 @@ class DelegationTelemetry:
             "value_id": str(value_id) if value_id else None,
             "idea_id": str(idea_id) if idea_id else None,
         }
-        
+
         if override_check_time is not None:
             extra_data["override_check_time_ms"] = int(override_check_time * 1000)
-        
+
         logger.info(
             f"Stopping chain resolution due to user override for {user_id}",
-            extra=extra_data
+            extra=extra_data,
         )
-    
+
     @staticmethod
     def log_chain_depth_limit(
         user_id: UUID,
@@ -294,9 +294,9 @@ class DelegationTelemetry:
                 "user_id": str(user_id),
                 "max_depth": max_depth,
                 "chain_length": chain_length,
-            }
+            },
         )
-    
+
     @staticmethod
     def log_cache_invalidation(
         user_id: Optional[UUID] = None,
@@ -305,17 +305,21 @@ class DelegationTelemetry:
     ) -> None:
         """Log cache invalidation."""
         if user_id:
-            logger.debug(f"Invalidated {keys_invalidated} chain cache entries for user {user_id}")
+            logger.debug(
+                f"Invalidated {keys_invalidated} chain cache entries for user {user_id}"
+            )
         elif delegatee_id:
-            logger.debug(f"Invalidated all chain cache entries due to delegatee {delegatee_id} change")
+            logger.debug(
+                f"Invalidated all chain cache entries due to delegatee {delegatee_id} change"
+            )
         else:
             logger.debug(f"Invalidated {keys_invalidated} chain cache entries")
-    
+
     @staticmethod
     def log_cache_error(operation: str, error: str) -> None:
         """Log cache operation errors."""
         logger.warning(f"Cache {operation} error: {error}")
-    
+
     @staticmethod
     def get_performance_metrics() -> Dict[str, Any]:
         """Get current performance metrics (placeholder for metrics collection)."""
