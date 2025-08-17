@@ -1,11 +1,12 @@
 {
-  "timestamp": "2025-08-17T18:10:29.527080",
+  "timestamp": "2025-08-17T19:20:36.300278",
   "concentration_percentage": 100.0,
   "top_maintainer": "kaarlekaarle",
-  "total_commits": 30,
+  "total_commits": 23,
   "maintainer_stats": {
-    "kaarlekaarle": 30
+    "kaarlekaarle": 23
   },
   "lookback_days": 30,
-  "files_analyzed": 21
+  "files_analyzed": 13,
+  "include_tests": false
 }

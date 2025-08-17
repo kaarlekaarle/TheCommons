@@ -1,13 +1,16 @@
 {
-  "override_latency_ms": 1511.0047308104015,
-  "p50_ms": 610.0461085080059,
-  "p95_ms": 1511.0047308104015,
-  "p99_ms": 2328.9952644418236,
-  "total_requests": 400,
-  "cache_hit_rate": 80.0,
+  "override_latency_ms": 2487.7658207718378,
+  "p50_ms": 683.5736331036856,
+  "p95_ms": 2487.7658207718378,
+  "p99_ms": 2487.7658207718378,
+  "total_requests": 20,
+  "successful_requests": 20,
+  "errors": 0,
+  "cache_hit_rate": 85.0,
+  "fastpath_hit_rate": 65.0,
   "slo_compliance": {
     "p95_target_1_5s": false,
     "p99_target_2_0s": false
   },
-  "timestamp": "2025-08-17T18:09:51.044896"
+  "timestamp": "2025-08-17T20:04:05.132640"
 }

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-08-17T17:59:17.548838",
-  "summary": "CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency",
+  "timestamp": "2025-08-17T19:20:36.769202",
+  "summary": "CASCADE: rule=B, signals=[#2=CRITICAL(1436.287697172077ms)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency",
   "exit_code": 10,
   "cascade_results": [
     {
@@ -11,47 +11,67 @@
       "triggered_signals": [
         {
           "id": "#2",
+          "metric": "Override latency",
+          "value": 1436.287697172077,
+          "unit": "ms",
           "severity": "critical",
-          "value_ms": 2100,
-          "ts": "2025-08-17T17:59:17.244982"
+          "description": "P95: 1436.287697172077ms, P99: 2260.99424848836ms, Cache: 78.0% (P99 > 2.0s)",
+          "is_blocking": true,
+          "file_used": "reports/test_override_latency.json",
+          "file_age_hours": 1.2,
+          "p50_ms": 665.2420619155153,
+          "p95_ms": 1436.287697172077,
+          "p99_ms": 2260.99424848836,
+          "cache_hit_rate": 78.0,
+          "ts": "2025-08-17T19:20:36.003546"
         }
       ],
       "effective_mode": "enforce",
       "branch": "main",
-      "ts": "2025-08-17T17:59:17.548768"
+      "ts": "2025-08-17T19:20:36.769176"
     }
   ],
   "signals": [
     {
       "id": "#2",
+      "metric": "Override latency",
+      "value": 1436.287697172077,
+      "unit": "ms",
       "severity": "critical",
-      "value_ms": 2100,
-      "ts": "2025-08-17T17:59:17.244982"
+      "description": "P95: 1436.287697172077ms, P99: 2260.99424848836ms, Cache: 78.0% (P99 > 2.0s)",
+      "is_blocking": true,
+      "file_used": "reports/test_override_latency.json",
+      "file_age_hours": 1.2,
+      "p50_ms": 665.2420619155153,
+      "p95_ms": 1436.287697172077,
+      "p99_ms": 2260.99424848836,
+      "cache_hit_rate": 78.0,
+      "ts": "2025-08-17T19:20:36.003546"
     },
     {
       "id": "#3",
       "severity": "info",
       "flows": 0,
       "module": "delegations",
-      "ts": "2025-08-17T17:59:17.331655"
+      "ts": "2025-08-17T19:20:36.111710"
     },
     {
       "id": "#4",
       "severity": "critical",
       "value_pct": 100.0,
-      "ts": "2025-08-17T17:59:17.482178",
+      "ts": "2025-08-17T19:20:36.311841",
       "meta": {
         "top_maintainer": "kaarlekaarle",
-        "total_commits": 30,
+        "total_commits": 23,
         "lookback_days": 30,
-        "files_analyzed": 21
+        "files_analyzed": 13
       }
     },
     {
       "id": "#5",
       "severity": "info",
       "value_pct": 25.0,
-      "ts": "2025-08-17T17:59:17.548464",
+      "ts": "2025-08-17T19:20:36.769011",
       "meta": {
         "mode_distribution": {
           "legacy_fixed_term": 25,

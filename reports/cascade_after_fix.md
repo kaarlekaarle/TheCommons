@@ -1,11 +1,11 @@
 # Constitutional Cascade Report
 
-**Generated**: 2025-08-17T17:59:17.550147
+**Generated**: 2025-08-17T19:20:36.769849
 
 ## Cascade Summary
 
 ```
-CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency
+CASCADE: rule=B, signals=[#2=CRITICAL(1436.287697172077ms)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency
 ```
 
 ## Collected Signals
@@ -13,7 +13,10 @@ CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=
 ### Signal #2: CRITICAL
 
 - **Type**: Override latency
-- **Value**: 2100ms
+- **P95**: 1436.287697172077ms
+- **P99**: 2260.99424848836ms
+- **Cache Hit Rate**: 78.0%
+- **Snapshot**: reports/test_override_latency.json (age: 1.2h)
 
 ### Signal #3: INFO
 
@@ -24,7 +27,7 @@ CASCADE: rule=B, signals=[#2=CRITICAL(2100ms)], window=7d, decision=BLOCK, next=
 
 - **Type**: Maintainer concentration
 - **Percentage**: 100.0%
-- **Commits**: 30
+- **Commits**: 23
 
 ### Signal #5: INFO
 

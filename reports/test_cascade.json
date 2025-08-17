@@ -1,7 +1,86 @@
 {
-  "timestamp": "2025-08-17T14:29:26.997040",
-  "signals": [],
-  "cascade_results": [],
-  "summary": "CASCADE: clean, no rules triggered",
-  "exit_code": 0
+  "timestamp": "2025-08-17T19:18:26.169719",
+  "summary": "CASCADE: rule=B, signals=[#2=CRITICAL(1511.0047308104015ms)], window=7d, decision=BLOCK, next=reduce_complexity+optimize_latency",
+  "exit_code": 10,
+  "cascade_results": [
+    {
+      "rule_id": "B",
+      "decision": "block",
+      "rationale": "Opacity + complexity",
+      "window_days": 7,
+      "triggered_signals": [
+        {
+          "id": "#2",
+          "metric": "Override latency",
+          "value": 1511.0047308104015,
+          "unit": "ms",
+          "severity": "critical",
+          "description": "P95: 1511.0047308104015ms, P99: 2328.9952644418236ms, Cache: 80.0% (P95 > 1.5s) (P99 > 2.0s)",
+          "is_blocking": true,
+          "file_used": "reports/override_latency.json",
+          "file_age_hours": 1.1,
+          "p50_ms": 610.0461085080059,
+          "p95_ms": 1511.0047308104015,
+          "p99_ms": 2328.9952644418236,
+          "cache_hit_rate": 80.0,
+          "ts": "2025-08-17T19:18:25.689792"
+        }
+      ],
+      "effective_mode": "enforce",
+      "branch": "main",
+      "ts": "2025-08-17T19:18:26.169655"
+    }
+  ],
+  "signals": [
+    {
+      "id": "#2",
+      "metric": "Override latency",
+      "value": 1511.0047308104015,
+      "unit": "ms",
+      "severity": "critical",
+      "description": "P95: 1511.0047308104015ms, P99: 2328.9952644418236ms, Cache: 80.0% (P95 > 1.5s) (P99 > 2.0s)",
+      "is_blocking": true,
+      "file_used": "reports/override_latency.json",
+      "file_age_hours": 1.1,
+      "p50_ms": 610.0461085080059,
+      "p95_ms": 1511.0047308104015,
+      "p99_ms": 2328.9952644418236,
+      "cache_hit_rate": 80.0,
+      "ts": "2025-08-17T19:18:25.689792"
+    },
+    {
+      "id": "#3",
+      "severity": "info",
+      "flows": 0,
+      "module": "delegations",
+      "ts": "2025-08-17T19:18:25.796444"
+    },
+    {
+      "id": "#4",
+      "severity": "critical",
+      "value_pct": 100.0,
+      "ts": "2025-08-17T19:18:26.092827",
+      "meta": {
+        "top_maintainer": "kaarlekaarle",
+        "total_commits": 23,
+        "lookback_days": 30,
+        "files_analyzed": 13
+      }
+    },
+    {
+      "id": "#5",
+      "severity": "info",
+      "value_pct": 25.0,
+      "ts": "2025-08-17T19:18:26.169356",
+      "meta": {
+        "mode_distribution": {
+          "legacy_fixed_term": 25,
+          "flexible_domain": 60,
+          "hybrid_seed": 15
+        },
+        "total_delegations": 100,
+        "transition_health": "moderate"
+      }
+    }
+  ]
 }
