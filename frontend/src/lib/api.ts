@@ -120,13 +120,9 @@ export const getPoll = async (id: string, signal?: AbortSignal): Promise<Poll> =
       if (poll) {
         return poll;
       }
+      // If hardcoded poll ID exists but poll data is missing, fall back to API
+      console.log('[DEBUG] Hardcoded poll ID found but data missing, falling back to API');
     }
-
-    // If not found in hardcoded data, throw error
-    throw {
-      status: 404,
-      message: 'Poll not found in hardcoded data'
-    };
   }
 
   try {

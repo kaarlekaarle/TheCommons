@@ -83,21 +83,21 @@ export default function ProposalDetail() {
         const hardcodedOptions = getHardcodedPollOptions(id);
         const hardcodedVote = getHardcodedVote(id);
 
-        if (!hardcodedPoll) {
-          throw new Error('Hardcoded poll not found');
+        if (hardcodedPoll) {
+          setPoll(hardcodedPoll);
+          setOptions(hardcodedOptions);
+          setMyVote(hardcodedVote);
+
+          // For hardcoded data, we don't have real results or delegation data
+          setResults(null);
+          setDelegationInfo(null);
+          setDelegationSummary(null);
+
+          console.log('[DEBUG] Hardcoded proposal data loaded successfully');
+          return;
+        } else {
+          console.log('[DEBUG] Hardcoded poll ID found but poll data missing, falling back to API');
         }
-
-        setPoll(hardcodedPoll);
-        setOptions(hardcodedOptions);
-        setMyVote(hardcodedVote);
-
-        // For hardcoded data, we don't have real results or delegation data
-        setResults(null);
-        setDelegationInfo(null);
-        setDelegationSummary(null);
-
-        console.log('[DEBUG] Hardcoded proposal data loaded successfully');
-        return;
       }
 
       // Fetch core data (poll and options) first
@@ -158,6 +158,9 @@ export default function ProposalDetail() {
       if (error.status === 401) {
         showError('Please log in to view this proposal');
         console.log('[DEBUG] Authentication error - token may be expired');
+      } else if (error.status === 404) {
+        showError('Proposal not found');
+        console.log('[DEBUG] 404 error - proposal may not exist or be accessible');
       } else {
         showError('Failed to load proposal');
       }
