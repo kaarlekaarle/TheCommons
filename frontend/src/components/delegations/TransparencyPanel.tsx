@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Users, User, BarChart3, Loader2, AlertCircle } from 'lucide-react';
+import { X, Users, User, BarChart3, Loader2, AlertCircle, RefreshCw, ChevronDown } from 'lucide-react';
 import { getMyChains, getInbound, getHealthSummary } from '../../api/delegationsApi';
 import Button from '../ui/Button';
 
@@ -25,6 +25,8 @@ export default function TransparencyPanel({
   const [delegateeId, setDelegateeId] = useState('');
   const [fieldId, setFieldId] = useState('');
   const [inboundData, setInboundData] = useState<any>(null);
+  const [inboundCursor, setInboundCursor] = useState<string | null>(null);
+  const [hasMoreInbound, setHasMoreInbound] = useState(false);
   
   // Health data
   const [healthData, setHealthData] = useState<any>(null);
@@ -59,15 +61,31 @@ export default function TransparencyPanel({
     }
   };
 
-  const loadInbound = async () => {
+  const loadInbound = async (isLoadMore = false) => {
     if (!delegateeId.trim()) return;
     
     setLoading(true);
     setError(null);
     
     try {
+      const params = new URLSearchParams();
+      if (fieldId) params.append('fieldId', fieldId);
+      if (isLoadMore && inboundCursor) params.append('cursor', inboundCursor);
+      
       const data = await getInbound(delegateeId, fieldId || undefined);
-      setInboundData(data);
+      
+      if (isLoadMore && inboundData) {
+        // Append to existing data
+        setInboundData({
+          ...data,
+          inbound: [...inboundData.inbound, ...data.inbound]
+        });
+      } else {
+        setInboundData(data);
+      }
+      
+      setInboundCursor(data.pagination?.nextCursor || null);
+      setHasMoreInbound(data.pagination?.hasMore || false);
     } catch (err: any) {
       setError(err.message || 'Failed to load inbound delegations');
     } finally {
@@ -108,21 +126,60 @@ export default function TransparencyPanel({
       return (
         <div className="text-center text-fg-muted py-8">
           <Users className="w-12 h-12 mx-auto mb-4 text-fg-muted/50" />
-          <p>No delegation chains found</p>
-          <p className="text-sm">You haven't created any delegations yet.</p>
+          <p className="font-medium mb-2">No delegation chains found</p>
+          <p className="text-sm mb-4">You haven't created any delegations yet.</p>
+          <Button 
+            onClick={loadChains}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try again
+          </Button>
         </div>
       );
     }
 
     return (
       <div className="space-y-4">
+        {/* Summary */}
+        {chains.summary && (
+          <div className="p-4 bg-primary-bg border border-primary-fg/20 rounded-lg">
+            <h4 className="font-medium text-primary-fg mb-2">Summary</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-primary-fg/80">Total chains:</span>
+                <span className="font-medium text-primary-fg ml-2">{chains.totalChains}</span>
+              </div>
+              <div>
+                <span className="text-primary-fg/80">Total delegations:</span>
+                <span className="font-medium text-primary-fg ml-2">{chains.summary.totalDelegations}</span>
+              </div>
+            </div>
+            {chains.summary.byField && Object.keys(chains.summary.byField).length > 0 && (
+              <div className="mt-3">
+                <span className="text-primary-fg/80 text-sm">By field:</span>
+                <div className="mt-1 space-y-1">
+                  {Object.entries(chains.summary.byField).map(([fieldId, count]: [string, any]) => (
+                    <div key={fieldId} className="text-sm">
+                      <span className="text-primary-fg/80">{fieldId === 'global' ? 'Global' : fieldId}:</span>
+                      <span className="font-medium text-primary-fg ml-2">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Chains */}
         <p className="text-sm text-fg-muted">
           Your delegation chains grouped by field:
         </p>
         {chains.chains.map((chain: any, index: number) => (
           <div key={index} className="p-4 bg-surface-muted rounded-lg border">
             <h4 className="font-medium text-fg-strong mb-2">
-              Field: {chain.fieldName || chain.fieldId}
+              {chain.fieldName || chain.fieldId || 'Global'}
             </h4>
             <div className="space-y-2">
               {chain.path.map((link: any, linkIndex: number) => (
@@ -186,29 +243,41 @@ export default function TransparencyPanel({
         {error && (
           <div className="flex items-center gap-2 text-danger-fg p-4 bg-danger-bg rounded-lg">
             <AlertCircle className="w-5 h-5" />
-            <span>{error}</span>
+            <div className="flex-1">
+              <p className="font-medium">{error}</p>
+              <p className="text-sm text-danger-fg/80 mt-1">Please check your input and try again.</p>
+            </div>
+            <Button 
+              onClick={() => loadInbound()}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
           </div>
         )}
 
         {inboundData && (
           <div className="space-y-4">
-            <div className="p-4 bg-surface-muted rounded-lg border">
-              <h4 className="font-medium text-fg-strong mb-2">
+            {/* Summary */}
+            <div className="p-4 bg-primary-bg border border-primary-fg/20 rounded-lg">
+              <h4 className="font-medium text-primary-fg mb-2">
                 {inboundData.delegateeName || inboundData.delegateeId}
               </h4>
-              <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-fg-muted">Total inbound:</span>
-                  <span className="font-medium ml-2">{inboundData.counts.total}</span>
+                  <span className="text-primary-fg/80">Total inbound:</span>
+                  <span className="font-medium text-primary-fg ml-2">{inboundData.counts.total}</span>
                 </div>
-                {Object.keys(inboundData.counts.byField).length > 0 && (
+                {inboundData.summary?.topFields && inboundData.summary.topFields.length > 0 && (
                   <div>
-                    <span className="text-fg-muted">By field:</span>
+                    <span className="text-primary-fg/80">Top fields:</span>
                     <div className="mt-1 space-y-1">
-                      {Object.entries(inboundData.counts.byField).map(([fieldId, count]: [string, any]) => (
-                        <div key={fieldId} className="ml-4">
-                          <span className="text-fg-muted">{fieldId}:</span>
-                          <span className="font-medium ml-2">{count}</span>
+                      {inboundData.summary.topFields.map((field: any, index: number) => (
+                        <div key={index} className="text-sm">
+                          <span className="text-primary-fg/80">{field.fieldName}:</span>
+                          <span className="font-medium text-primary-fg ml-2">{field.count}</span>
                         </div>
                       ))}
                     </div>
@@ -217,18 +286,19 @@ export default function TransparencyPanel({
               </div>
             </div>
 
+            {/* Delegations */}
             {inboundData.inbound.length > 0 && (
               <div>
                 <h5 className="font-medium text-fg-strong mb-2">Recent delegations:</h5>
                 <div className="space-y-2">
-                  {inboundData.inbound.slice(0, 10).map((delegation: any, index: number) => (
+                  {inboundData.inbound.map((delegation: any, index: number) => (
                     <div key={index} className="p-3 bg-surface-muted rounded-lg border text-sm">
                       <div className="flex items-center justify-between">
                         <span className="font-medium">
                           {delegation.delegatorName || delegation.delegatorId}
                         </span>
                         <span className="text-fg-muted text-xs">
-                          {delegation.fieldName || delegation.fieldId}
+                          {delegation.fieldName || delegation.fieldId || 'Global'}
                         </span>
                       </div>
                       <div className="text-xs text-fg-muted mt-1">
@@ -237,6 +307,34 @@ export default function TransparencyPanel({
                     </div>
                   ))}
                 </div>
+                
+                {/* Load More Button */}
+                {hasMoreInbound && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      onClick={() => loadInbound(true)}
+                      disabled={loading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 mr-2" />
+                      )}
+                      Load more
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty state for no delegations */}
+            {inboundData.inbound.length === 0 && inboundData.counts.total === 0 && (
+              <div className="text-center text-fg-muted py-8">
+                <User className="w-12 h-12 mx-auto mb-4 text-fg-muted/50" />
+                <p className="font-medium mb-2">No inbound delegations found</p>
+                <p className="text-sm">This person hasn't received any delegations yet.</p>
               </div>
             )}
           </div>
@@ -258,7 +356,18 @@ export default function TransparencyPanel({
       return (
         <div className="flex items-center gap-2 text-danger-fg p-4 bg-danger-bg rounded-lg">
           <AlertCircle className="w-5 h-5" />
-          <span>{error}</span>
+          <div className="flex-1">
+            <p className="font-medium">{error}</p>
+            <p className="text-sm text-danger-fg/80 mt-1">Please try again later.</p>
+          </div>
+          <Button 
+            onClick={loadHealth}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </div>
       );
     }
@@ -267,7 +376,16 @@ export default function TransparencyPanel({
       return (
         <div className="text-center text-fg-muted py-8">
           <BarChart3 className="w-12 h-12 mx-auto mb-4 text-fg-muted/50" />
-          <p>No health data available</p>
+          <p className="font-medium mb-2">No health data available</p>
+          <p className="text-sm mb-4">Health metrics are not currently available.</p>
+          <Button 
+            onClick={loadHealth}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try again
+          </Button>
         </div>
       );
     }
