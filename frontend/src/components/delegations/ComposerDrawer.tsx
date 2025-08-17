@@ -1,3 +1,6 @@
+// DEPRECATED: replaced by InlineTraditionalForm/InlineCommonsForm rendered on DelegationsPage.
+// Kept temporarily for potential reuse. Do not import this component in DelegationsPage.
+
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, User, Hash, AlertTriangle } from 'lucide-react';
 import { useToast } from '../ui/useToast';
