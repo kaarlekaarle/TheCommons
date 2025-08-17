@@ -2,7 +2,7 @@ name: Constitutional Amendment Validation
 
 on:
   pull_request:
-    paths: 
+    paths:
       - 'constitutional/**'
       - 'docs/constitutional/**'
       - 'backend/scripts/constitutional_amendment_validator.py'
@@ -25,24 +25,24 @@ jobs:
   amendment-validation:
     name: Constitutional Amendment Validation
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0  # Fetch full history for git diff
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
         pip install networkx requests
-    
+
     - name: Super-Delegate Pattern Detection
       run: |
         echo "🚨 SUPER-DELEGATE PATTERN DETECTION"
@@ -50,10 +50,10 @@ jobs:
         echo ""
         echo "Scanning for super-delegate patterns in delegation code..."
         echo ""
-        
+
         # Run super-delegate detection
         python backend/scripts/constitutional_principle_matrix.py --detect-super-delegates --git-changes
-        
+
         # Check exit code
         if [ $? -eq 0 ]; then
           echo ""
@@ -81,7 +81,7 @@ jobs:
           echo "4. Resubmit amendment"
           exit 1
         fi
-    
+
     - name: Override Latency Performance Test
       run: |
         echo "⚡ OVERRIDE LATENCY PERFORMANCE TEST"
@@ -89,10 +89,10 @@ jobs:
         echo ""
         echo "Testing delegation override latency..."
         echo ""
-        
+
         # Run override latency test
         python backend/scripts/constitutional_drift_detector.py --test-override-latency
-        
+
         # Check exit code
         if [ $? -eq 0 ]; then
           echo ""
@@ -120,7 +120,7 @@ jobs:
           echo "4. Resubmit amendment"
           exit 1
         fi
-    
+
     - name: Constitutional Amendment Validation
       run: |
         echo "🏛️ CONSTITUTIONAL AMENDMENT VALIDATION"
@@ -128,10 +128,10 @@ jobs:
         echo ""
         echo "Running amendment validation on changed files..."
         echo ""
-        
+
         # Run the amendment validator
         python backend/scripts/constitutional_amendment_validator.py --git-changes --output amendment_results.json
-        
+
         # Check exit code
         if [ $? -eq 0 ]; then
           echo ""
@@ -150,17 +150,17 @@ jobs:
           echo "Please review the validation results and address any issues."
           exit 1
         fi
-    
+
     - name: Philosophical Integrity Check
       run: |
         echo "🏛️ PHILOSOPHICAL INTEGRITY VALIDATION"
         echo "====================================="
         echo ""
-        
+
         if [ -f amendment_results.json ]; then
           # Check if philosophical integrity check was run
           PHI_STATUS=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data['validation_results']['checks']['philosophical_integrity']['status'])")
-          
+
           if [ "$PHI_STATUS" = "fail" ]; then
             echo "❌ PHILOSOPHICAL INTEGRITY CHECK FAILED"
             echo "======================================"
@@ -198,17 +198,17 @@ jobs:
           echo "Philosophical integrity check may not have completed."
           exit 1
         fi
-    
+
     - name: Technical Feasibility Check
       run: |
         echo "🔧 TECHNICAL FEASIBILITY VALIDATION"
         echo "==================================="
         echo ""
-        
+
         if [ -f amendment_results.json ]; then
           # Check if technical feasibility check was run
           FEAS_STATUS=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data['validation_results']['checks']['technical_feasibility']['status'])")
-          
+
           if [ "$FEAS_STATUS" = "fail" ]; then
             echo "❌ TECHNICAL FEASIBILITY CHECK FAILED"
             echo "===================================="
@@ -246,17 +246,17 @@ jobs:
           echo "Technical feasibility check may not have completed."
           exit 1
         fi
-    
+
     - name: Dependency & Community Impact Check
       run: |
         echo "🔗 DEPENDENCY & COMMUNITY IMPACT VALIDATION"
         echo "=========================================="
         echo ""
-        
+
         if [ -f amendment_results.json ]; then
           # Check if dependency impact check was run
           DEP_STATUS=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data['validation_results']['checks']['dependency_impact']['status'])")
-          
+
           if [ "$DEP_STATUS" = "fail" ]; then
             echo "❌ DEPENDENCY & COMMUNITY IMPACT CHECK FAILED"
             echo "==========================================="
@@ -294,7 +294,7 @@ jobs:
           echo "Dependency impact check may not have completed."
           exit 1
         fi
-    
+
     - name: Delegation Concentration Monitoring
       run: |
         echo "📊 DELEGATION CONCENTRATION MONITORING"
@@ -302,11 +302,11 @@ jobs:
         echo ""
         echo "Monitoring delegation API complexity and maintainer concentration..."
         echo ""
-        
+
         if [ -f amendment_results.json ]; then
           # Check delegation complexity
           COMPLEXITY_STATUS=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data['validation_results']['checks'].get('delegation_complexity', {}).get('status', 'unknown'))")
-          
+
           if [ "$COMPLEXITY_STATUS" = "warning" ]; then
             echo "⚠️  DELEGATION COMPLEXITY WARNING"
             echo "================================"
@@ -328,10 +328,10 @@ jobs:
           else
             echo "✅ Delegation complexity within acceptable limits"
           fi
-          
+
           # Check maintainer concentration
           CONCENTRATION_STATUS=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data['validation_results']['checks'].get('maintainer_concentration', {}).get('status', 'unknown'))"
-          
+
           if [ "$CONCENTRATION_STATUS" = "warning" ]; then
             echo "⚠️  MAINTAINER CONCENTRATION WARNING"
             echo "==================================="
@@ -357,18 +357,34 @@ jobs:
           echo "⚠️  No amendment results found"
           echo "Delegation concentration monitoring may not have completed."
         fi
-    
+
+    - name: Refresh perf snapshot
+      run: |
+        echo "⚡ REFRESHING PERFORMANCE SNAPSHOT"
+        echo "=================================="
+        echo ""
+        echo "Generating fresh override latency metrics..."
+        echo ""
+
+        # Run performance refresh to get latest latency data
+        python3 scripts/sim_override_load.py --requests 400
+        python3 backend/scripts/collect_override_latency.py --json-out reports/override_latency.json
+
+        echo ""
+        echo "✅ Performance snapshot refreshed!"
+        echo "📊 Fresh latency data available for cascade detector"
+
     - name: Cascade Detector (shadow/warn/enforce)
       run: |
         # Export branch information for cascade detector
         export GITHUB_REF_NAME="${{ github.ref_name }}"
         export GITHUB_REF="${{ github.ref }}"
-        
+
         echo ""
         echo "🌿 BRANCH: $GITHUB_REF_NAME"
         echo "================================="
         echo ""
-        
+
         python3 backend/scripts/constitutional_cascade_detector.py \
           --mode "${{ env.CASCADE_MODE || 'warn' }}" \
           --json-out reports/constitutional_cascade.json
@@ -381,35 +397,35 @@ jobs:
         echo "📊 COLLECTING OVERRIDE LATENCY SLOS"
         echo "==================================="
         echo ""
-        
+
         # Collect real override latency metrics
         python3 backend/scripts/collect_override_latency.py \
           --output reports/override_latency_stats.json
-        
+
         # Collect complexity data from dependency validator
         python3 backend/scripts/constitutional_dependency_validator.py \
           --emit-complexity-json --json-out reports/complexity_stats.json
-        
+
         # Post SLO summary to logs
         if [ -f reports/override_latency_stats.json ]; then
           echo ""
           echo "📈 SLO SNAPSHOT"
           echo "==============="
           echo ""
-          
+
           # Extract SLO metrics
           P50=$(jq -r '.statistics.p50 // 0' reports/override_latency_stats.json)
           P95=$(jq -r '.statistics.p95 // 0' reports/override_latency_stats.json)
           P99=$(jq -r '.statistics.p99 // 0' reports/override_latency_stats.json)
           COUNT=$(jq -r '.statistics.count // 0' reports/override_latency_stats.json)
-          
+
           echo "Override Latency Metrics:"
           echo "  p50: ${P50}ms"
           echo "  p95: ${P95}ms (target: <1500ms)"
           echo "  p99: ${P99}ms (target: <2000ms)"
           echo "  samples: ${COUNT}"
           echo ""
-          
+
           # Check SLO violations
           if (( $(echo "$P95 >= 1500" | bc -l) )); then
             echo "⚠️  SLO VIOLATION: p95 override latency >= 1500ms"
@@ -418,7 +434,7 @@ jobs:
           else
             echo "✅ SLO OK: p95 override latency < 1200ms"
           fi
-          
+
           if (( $(echo "$P99 >= 2000" | bc -l) )); then
             echo "⚠️  SLO VIOLATION: p99 override latency >= 2000ms"
           elif (( $(echo "$P99 >= 1600" | bc -l) )); then
@@ -432,15 +448,15 @@ jobs:
           P95=0
           P99=0
         fi
-        
+
         # Extract complexity data
         if [ -f reports/complexity_stats.json ]; then
           echo ""
           echo "Complexity Analysis:"
-          
+
           # Get modules with >=7 flows
           HIGH_COMPLEXITY_MODULES=$(jq -r '.modules | to_entries[] | select(.value >= 7) | "\(.key) (\(.value) flows)"' reports/complexity_stats.json 2>/dev/null || echo "")
-          
+
           if [ -n "$HIGH_COMPLEXITY_MODULES" ]; then
             echo "  Modules ≥7 flows:"
             echo "$HIGH_COMPLEXITY_MODULES" | while read -r module; do
@@ -452,16 +468,16 @@ jobs:
         else
           echo "  ⚠️  No complexity stats found"
         fi
-        
+
         echo ""
         echo "📄 SLO Documentation: docs/SLO_delegation_backend.md"
         echo "📊 Full reports: reports/override_latency_stats.json, reports/complexity_stats.json"
-        
+
         # Create SLO snapshot for PR summary
         echo ""
         echo "## SLO Snapshot" >> $GITHUB_STEP_SUMMARY
         echo "**Override Latency**: p50=${P50}ms, p95=${P95}ms, p99=${P99}ms" >> $GITHUB_STEP_SUMMARY
-        
+
         if [ -n "$HIGH_COMPLEXITY_MODULES" ]; then
           echo "**Modules ≥7 flows**: " >> $GITHUB_STEP_SUMMARY
           echo "$HIGH_COMPLEXITY_MODULES" | while read -r module; do
@@ -470,7 +486,7 @@ jobs:
         else
           echo "**Modules ≥7 flows**: None" >> $GITHUB_STEP_SUMMARY
         fi
-        
+
         echo "**SLO Targets**: p95 < 1500ms, p99 < 2000ms, ≤5 flows/module" >> $GITHUB_STEP_SUMMARY
         echo "**Documentation**: [SLO Guide](docs/SLO_delegation_backend.md)" >> $GITHUB_STEP_SUMMARY
 
@@ -481,17 +497,17 @@ jobs:
         echo "🤖 POSTING CASCADE REMEDIATION TIPS"
         echo "==================================="
         echo ""
-        
+
         # Set PR number from GitHub context
         export PR_NUMBER="${{ github.event.pull_request.number }}"
-        
+
         # Post cascade comment if Rule B or C is triggered
         python3 scripts/post_cascade_comment.py \
           --cascade-file reports/constitutional_cascade.json \
           --warnings-file reports/constitutional_warnings.json \
           --override-latency-file reports/override_latency_stats.json \
           --complexity-file reports/complexity_stats.json
-        
+
         echo ""
         echo "✅ Cascade remediation tips posted (if applicable)"
 
@@ -507,21 +523,21 @@ jobs:
           reports/override_latency_stats.json
           reports/complexity_stats.json
         retention-days: 30
-    
+
     - name: Constitutional Cascade Summary
       run: |
         echo ""
         echo "🔍 CONSTITUTIONAL CASCADE SUMMARY"
         echo "================================="
         echo ""
-        
+
         if [ -f reports/constitutional_cascade.json ]; then
           CASCADE_SUMMARY=$(jq -r '.summary // "No summary available"' reports/constitutional_cascade.json)
           EXIT_CODE=$(jq -r '.exit_code // 0' reports/constitutional_cascade.json)
-          
+
           echo "📋 $CASCADE_SUMMARY"
           echo ""
-          
+
           if [ "$EXIT_CODE" = "10" ]; then
             echo "❌ CASCADE BLOCK DETECTED"
             echo "========================="
@@ -560,13 +576,13 @@ jobs:
         echo "📥 INGESTING CASCADE TO WARNINGS LEDGER"
         echo "======================================="
         echo ""
-        
+
         if [ -f reports/constitutional_cascade.json ]; then
           python3 backend/scripts/constitutional_warnings_ingest.py \
             --from-cascade reports/constitutional_cascade.json \
             --to reports/constitutional_warnings.json \
             --append
-          
+
           echo ""
           echo "✅ Cascade decisions ingested into warnings ledger"
           echo "📊 Unified constitutional signals available in reports/constitutional_warnings.json"
@@ -581,11 +597,11 @@ jobs:
         echo "💾 STORING CASCADE EVENTS IN HISTORY"
         echo "===================================="
         echo ""
-        
+
         if [ -f reports/constitutional_cascade.json ]; then
           python3 backend/scripts/constitutional_history.py \
             --store-cascade reports/constitutional_cascade.json
-          
+
           echo ""
           echo "✅ Cascade events stored in constitutional history database"
           echo "📈 14-day sparkline will be populated for dashboard"
@@ -600,17 +616,17 @@ jobs:
         echo "🔍 PROMOTE TO FAIL GUARD"
         echo "========================"
         echo ""
-        
+
         # Check if override label is present
         OVERRIDE_FLAG=""
         if [[ "${{ contains(github.event.pull_request.labels.*.name, 'constitutional-override') }}" == "true" ]]; then
           OVERRIDE_FLAG="--override"
           echo "🚨 Constitutional override detected - red-flags will not fail build"
         fi
-        
+
         # Run promote-to-fail check
         python3 scripts/promote_to_fail.py --warnings reports/constitutional_warnings.json $OVERRIDE_FLAG
-        
+
         if [ $? -eq 20 ]; then
           echo ""
           echo "🔒 BUILD FAILED - Constitutional red-flags detected"
@@ -644,44 +660,44 @@ jobs:
         echo ""
         echo "🔍 A 24-hour re-check ticket will be created automatically."
         echo ""
-        
+
         # Create override issue content
         cat > override_issue.md << EOF
         # Cascade Override - 24h Re-check Required
-        
+
         **PR**: ${{ github.event.pull_request.html_url }}
         **Author**: ${{ github.event.pull_request.user.login }}
         **Override Reason**: ${{ github.event.pull_request.body }}
-        
+
         **Cascade Summary**: $(jq -r '.summary // "No summary"' reports/constitutional_cascade.json)
-        
+
         ## 24-Hour Re-check Checklist
-        
+
         - [ ] Cascade conditions resolved
         - [ ] Constitutional drift addressed
         - [ ] Override label removed
         - [ ] Normal cascade checks passing
-        
+
         **Due**: $(date -d '+24 hours' -u +"%Y-%m-%d %H:%M UTC")
-        
+
         ---
         *This issue was auto-generated due to constitutional-override label.*
         EOF
-        
+
         echo "📄 Override issue content prepared:"
         cat override_issue.md
-    
+
     - name: Log Amendment Attempt
       if: always()
       run: |
         echo "📝 Logging amendment attempt..."
-        
+
         # Extract amendment details from results
         if [ -f amendment_results.json ]; then
           AMENDMENT_ID=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data.get('amendment_id', 'unknown'))")
           AMENDMENT_TYPE=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data.get('amendment_type', 'unknown'))")
           STATUS=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data['validation_results']['overall_status'])")
-          
+
           # Log the amendment
           python backend/scripts/constitutional_amendment_log.py \
             --log \
@@ -694,7 +710,7 @@ jobs:
         else
           echo "⚠️  No amendment results found to log"
         fi
-    
+
     - name: Upload Amendment Results
       if: always()
       uses: actions/upload-artifact@v3
@@ -704,16 +720,16 @@ jobs:
           amendment_results.json
           constitutional_amendment_log.db
         retention-days: 30
-    
+
     - name: Amendment Gate Check
       run: |
         echo "🔒 CONSTITUTIONAL AMENDMENT GATE"
         echo "================================"
         echo ""
-        
+
         if [ -f amendment_results.json ]; then
           STATUS=$(python -c "import json; data=json.load(open('amendment_results.json')); print(data['validation_results']['overall_status'])")
-          
+
           if [ "$STATUS" = "pass" ]; then
             echo "✅ Amendment validation passed"
             echo "This constitutional change may proceed to review."
@@ -756,22 +772,22 @@ jobs:
     name: Cascade Smoke Test
     runs-on: ubuntu-latest
     if: github.event.inputs.cascade_smoke == 'true'
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
         pip install jq
-    
+
     - name: Run Cascade Smoke Tests
       run: |
         echo "🚀 RUNNING CASCADE SMOKE TESTS"
@@ -783,14 +799,14 @@ jobs:
         echo "  - Rule A: Should WARN (warn mode)"
         echo "  - Rule D: Should WARN (warn mode)"
         echo ""
-        
+
         chmod +x scripts/cascade_smoke.sh
         ./scripts/cascade_smoke.sh
-        
+
         echo ""
         echo "✅ All cascade smoke tests passed!"
         echo "Selective enforcement is working correctly."
-    
+
     - name: Upload Smoke Test Results
       if: always()
       uses: actions/upload-artifact@v3

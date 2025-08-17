@@ -197,7 +197,7 @@ class ConstitutionalCascadeDetector:
                         continue
 
             if newest_file and newest_timestamp:
-                # Check if data is stale (>48h old)
+                # Check if data is stale (>24h old)
                 now = datetime.now()
                 if newest_timestamp.tzinfo is None:
                     # Assume local time if no timezone
@@ -208,15 +208,15 @@ class ConstitutionalCascadeDetector:
 
                 age_hours = (now - newest_timestamp).total_seconds() / 3600
 
-                if age_hours > 48:
-                    print(f"⚠️  Latency signal stale (>48h); not blocking.")
+                if age_hours > 24:
+                    print("⚠️  Latency signal stale (>24h); not blocking.")
                     return {
                         "id": "#2",
                         "metric": "Override latency",
                         "value": "STALE",
                         "unit": "ms",
                         "severity": "info",
-                        "description": f"Latency signal stale (>48h); not blocking.",
+                        "description": "Latency signal stale (>24h); not blocking.",
                         "is_blocking": False,  # Mark as non-blocking if stale
                         "file_used": newest_file,
                         "file_age_hours": round(age_hours, 1),
@@ -231,13 +231,14 @@ class ConstitutionalCascadeDetector:
                 p50 = data.get("p50_ms", data.get("statistics", {}).get("p50", 0))
                 p95 = data.get("p95_ms", data.get("statistics", {}).get("p95", 0))
                 p99 = data.get("p99_ms", data.get("statistics", {}).get("p99", 0))
+                cache_hit_rate = data.get("cache_hit_rate", 0)
 
                 # Use p95 for severity determination (primary SLO metric)
                 latency_ms = p95
 
                 # Determine severity based on SLOs
                 severity = "ok"
-                description = f"P95: {p95}ms, P99: {p99}ms"
+                description = f"P95: {p95}ms, P99: {p99}ms, Cache: {cache_hit_rate}%"
                 is_blocking = False
 
                 if p95 > 1500:
@@ -249,7 +250,10 @@ class ConstitutionalCascadeDetector:
                     is_blocking = True  # Blocking if critical
 
                 print(f"📊 Using {newest_file} (age: {age_hours:.1f}h)")
-                print(f"   P50: {p50}ms, P95: {p95}ms, P99: {p99}ms")
+                print(
+                    f"   P50: {p50}ms, P95: {p95}ms, P99: {p99}ms, "
+                    f"Cache: {cache_hit_rate}%"
+                )
 
                 return {
                     "id": "#2",
@@ -264,6 +268,7 @@ class ConstitutionalCascadeDetector:
                     "p50_ms": p50,
                     "p95_ms": p95,
                     "p99_ms": p99,
+                    "cache_hit_rate": cache_hit_rate,
                     "ts": datetime.now().isoformat(),
                 }
 
@@ -444,7 +449,7 @@ class ConstitutionalCascadeDetector:
 
         try:
             # Run dependency validator to get mode distribution
-            result = subprocess.run(
+            subprocess.run(
                 [
                     sys.executable,
                     "backend/scripts/constitutional_dependency_validator.py",
@@ -724,7 +729,25 @@ class ConstitutionalCascadeDetector:
                 md.append(f"- **Files**: {', '.join(signal['meta']['files'])}")
             elif signal_id == "#2":
                 md.append(f"- **Type**: Override latency")
-                md.append(f"- **Value**: {signal['value_ms']}ms")
+                if signal.get("value") == "STALE":
+                    md.append(
+                        f"- **Status**: STALE (age: {signal.get('file_age_hours', 0):.1f}h)"
+                    )
+                    md.append(
+                        f"- **Note**: Latency snapshot stale (>24h); ignoring for blocking"
+                    )
+                else:
+                    md.append(
+                        f"- **P95**: {signal.get('p95_ms', signal.get('value_ms', 0))}ms"
+                    )
+                    md.append(f"- **P99**: {signal.get('p99_ms', 0)}ms")
+                    md.append(
+                        f"- **Cache Hit Rate**: {signal.get('cache_hit_rate', 0)}%"
+                    )
+                    if signal.get("file_used"):
+                        md.append(
+                            f"- **Snapshot**: {signal.get('file_used')} (age: {signal.get('file_age_hours', 0):.1f}h)"
+                        )
             elif signal_id == "#3":
                 md.append(f"- **Type**: Delegation complexity")
                 md.append(f"- **Flows**: {signal['flows']} in {signal['module']}")
