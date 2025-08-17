@@ -146,27 +146,21 @@ export default function TransparencyPanel({
         {chains.summary && (
           <div className="p-4 bg-primary-bg border border-primary-fg/20 rounded-lg">
             <h4 className="font-medium text-primary-fg mb-2">Summary</h4>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-primary-fg/80">Total chains:</span>
-                <span className="font-medium text-primary-fg ml-2">{chains.totalChains}</span>
-              </div>
-              <div>
-                <span className="text-primary-fg/80">Total delegations:</span>
-                <span className="font-medium text-primary-fg ml-2">{chains.summary.totalDelegations}</span>
-              </div>
+            <div className="text-sm text-primary-fg">
+              <span className="text-primary-fg/80">Total chains:</span>
+              <span className="font-medium text-primary-fg ml-2">{chains.totalChains}</span>
+              <span className="text-primary-fg/80 ml-4">·</span>
+              <span className="text-primary-fg/80 ml-4">Fields:</span>
+              <span className="font-medium text-primary-fg ml-2">{Object.keys(chains.summary.byField || {}).length}</span>
             </div>
             {chains.summary.byField && Object.keys(chains.summary.byField).length > 0 && (
-              <div className="mt-3">
-                <span className="text-primary-fg/80 text-sm">By field:</span>
-                <div className="mt-1 space-y-1">
-                  {Object.entries(chains.summary.byField).map(([fieldId, count]: [string, any]) => (
-                    <div key={fieldId} className="text-sm">
-                      <span className="text-primary-fg/80">{fieldId === 'global' ? 'Global' : fieldId}:</span>
-                      <span className="font-medium text-primary-fg ml-2">{count}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="mt-2 text-xs text-primary-fg/80">
+                {Object.entries(chains.summary.byField).map(([fieldId, count]: [string, any], index: number) => (
+                  <span key={fieldId}>
+                    {index > 0 && ', '}
+                    {fieldId === 'global' ? 'Global' : fieldId} ({count})
+                  </span>
+                ))}
               </div>
             )}
           </div>
@@ -265,23 +259,22 @@ export default function TransparencyPanel({
               <h4 className="font-medium text-primary-fg mb-2">
                 {inboundData.delegateeName || inboundData.delegateeId}
               </h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-primary-fg/80">Total inbound:</span>
-                  <span className="font-medium text-primary-fg ml-2">{inboundData.counts.total}</span>
-                </div>
+              <div className="text-sm text-primary-fg">
+                <span className="text-primary-fg/80">Total inbound:</span>
+                <span className="font-medium text-primary-fg ml-2">{inboundData.counts.total}</span>
                 {inboundData.summary?.topFields && inboundData.summary.topFields.length > 0 && (
-                  <div>
-                    <span className="text-primary-fg/80">Top fields:</span>
-                    <div className="mt-1 space-y-1">
-                      {inboundData.summary.topFields.map((field: any, index: number) => (
-                        <div key={index} className="text-sm">
-                          <span className="text-primary-fg/80">{field.fieldName}:</span>
-                          <span className="font-medium text-primary-fg ml-2">{field.count}</span>
-                        </div>
+                  <>
+                    <span className="text-primary-fg/80 ml-4">·</span>
+                    <span className="text-primary-fg/80 ml-4">Top fields:</span>
+                    <span className="font-medium text-primary-fg ml-2">
+                      {inboundData.summary.topFields.slice(0, 3).map((field: any, index: number) => (
+                        <span key={index}>
+                          {index > 0 && ', '}
+                          {field.fieldName}
+                        </span>
                       ))}
-                    </div>
-                  </div>
+                    </span>
+                  </>
                 )}
               </div>
             </div>
