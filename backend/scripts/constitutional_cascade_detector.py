@@ -143,6 +143,23 @@ class ConstitutionalCascadeDetector:
         print("🔍 Collecting signal #2: Override latency...")
 
         try:
+            # Check if override latency data is stale (>48h old)
+            override_latency_file = "reports/override_latency.json"
+            if os.path.exists(override_latency_file):
+                file_stat = os.stat(override_latency_file)
+                file_age_hours = (datetime.now().timestamp() - file_stat.st_mtime) / 3600
+                
+                if file_age_hours > 48:
+                    print(f"⚠️  Latency signal stale (>48h); not blocking.")
+                    return {
+                        "id": "#2",
+                        "severity": "info",
+                        "value_ms": 0,
+                        "status": "stale",
+                        "age_hours": file_age_hours,
+                        "ts": datetime.now().isoformat(),
+                    }
+
             # Call constitutional_drift_detector.py
             subprocess.run(
                 [
@@ -465,6 +482,11 @@ class ConstitutionalCascadeDetector:
             # Find matching signal
             for signal in self.signals:
                 if signal["id"] == signal_id:
+                    # Check if signal is stale (for latency signals)
+                    if signal.get("status") == "stale":
+                        print(f"    ⚠️  Signal {signal_id} is stale ({signal.get('age_hours', 0):.1f}h old); skipping for blocking")
+                        continue
+                    
                     if severity_req is None or signal["severity"] == severity_req:
                         triggered_signals.append(signal)
                     break

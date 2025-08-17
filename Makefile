@@ -59,3 +59,9 @@ labels-fix:
 topics-ids:
 	@echo "🔍 Getting raw topic data for slug=$(slug)..."
 	@source .venv/bin/activate && curl -s "http://localhost:8000/api/dev/labels/$(slug)/raw" | python -m json.tool 
+
+perf-refresh:
+	@echo "⚡ Refreshing performance metrics..."
+	@python3 scripts/sim_override_load.py --requests 400
+	@python3 backend/scripts/collect_override_latency.py --json-out reports/override_latency.json
+	@echo "✅ Performance metrics refreshed!" 
