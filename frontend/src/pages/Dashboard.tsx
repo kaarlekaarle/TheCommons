@@ -29,6 +29,10 @@ import LabelChip from '../components/ui/LabelChip';
 import { flags } from '../config/flags';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 
+type PerLabelStat = { label: { slug: string }; delegate: { username: string }; [k: string]: unknown };
+const getPerLabel = (s?: { per_label?: PerLabelStat[] } | null): PerLabelStat[] =>
+  Array.isArray(s?.per_label) ? s!.per_label : [];
+
 export default function Dashboard() {
   const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
   const [principles, setPrinciples] = useState<PrincipleItem[]>([]);
@@ -470,7 +474,8 @@ export default function Dashboard() {
                 {/* Per-Label Delegations */}
                 <div className="grid gap-3 md:grid-cols-2">
                   {labels.map(label => {
-                    const labelDelegation = delegationSummary.per_label?.find(
+                    const perLabel = getPerLabel(delegationSummary);
+                    const labelDelegation = perLabel.find(
                       d => d.label.slug === label.slug
                     );
                     return (
