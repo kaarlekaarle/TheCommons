@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Activity, RefreshCw, Compass, Target } from 'lucide-react';
 import { getActivityFeed } from '../lib/api';
 import type { ActivityItem } from '../types';

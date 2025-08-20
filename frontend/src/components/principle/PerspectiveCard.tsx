@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Check } from 'lucide-react';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -70,8 +70,8 @@ export default function PerspectiveCard({
               {title}
             </h3>
             {trend7d !== null && trend7d !== 0 && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-xs px-2 py-1"
                 data-testid="trend-chip"
                 aria-label={`Primary leaning change past 7 days: ${trend7d > 0 ? '+' : ''}${trend7d} percent`}

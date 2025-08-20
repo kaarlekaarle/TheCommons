@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, BarChart3, MessageCircle, CheckCircle, XCircle, Minus, Compass, Target, Users, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, FileText, BarChart3, CheckCircle, XCircle, Minus, Compass, Target, Link as LinkIcon } from 'lucide-react';
 import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults } from '../lib/api';
 import type { Poll, PollOption, Vote, PollResults, Label } from '../types';
 import Button from '../components/ui/Button';
@@ -13,7 +13,7 @@ import LinkedPrinciplesDrawer from '../components/LinkedPrinciplesDrawer';
 import { flags } from '../config/flags';
 import { useNavigate } from 'react-router-dom';
 import PrincipleProposal from '../components/principle/PrincipleProposal';
-import { getHardcodedPoll, getHardcodedPollOptions, isHardcodedPoll, getHardcodedComments, getHardcodedVote } from '../utils/hardcodedData';
+import { getHardcodedPoll, getHardcodedPollOptions, isHardcodedPoll, getHardcodedVote } from '../utils/hardcodedData';
 
 export default function ProposalDetail() {
   const { id } = useParams<{ id: string }>();
@@ -29,7 +29,7 @@ export default function ProposalDetail() {
   const [linkedDrawerOpen, setLinkedDrawerOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<Label | null>(null);
   const { success, error: showError } = useToast();
-  const { user } = useCurrentUser();
+
 
   useEffect(() => {
     if (id) {

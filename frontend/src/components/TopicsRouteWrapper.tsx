@@ -7,7 +7,7 @@ interface TopicsRouteWrapperProps {
   children?: React.ReactNode;
 }
 
-export const TopicsRouteWrapper: React.FC<TopicsRouteWrapperProps> = ({ children }) => {
+export const TopicsRouteWrapper: React.FC<TopicsRouteWrapperProps> = () => {
   if (!flags.labelsEnabled) {
     return <TopicsDisabled />;
   }

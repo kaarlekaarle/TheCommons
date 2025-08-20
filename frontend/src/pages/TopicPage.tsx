@@ -2,12 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
   Target,
   Compass,
   TrendingUp,
   ExternalLink,
-  UserX,
   AlertTriangle,
   ChevronDown
 } from 'lucide-react';
@@ -47,7 +45,7 @@ export default function TopicPage() {
   const [popularLabels, setPopularLabels] = useState<PopularLabel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+
   const [fallbackData, setFallbackData] = useState<LabelOverview | null>(null);
   const { error: showError } = useToast();
   const showErrorRef = useRef(showError);

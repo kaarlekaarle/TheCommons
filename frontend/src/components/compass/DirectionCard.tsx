@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 import Button from '../ui/Button';
 import { Expandable } from './Expandable';
 import { compassCopy } from '../../copy/compass';
-import type { Vote } from '../../types';
+
 
 export type Direction = {
   id: string;

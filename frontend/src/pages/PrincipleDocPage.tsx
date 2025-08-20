@@ -34,8 +34,7 @@ export default function PrincipleDocPage() {
 
   // Section states
   const [pollState, setPollState] = useState<SectionState>('idle');
-  const [optionsState, setOptionsState] = useState<SectionState>('idle');
-  const [resultsState, setResultsState] = useState<SectionState>('idle');
+
   const [commentsState, setCommentsState] = useState<SectionState>('idle');
 
   // Fetch data
@@ -110,11 +109,11 @@ export default function PrincipleDocPage() {
   const isTieResult = primaryOption ? isTie(primaryOption) : true;
 
   // Compute percentages and trend data
-  const primaryPercent = results && primaryOption ? 
+  const primaryPercent = results && primaryOption ?
     Math.round((results.options.find(r => r.option_id === primaryOption.primaryId)?.percentage || 0)) : null;
-  const alternatePercent = results && primaryOption ? 
+  const alternatePercent = results && primaryOption ?
     Math.round((results.options.find(r => r.option_id === primaryOption.alternateId)?.percentage || 0)) : null;
-  
+
   // Mock trend data (in real implementation, this would come from historical data)
   const primaryTrend7d = primaryPercent ? Math.floor(Math.random() * 7) - 3 : null; // Random -3 to +3 for demo
 
@@ -124,10 +123,10 @@ export default function PrincipleDocPage() {
       const primaryShare = results?.optionResults?.[primaryOption.primaryId]?.votes || 0;
       const totalVotes = results?.totalVotes || 1;
       const share = primaryShare / totalVotes;
-      
-      console.log('perspective.primary_shown', { 
-        primaryId: primaryOption.primaryId, 
-        share: Math.round(share * 100) 
+
+      console.log('perspective.primary_shown', {
+        primaryId: primaryOption.primaryId,
+        share: Math.round(share * 100)
       });
     }
   }, [primaryOption, isTieResult, results]);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { Label, PopularLabel } from '../types';
@@ -137,7 +137,7 @@ export default function TopicsHub() {
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-        
+
         <div className="mb-12">
           <Skeleton className="h-6 w-32 mb-4" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="skeleton-grid">
@@ -146,7 +146,7 @@ export default function TopicsHub() {
             ))}
           </div>
         </div>
-        
+
         <div id="all-topics">
           <Skeleton className="h-6 w-32 mb-4" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="skeleton-grid">
@@ -180,13 +180,13 @@ export default function TopicsHub() {
     <main className="container mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 
+        <h1
           id="topics-heading"
           className="text-3xl font-bold text-gray-900 mb-2"
         >
           Browse Topics
         </h1>
-        <p 
+        <p
           id="topics-description"
           className="text-gray-600"
           aria-describedby="topics-heading"
@@ -225,8 +225,8 @@ export default function TopicsHub() {
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-600 mb-2">No popular topics yet.</p>
-            <a 
-              href="#all-topics" 
+            <a
+              href="#all-topics"
               className="text-blue-600 hover:text-blue-800 underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Browse all topics
@@ -240,7 +240,7 @@ export default function TopicsHub() {
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
           All Topics ({state.allLabels.length})
         </h2>
-        
+
         {currentLabels.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-600">No topics available</p>
@@ -274,7 +274,7 @@ export default function TopicsHub() {
               >
                 Previous
               </button>
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
@@ -288,7 +288,7 @@ export default function TopicsHub() {
                   {page}
                 </button>
               ))}
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
