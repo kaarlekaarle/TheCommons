@@ -1,5 +1,21 @@
 import api from '../lib/api';
 
+// --- Delegation summary types ---
+export interface DelegationSummary {
+  ok: boolean;
+  counts: { mine: number; inbound: number };
+  adoption?: { commonsPct: number; legacyPct: number; transitions?: number };
+  meta?: { errors?: string[]; trace_id?: string; generated_at: string };
+}
+
+export interface Delegation {
+  id: string;
+  mode: 'LEGACY_FIXED_TERM' | 'FLEXIBLE_DOMAIN' | 'HYBRID_SEED';
+  fieldId?: string | null;
+  personId: string;
+  expiresAt?: string | null; // ISO
+}
+
 // --- Search result types ---
 export type PersonSearchResult = {
   id: string;
@@ -27,31 +43,42 @@ export type CreateDelegationInput = {
 };
 
 export type DelegationWarnings = {
-  concentration?: { 
-    level: 'warn' | 'high'; 
-    percent: number; 
+  concentration?: {
+    level: 'warn' | 'high';
+    percent: number;
   };
-  superDelegateRisk?: { 
-    reason: string; 
+  superDelegateRisk?: {
+    reason: string;
   };
 };
 
-export interface Delegation {
-  id: string;
-  delegator_id: string;
-  delegatee_id: string;
-  mode: string;
-  target_type: string;
-  field_id?: string;
-  created_at: string;
-  expires_at?: string;
-  is_active: boolean;
+
+
+export type CreateDelegationResponse = {
+  delegation: Delegation;
+  warnings?: DelegationWarnings;
+};
+
+// --- Safe parsers ---
+function parseSummary(x: unknown): DelegationSummary {
+  const d = x as any;
+  return {
+    ok: !!d?.ok,
+    counts: { mine: Number(d?.counts?.mine || 0), inbound: Number(d?.counts?.inbound || 0) },
+    adoption: d?.adoption && {
+      commonsPct: Number(d.adoption.commonsPct || 0),
+      legacyPct: Number(d.adoption.legacyPct || 0),
+      transitions: Number(d.adoption.transitions || 0),
+    },
+    meta: d?.meta && { ...d.meta, generated_at: String(d.meta.generated_at || new Date().toISOString()) }
+  };
 }
 
-export type CreateDelegationResponse = { 
-  delegation: Delegation; 
-  warnings?: DelegationWarnings; 
-};
+export async function fetchDelegationSummary(): Promise<DelegationSummary> {
+  const r = await fetch('/api/delegations/summary');
+  const j = await r.json().catch(() => ({}));
+  return parseSummary(j);
+}
 
 // --- Search endpoints ---
 // NOTE: these can hit your real backend later.
@@ -85,17 +112,17 @@ export async function searchFields(q: string): Promise<FieldSearchResult[]> {
 
 export async function getCombinedSearch(q: string): Promise<{ people: PersonSearchResult[]; fields: FieldSearchResult[] }> {
   if (!q?.trim()) return { people: [], fields: [] };
-  
+
   try {
     // Fetch both people and fields in parallel
     const [peopleRes, fieldsRes] = await Promise.all([
       fetch(`/api/search/people?q=${encodeURIComponent(q)}`),
       fetch(`/api/search/fields?q=${encodeURIComponent(q)}`)
     ]);
-    
+
     const people = peopleRes.ok ? await peopleRes.json() : [];
     const fields = fieldsRes.ok ? await fieldsRes.json() : [];
-    
+
     return { people, fields };
   } catch (err) {
     // Fallback to mock data if API calls fail
@@ -129,7 +156,7 @@ export async function getInbound(delegateeId: string, fieldId?: string): Promise
   try {
     const params = new URLSearchParams();
     if (fieldId) params.append('fieldId', fieldId);
-    
+
     const response = await api.get(`/api/delegations/${delegateeId}/inbound?${params.toString()}`);
     return response.data;
   } catch (error: any) {
@@ -171,7 +198,7 @@ export async function getMyAdoptionSnapshot(): Promise<{
   try {
     const response = await api.get('/api/delegations/adoption/stats?days=30');
     const data = response.data;
-    
+
     return {
       last30d: {
         legacyPct: data.mode_percentages?.legacy_fixed_term || 0,
