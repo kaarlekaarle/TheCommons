@@ -86,11 +86,7 @@ class Delegation(SQLAlchemyBase):
     # Constitutional constraints
     __table_args__ = (
         # Legacy term constraint: must be ≤ start + 4y if mode=legacy_fixed_term
-        CheckConstraint(
-            "(mode != 'legacy_fixed_term') OR (legacy_term_ends_at IS NULL) OR "
-            "(legacy_term_ends_at <= start_date + INTERVAL '4 years')",
-            name="legacy_term_max_4y",
-        ),
+        # Note: This constraint is enforced at the application level for cross-database compatibility
         # Partial index for active legacy delegations by expiry (for expiry scans)
         Index(
             "idx_legacy_active_by_expiry",

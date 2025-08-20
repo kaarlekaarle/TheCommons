@@ -100,12 +100,13 @@ def upgrade() -> None:
     )
 
     # Add constitutional constraints
-    op.create_check_constraint(
-        "legacy_term_max_4y",
-        "delegations",
-        "(mode != 'legacy_fixed_term') OR (legacy_term_ends_at IS NULL) OR "
-        "(legacy_term_ends_at <= start_date + INTERVAL '4 years')",
-    )
+    # Note: Legacy term constraint is enforced at application level for cross-database compatibility
+    # op.create_check_constraint(
+    #     "legacy_term_max_4y",
+    #     "delegations",
+    #     "(mode != 'legacy_fixed_term') OR (legacy_term_ends_at IS NULL) OR "
+    #     "(legacy_term_ends_at <= start_date + INTERVAL '4 years')",
+    # )
 
     # Add partial index for legacy expiry scans
     op.create_index(
@@ -177,7 +178,8 @@ def downgrade() -> None:
     op.drop_index("idx_legacy_active_by_expiry", table_name="delegations")
 
     # Drop constitutional constraints
-    op.drop_constraint("legacy_term_max_4y", "delegations", type_="check")
+    # Note: Legacy term constraint was commented out for cross-database compatibility
+    # op.drop_constraint("legacy_term_max_4y", "delegations", type_="check")
 
     # Drop foreign key constraints
     op.drop_constraint(None, "delegations", type_="foreignkey")

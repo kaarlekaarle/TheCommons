@@ -1,14 +1,15 @@
 """JSON utilities for safe serialization of complex types."""
+
 import json
 import uuid
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
 
 class JSONResponseEncoder(json.JSONEncoder):
     """JSON encoder that handles datetime, date, UUID, and Decimal objects safely."""
-    
+
     def default(self, obj: Any) -> Any:
         """Convert non-serializable objects to JSON-safe formats."""
         if isinstance(obj, datetime):
@@ -33,6 +34,6 @@ def safe_json_response(data: Any) -> dict:
             "ok": False,
             "meta": {
                 "errors": [f"serialization_error: {str(e)}"],
-                "generated_at": datetime.utcnow().isoformat()
-            }
+                "generated_at": datetime.utcnow().isoformat(),
+            },
         }
