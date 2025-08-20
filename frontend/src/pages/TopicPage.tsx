@@ -131,8 +131,8 @@ export default function TopicPage() {
           logSet("overview:afterFetch", overviewData.items);
 
           // Deduplicate polls by ID to prevent duplicate key issues (safety net)
-          const uniquePolls = overviewData.items.filter((poll, index, self) =>
-            index === self.findIndex(p => p.id === poll.id)
+          const uniquePolls = overviewData.items.filter((poll: PollSummary, index: number, self: PollSummary[]) =>
+            index === self.findIndex((p: PollSummary) => p.id === poll.id)
           );
 
           // Log if duplicates were found (dev only)
@@ -273,18 +273,7 @@ export default function TopicPage() {
     }
   }, [activeTab]);
 
-  const getTabCount = useCallback(() => {
-    if (!overview) return 0;
 
-    switch (activeTab) {
-      case 'principles':
-        return overview.counts.level_a;
-      case 'actions':
-        return overview.counts.level_b;
-      default:
-        return overview.counts.total;
-    }
-  }, [activeTab, overview]);
 
   if (loading) {
     return (
@@ -338,7 +327,6 @@ export default function TopicPage() {
             error && (
               <Button
                 onClick={() => {
-                  setRetryCount(prev => prev + 1);
                   fetchData();
                 }}
                 variant="primary"
@@ -479,7 +467,7 @@ export default function TopicPage() {
             {(() => {
               // Log final rendered array
               logSet("render:final", overview.items);
-              return overview.items.map((poll, pollIndex) => (
+              return overview.items.map((poll) => (
                 <motion.div
                   key={poll.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -514,7 +502,7 @@ export default function TopicPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1">
-                    {poll.labels.map((label, labelIndex) => (
+                    {poll.labels.map((label) => (
                       <LabelChip
                         key={`${poll.id}:${label.slug}`}
                         label={{
