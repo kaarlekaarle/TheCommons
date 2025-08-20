@@ -416,6 +416,38 @@ export const getDelegationSummary = async (): Promise<DelegationSummary> => {
   }
 };
 
+// Enhanced delegation summary with graceful error handling
+export interface SafeDelegationSummary {
+  ok: boolean;
+  global_delegate?: any;
+  per_label?: any[];
+  counts?: { mine: number; inbound: number };
+  meta?: {
+    errors?: string[];
+    trace_id?: string;
+    generated_at?: string;
+    duration_ms?: number;
+  };
+}
+
+export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary> => {
+  try {
+    const response = await api.get('/api/delegations/summary');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosErrorResponse;
+    // Return a safe fallback instead of throwing
+    return {
+      ok: false,
+      counts: { mine: 0, inbound: 0 },
+      meta: {
+        errors: [`api_error: ${err.response?.data?.detail || err.message || 'Network error'}`],
+        generated_at: new Date().toISOString()
+      }
+    };
+  }
+};
+
 export const setDelegation = async (delegateId: string, labelSlug?: string): Promise<DelegationInfo> => {
   try {
     const payload: { delegatee_id: string; label_slug?: string } = { delegatee_id: delegateId };

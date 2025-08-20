@@ -17,8 +17,9 @@ import {
   Compass,
   Target
 } from 'lucide-react';
-import { listPolls, getContentPrinciples, getContentActions, getDelegationSummary, setDelegation, listLabels } from '../lib/api';
+import { listPolls, getContentPrinciples, getContentActions, getDelegationSummary, getSafeDelegationSummary, setDelegation, listLabels } from '../lib/api';
 import type { Poll, DelegationSummary, Label } from '../types';
+import type { SafeDelegationSummary } from '../lib/api';
 import type { PrincipleItem, ActionItem } from '../types/content';
 import Button from '../components/ui/Button';
 import { useToast } from '../components/ui/useToast';
@@ -26,35 +27,50 @@ import ProposalCard from '../components/ProposalCard';
 import ContentList from '../components/content/ContentList';
 import LabelChip from '../components/ui/LabelChip';
 import { flags } from '../config/flags';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 
 export default function Dashboard() {
   const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
   const [principles, setPrinciples] = useState<PrincipleItem[]>([]);
   const [actions, setActions] = useState<ActionItem[]>([]);
-  const [delegationSummary, setDelegationSummary] = useState<DelegationSummary | null>(null);
+  const [delegationSummary, setDelegationSummary] = useState<SafeDelegationSummary | null>(null);
   const [labels, setLabels] = useState<Label[]>([]);
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(true);
   const [contentError, setContentError] = useState<string | null>(null);
   const [delegationLoading, setDelegationLoading] = useState(false);
   const { error: showError, success: showSuccess } = useToast();
+  const { user, loading: userLoading } = useCurrentUser();
 
   // Counts for dashboard sections
   const levelACount = recentPolls.filter(poll => poll.decision_type === 'level_a').length;
   const levelBCount = recentPolls.filter(poll => poll.decision_type === 'level_b').length;
 
   useEffect(() => {
+    console.log('[DEBUG] Dashboard useEffect - user:', user, 'userLoading:', userLoading, 'labelsEnabled:', flags.labelsEnabled);
+    
     fetchRecentPolls();
     if (!flags.useDemoContent) {
       fetchContent();
     } else {
       setContentLoading(false);
     }
-    if (flags.labelsEnabled) {
+    // Always fetch delegation data if labels are enabled (safe endpoint handles auth)
+    if (flags.labelsEnabled && !userLoading) {
+      console.log('[DEBUG] Dashboard: Fetching delegation data (safe endpoint)');
       fetchDelegationSummary();
-      fetchLabels();
+      
+      // Only fetch labels if authenticated
+      if (user) {
+        fetchLabels();
+      }
+    } else if (!flags.labelsEnabled && !userLoading) {
+      // Clear delegation data when labels are disabled
+      console.log('[DEBUG] Dashboard: Clearing delegation data - labels disabled');
+      setDelegationSummary(null);
+      setLabels([]);
     }
-  }, []);
+  }, [user, userLoading]);
 
   const fetchRecentPolls = async () => {
     try {
@@ -92,10 +108,38 @@ export default function Dashboard() {
 
   const fetchDelegationSummary = async () => {
     try {
-      const summary = await getDelegationSummary();
+      console.log('[DEBUG] fetchDelegationSummary: Starting safe API call');
+      const summary = await getSafeDelegationSummary();
+      console.log('[DEBUG] fetchDelegationSummary: Response:', summary);
+      
+      if (summary.meta?.errors?.length) {
+        console.warn('[DEBUG] fetchDelegationSummary: Errors in response:', summary.meta.errors);
+        if (summary.meta.trace_id) {
+          console.log('[DEBUG] fetchDelegationSummary: Trace ID for debugging:', summary.meta.trace_id);
+        }
+      }
+      
       setDelegationSummary(summary);
+      
+      // Show non-blocking warning if there are errors but some data is available
+      if (!summary.ok && summary.meta?.errors?.length) {
+        const hasData = summary.global_delegate || (summary.per_label && summary.per_label.length > 0);
+        if (hasData) {
+          console.warn('Delegation summary is partially available with errors:', summary.meta.errors);
+        }
+      }
+      
     } catch (err) {
-      console.error('Failed to load delegation summary:', err);
+      console.error('[DEBUG] fetchDelegationSummary: Unexpected error:', err);
+      // Set a minimal error state
+      setDelegationSummary({
+        ok: false,
+        counts: { mine: 0, inbound: 0 },
+        meta: {
+          errors: ['unexpected_error'],
+          generated_at: new Date().toISOString()
+        }
+      });
     }
   };
 
@@ -112,7 +156,10 @@ export default function Dashboard() {
     try {
       setDelegationLoading(true);
       await setDelegation(delegateUsername, labelSlug);
+      
+      // Always refresh delegation summary (it handles auth gracefully)
       await fetchDelegationSummary();
+      
       showSuccess(`Delegation ${labelSlug ? `for ${labelSlug}` : 'globally'} set successfully`);
     } catch (err: unknown) {
       const error = err as { message?: string };
@@ -387,7 +434,7 @@ export default function Dashboard() {
           )}
 
           {/* Label-Specific Delegations */}
-          {flags.labelsEnabled && delegationSummary && (
+          {flags.labelsEnabled && delegationSummary && delegationSummary.ok && user && (
             <div className="gov-card mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gov-primary flex items-center gap-2">
@@ -406,14 +453,16 @@ export default function Dashboard() {
                       <div>
                         <span className="text-sm font-medium text-blue-800">Global Delegate:</span>
                         <span className="ml-2 text-sm text-blue-600">
-                          {delegationSummary.global_delegate.delegate_username || 'Not set'}
+                          {delegationSummary.global_delegate.delegatee_username || 'Not set'}
                         </span>
                       </div>
-                      <DelegationForm
-                        onSubmit={(username) => handleSetDelegation(username)}
-                        loading={delegationLoading}
-                        placeholder="Set global delegate"
-                      />
+                      {user && (
+                        <DelegationForm
+                          onSubmit={(username) => handleSetDelegation(username)}
+                          loading={delegationLoading}
+                          placeholder="Set global delegate"
+                        />
+                      )}
                     </div>
                   </div>
                 )}
@@ -433,11 +482,13 @@ export default function Dashboard() {
                           <span className="text-sm text-gray-600">
                             {labelDelegation?.delegate.username || 'Not set'}
                           </span>
-                          <DelegationForm
-                            onSubmit={(username) => handleSetDelegation(username, label.slug)}
-                            loading={delegationLoading}
-                            placeholder={`Set ${label.name} delegate`}
-                          />
+                          {user && (
+                            <DelegationForm
+                              onSubmit={(username) => handleSetDelegation(username, label.slug)}
+                              loading={delegationLoading}
+                              placeholder={`Set ${label.name} delegate`}
+                            />
+                          )}
                         </div>
                       </div>
                     );

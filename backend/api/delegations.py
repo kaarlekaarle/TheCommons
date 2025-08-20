@@ -1,5 +1,6 @@
 from typing import Any, List, Optional
 from uuid import UUID
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Security, status, Request, Query
 from sqlalchemy import and_, select, or_, func
@@ -18,6 +19,7 @@ from backend.core.metrics import increment_delegation_metric
 from backend.database import get_db
 from backend.models.delegation import Delegation, DelegationMode
 from backend.models.field import Field
+from backend.services.delegation_summary import SafeDelegationSummaryService
 from backend.models.institution import Institution, InstitutionKind
 from backend.models.user import User
 from backend.models.label import Label
@@ -678,6 +680,83 @@ async def get_my_delegation_summary(
             exc_info=True,
         )
         raise ServerError("Failed to get delegation summary")
+
+
+@router.get("/summary", response_model=dict)
+async def get_safe_delegation_summary(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    token: Optional[str] = Depends(oauth2_scheme),
+) -> dict:
+    """
+    Get delegation summary with comprehensive error handling and observability.
+    Always returns 200 with ok flag and meta information.
+    """
+    trace_id = str(uuid.uuid4())
+    
+    # Add trace_id to request for downstream logging
+    request.state.trace_id = trace_id
+    
+    # Try to get current user, but don't fail if unauthenticated
+    current_user = None
+    if token:
+        try:
+            from backend.core.auth import get_current_active_user
+            # Try to get user, but don't fail the request if authentication fails
+            current_user = await get_current_active_user(token, db)
+        except Exception:
+            # User is not authenticated, continue with None
+            pass
+    
+    logger.info(
+        "Safe delegation summary requested",
+        extra={
+            "trace_id": trace_id,
+            "user_id": current_user.id if current_user else None,
+            "authenticated": bool(current_user)
+        }
+    )
+    
+    try:
+        service = SafeDelegationSummaryService(db)
+        user_id = str(current_user.id) if current_user else None
+        
+        summary = await service.get_safe_summary(user_id, trace_id)
+        
+        logger.info(
+            "Safe delegation summary completed",
+            extra={
+                "trace_id": trace_id,
+                "user_id": user_id,
+                "ok": summary.get("ok", False),
+                "error_count": len(summary.get("meta", {}).get("errors", [])),
+                "duration_ms": summary.get("meta", {}).get("duration_ms", 0)
+            }
+        )
+        
+        return summary
+        
+    except Exception as e:
+        logger.error(
+            "Catastrophic error in safe delegation summary endpoint",
+            extra={
+                "trace_id": trace_id,
+                "user_id": current_user.id if current_user else None,
+                "error": str(e)
+            },
+            exc_info=True
+        )
+        
+        # Always return 200 with error information
+        return {
+            "ok": False,
+            "counts": {"mine": 0, "inbound": 0},
+            "meta": {
+                "errors": [f"endpoint_error: {str(e)}"],
+                "trace_id": trace_id,
+                "generated_at": "error"
+            }
+        }
 
 
 @router.get("/my", response_model=List[dict])
