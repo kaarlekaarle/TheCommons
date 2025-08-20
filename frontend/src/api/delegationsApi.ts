@@ -61,7 +61,7 @@ export type CreateDelegationResponse = {
 
 // --- Safe parsers ---
 function parseSummary(x: unknown): DelegationSummary {
-  const d = x as any;
+  const d = x as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   return {
     ok: !!d?.ok,
     counts: { mine: Number(d?.counts?.mine || 0), inbound: Number(d?.counts?.inbound || 0) },
@@ -124,7 +124,7 @@ export async function getCombinedSearch(q: string): Promise<{ people: PersonSear
     const fields = fieldsRes.ok ? await fieldsRes.json() : [];
 
     return { people, fields };
-  } catch (err) {
+  } catch {
     // Fallback to mock data if API calls fail
     const mockPeople = await searchPeople(q);
     const mockFields = await searchFields(q);

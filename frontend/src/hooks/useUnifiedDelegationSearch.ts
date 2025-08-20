@@ -33,7 +33,7 @@ export function useUnifiedDelegationSearch() {
           setPeople(peopleResults);
           setFields(fieldsResults);
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setError("Search failed. Please try again.");
           setPeople([]);

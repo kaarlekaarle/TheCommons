@@ -34,7 +34,7 @@ export default function ConversationSection({
       await onSubmit(body.trim(), perspective);
       setBody('');
       setPerspective('primary');
-    } catch (error) {
+    } catch {
       // Error handling is done in the parent component
     }
   };

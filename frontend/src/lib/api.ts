@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Poll, PollOption, Vote, PollResults, User, DelegationInfo, ActivityItem, CommentList, Comment, ReactionResponse, ReactionSummary, AxiosErrorResponse, DecisionType, Label, DelegationSummary, LabelOverview, PopularLabel } from '../types';
+import type { Poll, PollOption, Vote, PollResults, User, DelegationInfo, ActivityItem, CommentList, Comment, ReactionResponse, AxiosErrorResponse, DecisionType, Label, DelegationSummary, LabelOverview, PopularLabel } from '../types';
 import type { DelegationInfo as NewDelegationInfo, CreateDelegationRequest, RemoveDelegationRequest } from '../types/delegation';
 import type { PrincipleItem, ActionItem, StoryItem } from '../types/content';
 
