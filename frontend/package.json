@@ -8,6 +8,8 @@
     "vite:dev": "vite",
     "build": "npm run sync:features && tsc -b && vite build",
     "lint": "eslint .",
+    "lint:fix": "eslint --ext .ts,.tsx src --fix",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
