@@ -17,8 +17,8 @@ import {
   Compass,
   Target
 } from 'lucide-react';
-import { listPolls, getContentPrinciples, getContentActions, getDelegationSummary, getSafeDelegationSummary, setDelegation, listLabels } from '../lib/api';
-import type { Poll, DelegationSummary, Label } from '../types';
+import { listPolls, getContentPrinciples, getContentActions, getSafeDelegationSummary, setDelegation, listLabels } from '../lib/api';
+import type { Poll, Label } from '../types';
 import type { SafeDelegationSummary } from '../lib/api';
 import type { PrincipleItem, ActionItem } from '../types/content';
 import Button from '../components/ui/Button';
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log('[DEBUG] Dashboard useEffect - user:', user, 'userLoading:', userLoading, 'labelsEnabled:', flags.labelsEnabled);
-    
+
     fetchRecentPolls();
     if (!flags.useDemoContent) {
       fetchContent();
@@ -59,7 +59,7 @@ export default function Dashboard() {
     if (flags.labelsEnabled && !userLoading) {
       console.log('[DEBUG] Dashboard: Fetching delegation data (safe endpoint)');
       fetchDelegationSummary();
-      
+
       // Only fetch labels if authenticated
       if (user) {
         fetchLabels();
@@ -111,16 +111,16 @@ export default function Dashboard() {
       console.log('[DEBUG] fetchDelegationSummary: Starting safe API call');
       const summary = await getSafeDelegationSummary();
       console.log('[DEBUG] fetchDelegationSummary: Response:', summary);
-      
+
       if (summary.meta?.errors?.length) {
         console.warn('[DEBUG] fetchDelegationSummary: Errors in response:', summary.meta.errors);
         if (summary.meta.trace_id) {
           console.log('[DEBUG] fetchDelegationSummary: Trace ID for debugging:', summary.meta.trace_id);
         }
       }
-      
+
       setDelegationSummary(summary);
-      
+
       // Show non-blocking warning if there are errors but some data is available
       if (!summary.ok && summary.meta?.errors?.length) {
         const hasData = summary.global_delegate || (summary.per_label && summary.per_label.length > 0);
@@ -128,7 +128,7 @@ export default function Dashboard() {
           console.warn('Delegation summary is partially available with errors:', summary.meta.errors);
         }
       }
-      
+
     } catch (err) {
       console.error('[DEBUG] fetchDelegationSummary: Unexpected error:', err);
       // Set a minimal error state
@@ -156,10 +156,10 @@ export default function Dashboard() {
     try {
       setDelegationLoading(true);
       await setDelegation(delegateUsername, labelSlug);
-      
+
       // Always refresh delegation summary (it handles auth gracefully)
       await fetchDelegationSummary();
-      
+
       showSuccess(`Delegation ${labelSlug ? `for ${labelSlug}` : 'globally'} set successfully`);
     } catch (err: unknown) {
       const error = err as { message?: string };
@@ -470,7 +470,7 @@ export default function Dashboard() {
                 {/* Per-Label Delegations */}
                 <div className="grid gap-3 md:grid-cols-2">
                   {labels.map(label => {
-                    const labelDelegation = delegationSummary.per_label.find(
+                    const labelDelegation = delegationSummary.per_label?.find(
                       d => d.label.slug === label.slug
                     );
                     return (

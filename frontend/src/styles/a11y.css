@@ -11,10 +11,10 @@
 .bg-surface-muted { background: var(--surface-muted); }
 
 /* Banner utilities */
-.banner-info   { background: var(--info-bg); color: var(--fg); border: 1px solid var(--border); }
-.banner-ok     { background: var(--ok-bg); color: var(--fg);  border: 1px solid var(--border); }
-.banner-warn   { background: var(--warn-bg); color: var(--fg); border: 1px solid var(--border); }
-.banner-danger { background: var(--danger-bg); color: var(--fg); border: 1px solid var(--border); }
+.banner-info   { background: var(--info-bg); color: var(--fg); border: 1px solid var(--border); padding: 1rem; }
+.banner-ok     { background: var(--ok-bg); color: var(--fg);  border: 1px solid var(--border); padding: 1rem; }
+.banner-warn   { background: var(--warn-bg); color: var(--fg); border: 1px solid var(--border); padding: 1rem; }
+.banner-danger { background: var(--danger-bg); color: var(--fg); border: 1px solid var(--border); padding: 1rem; }
 
 /* Button utilities */
 .btn-primary     { background: var(--primary-600); color: var(--fg-oncolor); }
