@@ -24,6 +24,7 @@ export default function RevisionComposer({
   const charCount = body.length;
   const isValid = charCount >= 240 && charCount <= 1000;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (initialTarget !== target) {
       setTarget(initialTarget);

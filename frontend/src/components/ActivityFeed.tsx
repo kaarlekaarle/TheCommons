@@ -42,7 +42,7 @@ export default function ActivityFeed() {
 
   useEffect(() => {
     fetchActivities();
-  }, []);
+  }, [fetchActivities]);
 
   const handleLabelClick = (slug: string) => {
     window.location.href = `/t/${slug}?tab=all&page=1`;
