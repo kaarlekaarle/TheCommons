@@ -493,6 +493,11 @@ export default function Dashboard() {
                 <div className="p-4 text-center">
                   <div className="text-gray-500 mb-2">Delegation summary unavailable</div>
                   <div className="text-xs text-gray-400 mb-3">Retry later or open Transparency</div>
+                  {delegationSummary?.meta?.trace_id && (
+                    <div className="text-[10px] text-gray-400 mt-1 mb-3">
+                      Trace: {delegationSummary.meta.trace_id}
+                    </div>
+                  )}
                   <div className="flex justify-center gap-2">
                     <Button
                       variant="secondary"
