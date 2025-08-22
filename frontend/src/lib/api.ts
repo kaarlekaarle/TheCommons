@@ -1,7 +1,9 @@
 import axios from 'axios';
-import type { Poll, PollOption, Vote, PollResults, User, DelegationInfo, ActivityItem, CommentList, Comment, ReactionResponse, AxiosErrorResponse, DecisionType, Label, DelegationSummary, LabelOverview, PopularLabel } from '../types';
+import type { Poll, PollOption, Vote, PollResults, User, DelegationInfo, ActivityItem, CommentList, Comment, ReactionResponse, AxiosErrorResponse, DecisionType, Label, LabelOverview, PopularLabel } from '../types';
 import type { DelegationInfo as NewDelegationInfo, CreateDelegationRequest, RemoveDelegationRequest } from '../types/delegation';
 import type { PrincipleItem, ActionItem, StoryItem } from '../types/content';
+
+
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -403,7 +405,7 @@ export const removeDelegate = async (): Promise<void> => {
   }
 };
 
-export const getDelegationSummary = async (): Promise<DelegationSummary> => {
+export const getDelegationSummary = async (): Promise<SafeDelegationSummary> => {
   try {
     const response = await api.get('/api/delegations/me/summary');
     return response.data;
@@ -432,8 +434,23 @@ export interface SafeDelegationSummary {
 
 export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary> => {
   try {
-    const response = await api.get('/api/delegations/summary');
-    return response.data;
+    const { data } = await api.get('/api/delegations/summary');
+    // minimal safety parsing
+    return {
+      ok: Boolean(data?.ok),
+      global_delegate: data?.global_delegate,
+      per_label: Array.isArray(data?.per_label) ? data.per_label : [],
+      counts: {
+        mine: Number(data?.counts?.mine ?? 0),
+        inbound: Number(data?.counts?.inbound ?? 0),
+      },
+      meta: data?.meta && {
+        errors: Array.isArray(data.meta.errors) ? data.meta.errors : undefined,
+        trace_id: data.meta.trace_id ? String(data.meta.trace_id) : undefined,
+        generated_at: String(data.meta.generated_at ?? ''),
+        duration_ms: Number(data.meta.duration_ms ?? 0),
+      },
+    };
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
     // Return a safe fallback instead of throwing
