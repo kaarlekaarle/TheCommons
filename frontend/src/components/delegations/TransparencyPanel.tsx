@@ -23,17 +23,17 @@ export default function TransparencyPanel({
   const [error, setError] = useState<string | null>(null);
 
   // Chains data
-  const [chains, setChains] = useState<any>(null);
+  const [chains, setChains] = useState<unknown>(null);
 
   // Inbound data
   const [delegateeId, setDelegateeId] = useState('');
   const [fieldId, setFieldId] = useState('');
-  const [inboundData, setInboundData] = useState<any>(null);
+  const [inboundData, setInboundData] = useState<unknown>(null);
   const [inboundCursor, setInboundCursor] = useState<string | null>(null);
   const [hasMoreInbound, setHasMoreInbound] = useState(false);
 
   // Health data
-  const [healthData, setHealthData] = useState<any>(null);
+  const [healthData, setHealthData] = useState<unknown>(null);
 
   // Reset to defaultTab when opened
   useEffect(() => {
@@ -65,8 +65,9 @@ export default function TransparencyPanel({
     try {
       const data = await getMyChains();
       setChains(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load delegation chains');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Failed to load delegation chains');
     } finally {
       setLoading(false);
     }
@@ -97,8 +98,9 @@ export default function TransparencyPanel({
 
       setInboundCursor(data.pagination?.nextCursor || null);
       setHasMoreInbound(data.pagination?.hasMore || false);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load inbound delegations');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Failed to load inbound delegations');
     } finally {
       setLoading(false);
     }
@@ -108,8 +110,9 @@ export default function TransparencyPanel({
     try {
       const data = await getHealthSummary();
       setHealthData(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load health summary');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Failed to load health summary');
     } finally {
       setLoading(false);
     }

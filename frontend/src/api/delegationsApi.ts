@@ -86,8 +86,9 @@ export async function fetchDelegationSummary(): Promise<DelegationSummary> {
     const r = await fetch('/api/delegations/summary');
     const j = await r.json().catch(() => ({}));
     return parseSummary(j);
-  } catch (e: any) {
-    return { ok: false, counts: { mine: 0, inbound: 0 }, meta: { errors: [e?.message ?? 'fetch failed'] } };
+  } catch (e: unknown) {
+    const error = e as { message?: string };
+    return { ok: false, counts: { mine: 0, inbound: 0 }, meta: { errors: [error?.message ?? 'fetch failed'] } };
   }
 }
 
@@ -148,8 +149,9 @@ export async function createDelegation(input: CreateDelegationInput): Promise<Cr
   try {
     const response = await api.post('/api/delegations', input);
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.detail || 'Failed to create delegation');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { detail?: string } } };
+    throw new Error(err.response?.data?.detail || 'Failed to create delegation');
   }
 }
 
@@ -158,8 +160,9 @@ export async function getMyChains(): Promise<any> {
   try {
     const response = await api.get('/api/delegations/me/chain');
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.detail || 'Failed to fetch delegation chains');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { detail?: string } } };
+    throw new Error(err.response?.data?.detail || 'Failed to fetch delegation chains');
   }
 }
 
@@ -170,8 +173,9 @@ export async function getInbound(delegateeId: string, fieldId?: string): Promise
 
     const response = await api.get(`/api/delegations/${delegateeId}/inbound?${params.toString()}`);
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.detail || 'Failed to fetch inbound delegations');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { detail?: string } } };
+    throw new Error(err.response?.data?.detail || 'Failed to fetch inbound delegations');
   }
 }
 
@@ -179,8 +183,9 @@ export async function getHealthSummary(): Promise<any> {
   try {
     const response = await api.get('/api/delegations/health/summary');
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.detail || 'Failed to fetch health summary');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { detail?: string } } };
+    throw new Error(err.response?.data?.detail || 'Failed to fetch health summary');
   }
 }
 
