@@ -12,13 +12,15 @@ interface DelegationStatusProps {
   className?: string;
   compact?: boolean;
   onOpenModal?: () => void;
+  onChanged?: () => void;
 }
 
 export default function DelegationStatus({
   pollId,
   className = '',
   compact = false,
-  onOpenModal
+  onOpenModal,
+  onChanged
 }: DelegationStatusProps) {
   const [delegationInfo, setDelegationInfo] = useState<DelegationInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,24 @@ export default function DelegationStatus({
       onOpenModal();
     } else {
       setIsManagerOpen(true);
+    }
+  };
+
+  const handleDelegationChanged = () => {
+    // Refresh local delegation data
+    const fetchDelegation = async () => {
+      try {
+        const data = await getMyDelegation();
+        setDelegationInfo(data);
+      } catch (err) {
+        console.error('Failed to refresh delegation:', err);
+      }
+    };
+    fetchDelegation();
+
+    // Notify parent (for future query invalidation)
+    if (onChanged) {
+      onChanged();
     }
   };
 
@@ -276,6 +296,7 @@ export default function DelegationStatus({
           onClose={() => setIsManagerOpen(false)}
           pollId={pollId}
           onDelegationChange={setDelegationInfo}
+          onChanged={handleDelegationChanged}
         />
       </>
     );
@@ -302,6 +323,7 @@ export default function DelegationStatus({
         onClose={() => setIsManagerOpen(false)}
         pollId={pollId}
         onDelegationChange={setDelegationInfo}
+        onChanged={handleDelegationChanged}
       />
     </>
   );
