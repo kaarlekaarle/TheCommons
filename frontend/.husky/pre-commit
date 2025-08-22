@@ -2,4 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 echo "🔎 lint-staged running…"
-npx lint-staged || { echo "❌ Lint failed"; exit 1; }
+cd frontend && npx lint-staged || { echo "❌ Lint failed"; exit 1; }
