@@ -187,6 +187,24 @@ export default function Dashboard() {
     }
   };
 
+  const handleRetry = async () => {
+    setDelegationSummaryLoading(true);
+    try {
+      const summary = await getSafeDelegationSummary();
+      setDelegationSummary(summary);
+
+      // Track telemetry once per mount
+      if (!telemetrySentRef.current) {
+        trackDelegationSummaryLoaded(!!summary?.ok);
+        telemetrySentRef.current = true;
+      }
+    } catch (err) {
+      console.error('Failed to retry delegation summary:', err);
+    } finally {
+      setDelegationSummaryLoading(false);
+    }
+  };
+
   // DelegationForm Component
   const DelegationForm = ({ onSubmit, loading, placeholder }: {
     onSubmit: (username: string) => void;
@@ -475,14 +493,24 @@ export default function Dashboard() {
                 <div className="p-4 text-center">
                   <div className="text-gray-500 mb-2">Delegation summary unavailable</div>
                   <div className="text-xs text-gray-400 mb-3">Retry later or open Transparency</div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setTransparencyOpen(true)}
-                    className="text-purple-600 hover:text-purple-700"
-                  >
-                    Open Transparency
-                  </Button>
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleRetry}
+                      disabled={delegationSummaryLoading}
+                    >
+                      Retry
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setTransparencyOpen(true)}
+                      className="text-purple-600 hover:text-purple-700"
+                    >
+                      Open Transparency
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
