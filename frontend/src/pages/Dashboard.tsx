@@ -100,7 +100,7 @@ export default function Dashboard() {
     }
   }, [user, userLoading, fetchRecentPolls]);
 
-  const fetchContent = async () => {
+  const fetchContent = useCallback(async () => {
     try {
       setContentLoading(true);
       setContentError(null);
@@ -116,9 +116,9 @@ export default function Dashboard() {
     } finally {
       setContentLoading(false);
     }
-  };
+  }, []);
 
-  const fetchDelegationSummary = async () => {
+  const fetchDelegationSummary = useCallback(async () => {
     try {
       setDelegationSummaryLoading(true);
       console.log('[DEBUG] fetchDelegationSummary: Starting safe API call');
@@ -162,16 +162,16 @@ export default function Dashboard() {
     } finally {
       setDelegationSummaryLoading(false);
     }
-  };
+  }, []);
 
-  const fetchLabels = async () => {
+  const fetchLabels = useCallback(async () => {
     try {
       const labelsData = await listLabels();
       setLabels(labelsData);
     } catch (err) {
       console.error('Failed to load labels:', err);
     }
-  };
+  }, []);
 
   const handleSetDelegation = async (delegateUsername: string, labelSlug?: string) => {
     try {
@@ -485,7 +485,7 @@ export default function Dashboard() {
                 </h3>
               </div>
 
-              {delegationSummaryLoading ? (
+              {userLoading || delegationSummaryLoading ? (
                 <div className="space-y-4">
                   <Skeleton className="h-12 w-full" />
                   <div className="grid gap-3 md:grid-cols-2">
@@ -499,7 +499,7 @@ export default function Dashboard() {
                   <div className="text-xs text-gray-400 mb-3">Try again now or open Transparency to inspect live data.</div>
                   {delegationSummary?.meta?.trace_id && (
                     <div className="text-[10px] text-gray-400 mt-1 mb-3">
-                      Trace: {delegationSummary.meta.trace_id}
+                      Trace: {delegationSummary.meta.trace_id.slice(0, 8)}...
                     </div>
                   )}
                   <div className="flex justify-center gap-2">
@@ -609,7 +609,7 @@ export default function Dashboard() {
           {/* Recent Community Activity */}
           <div>
             <h2 className="text-2xl font-semibold text-gov-primary mb-6">Recent Community Activity</h2>
-          {loading ? (
+          {userLoading || loading ? (
             <div className="space-y-4">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="gov-card animate-pulse">
