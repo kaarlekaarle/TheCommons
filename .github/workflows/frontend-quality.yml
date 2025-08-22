@@ -33,7 +33,5 @@ jobs:
         cd frontend
         npm run typecheck
 
-    - name: Lint with warnings limit
-      run: |
-        cd frontend
-        npm run lint -- --max-warnings=10
+    - name: ESLint
+      run: npm run lint -- --max-warnings=10

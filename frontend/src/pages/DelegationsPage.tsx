@@ -225,14 +225,6 @@ export default function DelegationsPage() {
     cascadeHealth.effectiveBlockMs >= 1550 &&
     cascadeHealth.p95Ms >= 1480;
 
-  // Fetch warnings for people when search results change
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time fetch when people change
-  useEffect(() => {
-    if (people.length > 0) {
-      fetchPeopleWarnings();
-    }
-  }, [people]);
-
   const fetchPeopleWarnings = useCallback(async () => {
     const warnings: Record<string, { concentration?: boolean; superDelegate?: boolean }> = {};
 
@@ -258,6 +250,13 @@ export default function DelegationsPage() {
 
     setPeopleWarnings(warnings);
   }, [people]);
+
+  // Fetch warnings for people when search results change
+  useEffect(() => {
+    if (people.length > 0) {
+      fetchPeopleWarnings();
+    }
+  }, [people, fetchPeopleWarnings]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">

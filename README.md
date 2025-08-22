@@ -563,9 +563,9 @@ Response:
 
 We welcome contributors of all skill levels! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, or ask questions in our community chat.
 
-### Quality gates
-- Pre-commit runs ESLint via husky/lint-staged (0 errors, warnings blocked by CI cap)
-- CI cap: 10 warnings (ratcheted weekly to 0)
+### Frontend quality gates
+- Pre-commit (husky + lint-staged): blocks TS/ESLint errors on staged TS/TSX.
+- CI cap: ≤10 warnings (ratcheted weekly to 0).
 - See `docs/FRONTEND_QUALITY_GATES.md` for details.
 
 Join the discussion on Discord: [your-discord-invite-link]

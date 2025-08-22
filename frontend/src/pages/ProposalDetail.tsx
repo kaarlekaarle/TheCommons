@@ -31,7 +31,7 @@ export default function ProposalDetail() {
   const { success, error: showError } = useToast();
 
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time fetch when id changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
   useEffect(() => {
     if (id) {
       fetchData();
