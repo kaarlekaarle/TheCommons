@@ -8,7 +8,7 @@ import { compassAnalytics } from '../lib/analytics';
 import type { Poll, PollOption, Vote } from '../types';
 import Button from '../components/ui/Button';
 import LabelChip from '../components/ui/LabelChip';
-import DirectionCards, { type Direction } from '../components/compass/DirectionCards';
+import { type Direction } from '../components/compass/DirectionCards';
 import DirectionCard from '../components/compass/DirectionCard';
 import { Expandable } from '../components/compass/Expandable';
 import CompassTally from '../components/compass/CompassTally';
@@ -346,7 +346,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
           }));
           setTally(tallyData);
         }
-      } catch (resultsError) {
+      } catch {
         console.log('Could not refresh results');
       }
     } catch (err: unknown) {
