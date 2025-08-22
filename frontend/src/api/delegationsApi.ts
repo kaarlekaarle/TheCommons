@@ -1,5 +1,9 @@
 import api from '../lib/api';
 
+// Tiny guards for API responses
+const asObj = (v: unknown) => (v && typeof v === 'object') ? v as Record<string, unknown> : {};
+const asArr = (v: unknown) => Array.isArray(v) ? v as unknown[] : [];
+
 // --- Delegation summary types ---
 export interface DelegationSummary {
   ok: boolean;
@@ -156,36 +160,36 @@ export async function createDelegation(input: CreateDelegationInput): Promise<Cr
 }
 
 // --- Transparency endpoints ---
-export async function getMyChains(): Promise<any> {
+export async function getMyChains(): Promise<unknown[]> {
   try {
     const response = await api.get('/api/delegations/me/chain');
-    return response.data;
+    return asArr(response.data);
   } catch (error: unknown) {
-    const err = error as { response?: { data?: { detail?: string } } };
-    throw new Error(err.response?.data?.detail || 'Failed to fetch delegation chains');
+    console.debug('Failed to fetch delegation chains:', error);
+    return [];
   }
 }
 
-export async function getInbound(delegateeId: string, fieldId?: string): Promise<any> {
+export async function getInbound(delegateeId: string, fieldId?: string): Promise<Record<string, unknown>> {
   try {
     const params = new URLSearchParams();
     if (fieldId) params.append('fieldId', fieldId);
 
     const response = await api.get(`/api/delegations/${delegateeId}/inbound?${params.toString()}`);
-    return response.data;
+    return asObj(response.data);
   } catch (error: unknown) {
-    const err = error as { response?: { data?: { detail?: string } } };
-    throw new Error(err.response?.data?.detail || 'Failed to fetch inbound delegations');
+    console.debug('Failed to fetch inbound delegations:', error);
+    return { total: 0, byField: [], recent: [] };
   }
 }
 
-export async function getHealthSummary(): Promise<any> {
+export async function getHealthSummary(): Promise<Record<string, unknown>> {
   try {
     const response = await api.get('/api/delegations/health/summary');
-    return response.data;
+    return asObj(response.data);
   } catch (error: unknown) {
-    const err = error as { response?: { data?: { detail?: string } } };
-    throw new Error(err.response?.data?.detail || 'Failed to fetch health summary');
+    console.debug('Failed to fetch health summary:', error);
+    return { topDelegatees: [], byField: [] };
   }
 }
 
