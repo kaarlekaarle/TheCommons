@@ -203,6 +203,15 @@ export async function trackDelegationCreated(mode: string): Promise<void> {
   }
 }
 
+export async function trackDelegationSummaryLoaded(ok: boolean): Promise<void> {
+  try {
+    await api.post('/api/telemetry/delegation-summary-loaded', { ok });
+  } catch (err) {
+    // Silently fail - telemetry is non-critical
+    console.debug('Failed to track delegation summary loaded:', err);
+  }
+}
+
 export async function getMyAdoptionSnapshot(): Promise<{
   last30d: { legacyPct: number; commonsPct: number };
 }> {

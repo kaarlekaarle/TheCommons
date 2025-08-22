@@ -18,6 +18,7 @@ import {
   Target
 } from 'lucide-react';
 import { listPolls, getContentPrinciples, getContentActions, getSafeDelegationSummary, setDelegation, listLabels } from '../lib/api';
+import { trackDelegationSummaryLoaded } from '../api/delegationsApi';
 import type { Poll, Label } from '../types';
 import type { SafeDelegationSummary } from '../lib/api';
 import type { PrincipleItem, ActionItem } from '../types/content';
@@ -127,6 +128,9 @@ export default function Dashboard() {
       }
 
       setDelegationSummary(summary);
+
+      // Track telemetry
+      trackDelegationSummaryLoaded(!!summary?.ok);
 
       // Show non-blocking warning if there are errors but some data is available
       if (!summary.ok && summary.meta?.errors?.length) {
