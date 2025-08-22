@@ -68,7 +68,7 @@ export default function TopicPage() {
   }, [overview]);
 
   // Retry logic with exponential backoff
-  const retryWithBackoff = useCallback(async (fn: () => Promise<any>, maxRetries = 3) => {
+  const retryWithBackoff = useCallback(async (fn: () => Promise<unknown>, maxRetries = 3) => {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await fn();
@@ -110,7 +110,7 @@ export default function TopicPage() {
           page: currentPage,
           per_page: perPage,
           sort: sortOrder
-        }));
+        })) as LabelOverview;
 
         // Log the raw data from API
         if (overviewData.items) {
@@ -139,7 +139,7 @@ export default function TopicPage() {
       }
 
       try {
-        popularData = await retryWithBackoff(() => getPopularLabels(8));
+        popularData = await retryWithBackoff(() => getPopularLabels(8)) as PopularLabel[];
       } catch (popularErr) {
         console.error('Failed to fetch popular labels:', popularErr);
         // Don't set error for popular labels - it's not critical

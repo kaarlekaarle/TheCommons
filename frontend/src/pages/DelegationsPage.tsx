@@ -122,8 +122,9 @@ export default function DelegationsPage() {
         setFields(results.fields);
         setShowResults(true);
         setSelectedIndex(-1);
-      } catch (err: any) {
-        setError(err.message || 'Search failed');
+      } catch (err: unknown) {
+        const error = err as { message?: string };
+        setError(error.message || 'Search failed');
         setPeople([]);
         setFields([]);
       } finally {

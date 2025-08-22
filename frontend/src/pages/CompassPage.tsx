@@ -52,7 +52,7 @@ const defaultScheduler: RetryScheduler = {
 };
 
 // Backoff computation
-export const computeBackoff = (attempt: number) => Math.min(1000 * 2 ** (attempt - 1), 8000);
+const computeBackoff = (attempt: number) => Math.min(1000 * 2 ** (attempt - 1), 8000);
 
 // Props
 interface CompassPageProps {
