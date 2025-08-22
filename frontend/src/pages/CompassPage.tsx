@@ -66,6 +66,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
   // Core data
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [myAlignment, setMyAlignment] = useState<string | null>(null);
   const [myVote, setMyVote] = useState<Vote | null>(null);
@@ -74,6 +75,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
   // Section state machines
   const [directionsState, setDirectionsState] = useState<SectionState>({ status: 'idle', retryCount: 0 });
   const [tallyState, setTallyState] = useState<SectionState>({ status: 'idle', retryCount: 0 });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [conversationState, setConversationState] = useState<SectionState>({ status: 'idle', retryCount: 0 });
 
   // UI state
@@ -227,7 +229,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
       });
       compassAnalytics.error('directions', error.message || 'Failed to load compass');
     }
-  }, [id, navigate]);
+  }, [id, navigate, directionsState.retryCount]);
 
   // Initialize fetch on mount and route change
   useEffect(() => {
@@ -260,7 +262,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
         abortControllerRef.current.abort();
       }
     };
-  }, [id]); // Only depend on id to avoid infinite loops
+  }, [id, fetchCompass]); // Only depend on id to avoid infinite loops
 
   // Retry function with exponential backoff
   const retrySection = useCallback(async (section: 'directions' | 'tally' | 'conversation') => {
@@ -302,7 +304,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
       }
       throw error;
     }
-  }, [fetchCompass]);
+  }, [fetchCompass, scheduler]);
 
   const handleShare = async () => {
     try {
