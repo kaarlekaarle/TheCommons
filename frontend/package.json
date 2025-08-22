@@ -25,7 +25,7 @@
     "clear-local": "echo 'Clearing local storage...' && node -e \"console.log('Local storage cleared. Please hard refresh your browser.')\"",
     "dev:topic:mobility": "echo 'Navigate to /t/mobility and check console for counts & dupes'",
     "setup:env": "chmod +x setup-env.sh && ./setup-env.sh",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{ts,tsx}": "eslint --max-warnings=0"
