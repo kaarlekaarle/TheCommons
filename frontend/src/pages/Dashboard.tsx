@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [contentError, setContentError] = useState<string | null>(null);
   const [delegationLoading, setDelegationLoading] = useState(false);
   const [delegationSummaryLoading, setDelegationSummaryLoading] = useState(false);
+  const [transparencyOpen, setTransparencyOpen] = useState(false);
   const { error: showError, success: showSuccess } = useToast();
   const { user, loading: userLoading } = useCurrentUser();
 
@@ -469,7 +470,15 @@ export default function Dashboard() {
               ) : !delegationSummary?.ok ? (
                 <div className="p-4 text-center">
                   <div className="text-gray-500 mb-2">Delegation summary unavailable</div>
-                  <div className="text-xs text-gray-400">Retry later or open Transparency</div>
+                  <div className="text-xs text-gray-400 mb-3">Retry later or open Transparency</div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setTransparencyOpen(true)}
+                    className="text-purple-600 hover:text-purple-700"
+                  >
+                    Open Transparency
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
