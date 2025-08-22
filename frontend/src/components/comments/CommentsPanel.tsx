@@ -47,8 +47,9 @@ export default function CommentsPanel({ proposalId }: CommentsPanelProps) {
         const data = await listComments(proposalId, undefined, ac.signal);
         setItems(data.comments);
       }
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
+    } catch (e: unknown) {
+      const error = e as { name?: string };
+      if (error.name !== 'AbortError') {
         setError('Could not load comments.');
       }
     } finally {

@@ -5,19 +5,19 @@ interface TextProps {
   children: React.ReactNode;
   muted?: boolean;
   className?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-export function Text({ 
-  as: Comp = 'p', 
-  children, 
-  muted = false, 
-  className = '', 
-  ...rest 
+export function Text({
+  as: Comp = 'p',
+  children,
+  muted = false,
+  className = '',
+  ...rest
 }: TextProps) {
   return (
-    <Comp 
-      className={`${muted ? 'text-muted' : 'text-body'} ${className}`} 
+    <Comp
+      className={`${muted ? 'text-muted' : 'text-body'} ${className}`}
       {...rest}
     >
       {children}

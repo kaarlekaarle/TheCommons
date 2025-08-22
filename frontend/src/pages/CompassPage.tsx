@@ -20,7 +20,7 @@ const isAbortError = (err: unknown) =>
   err instanceof DOMException && err.name === 'AbortError';
 
 // Debug logging (dev-only)
-const dbg = (...args: any[]) => {
+const dbg = (...args: unknown[]) => {
   if (import.meta?.env?.MODE === 'test') console.debug('[CompassPage]', ...args);
 };
 
@@ -350,7 +350,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
         console.log('Could not refresh results');
       }
     } catch (err: unknown) {
-      const error = err as { message: string | Array<any> };
+      const error = err as { message: string | Array<unknown> };
       console.error('Failed to cast vote:', error);
 
       // Handle different error message formats
@@ -358,8 +358,8 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
       if (error.message) {
         if (Array.isArray(error.message)) {
           // If message is an array (validation errors), join them
-          errorMessage = error.message.map((item: any) =>
-            typeof item === 'string' ? item : item.msg || 'Validation error'
+          errorMessage = error.message.map((item: unknown) =>
+            typeof item === 'string' ? item : (item as { msg?: string })?.msg || 'Validation error'
           ).join(', ');
         } else if (typeof error.message === 'string') {
           errorMessage = error.message;
