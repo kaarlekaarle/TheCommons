@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2, FileText, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Share2, Calendar, Clock } from 'lucide-react';
 import { getPoll, getPollOptions, getMyVoteForPoll, castVote, getResults } from '../lib/api';
 import { flags } from '../config/flags';
 import { compassCopy, completeStreetsCopy as cc } from '../copy/compass';
@@ -571,7 +571,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
         <section className="mt-8">
           <h2 className="text-lg font-semibold">{cc.backgroundHeading}</h2>
           <p className="mt-2 text-gray-800">{cc.backgroundSummary}</p>
-          <Expandable summary="Read more" id="background-more">
+          <Expandable id="background-more">
             <ul className="list-disc pl-5">
               {cc.backgroundReadMore.map((x, i) => (<li key={i}>{x}</li>))}
             </ul>

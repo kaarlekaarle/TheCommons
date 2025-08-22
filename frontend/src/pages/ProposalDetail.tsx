@@ -7,7 +7,7 @@ import type { Poll, PollOption, Vote, PollResults, Label } from '../types';
 import Button from '../components/ui/Button';
 import CommentsPanel from '../components/comments/CommentsPanel';
 import { useToast } from '../components/ui/useToast';
-import { useCurrentUser } from '../hooks/useCurrentUser';
+
 import LabelChip from '../components/ui/LabelChip';
 import LinkedPrinciplesDrawer from '../components/LinkedPrinciplesDrawer';
 import { flags } from '../config/flags';

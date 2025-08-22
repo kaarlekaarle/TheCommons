@@ -155,19 +155,19 @@ export default function DelegationsPage() {
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const totalItems = people.length + fields.length;
-    
+
     if (totalItems === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < totalItems - 1 ? prev + 1 : 0
         );
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev > 0 ? prev - 1 : totalItems - 1
         );
         break;
@@ -233,7 +233,7 @@ export default function DelegationsPage() {
 
   const fetchPeopleWarnings = async () => {
     const warnings: Record<string, { concentration?: boolean; superDelegate?: boolean }> = {};
-    
+
     // Fetch inbound delegations for each person to check for warnings
     for (const person of people) {
       try {
@@ -248,12 +248,12 @@ export default function DelegationsPage() {
             warnings[person.id] = { ...warnings[person.id], superDelegate: true };
           }
         }
-      } catch (err) {
+      } catch {
         // Silently fail - warnings are optional
         console.debug('Failed to fetch warnings for person:', person.id);
       }
     }
-    
+
     setPeopleWarnings(warnings);
   };
 
@@ -324,7 +324,7 @@ export default function DelegationsPage() {
           <div className="p-4 bg-surface-muted border border-border rounded-lg">
             <h3 id="traditional-title" className="font-medium text-fg-strong mb-2">Traditional</h3>
             <p className="text-fg-muted text-sm mb-4">Delegate all power to one person for 4 years (revocable).</p>
-            
+
             {openCard === 'traditional' ? (
               <InlineTraditionalForm
                 onSubmitted={handleCollapseForm}
@@ -348,11 +348,11 @@ export default function DelegationsPage() {
               </button>
             )}
           </div>
-          
+
           <div className="p-4 bg-info-bg border border-border rounded-lg">
             <h3 id="commons-title" className="font-medium text-fg-strong mb-2">Commons</h3>
             <p className="text-fg-muted text-sm mb-4">Delegate by field, interrupt anytime.</p>
-            
+
             {openCard === 'commons' ? (
               <InlineCommonsForm
                 onSubmitted={handleCollapseForm}
@@ -394,7 +394,7 @@ export default function DelegationsPage() {
             className="w-full max-w-2xl pl-10 pr-4 py-3 border border-border rounded-lg bg-surface text-fg placeholder-placeholder focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
           />
         </div>
-        
+
         {/* Search Results Dropdown */}
         {showResults && (query.trim() || loading) && (
           <div className="absolute top-full left-0 right-0 max-w-2xl mt-1 bg-surface border border-border rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
@@ -507,7 +507,7 @@ export default function DelegationsPage() {
             )}
           </div>
         )}
-        
+
         {error && (
           <p className="mt-2 text-sm text-danger-fg">{error}</p>
         )}

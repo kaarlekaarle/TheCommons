@@ -1,12 +1,10 @@
 import { useState } from "react";
 
 export function Expandable({
-  summary,
   children,
   defaultOpen = false,
   id
 }: {
-  summary: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
   id?: string
