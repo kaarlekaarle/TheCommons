@@ -83,15 +83,16 @@ export default function Dashboard() {
     } else {
       setContentLoading(false);
     }
-    // Always fetch delegation data if labels are enabled (safe endpoint handles auth)
-    if (flags.labelsEnabled && !userLoading) {
+    // Always fetch delegation data if labels are enabled and user is authenticated
+    if (flags.labelsEnabled && !userLoading && user) {
       console.log('[DEBUG] Dashboard: Fetching delegation data (safe endpoint)');
       fetchDelegationSummary();
-
-      // Only fetch labels if authenticated
-      if (user) {
-        fetchLabels();
-      }
+      fetchLabels();
+    } else if (flags.labelsEnabled && !userLoading && !user) {
+      // Clear delegation data when not authenticated
+      console.log('[DEBUG] Dashboard: Clearing delegation data - not authenticated');
+      setDelegationSummary(null);
+      setLabels([]);
     } else if (!flags.labelsEnabled && !userLoading) {
       // Clear delegation data when labels are disabled
       console.log('[DEBUG] Dashboard: Clearing delegation data - labels disabled');
@@ -497,11 +498,6 @@ export default function Dashboard() {
                 <div className="p-4 text-center">
                   <div className="text-gray-500 mb-2">Delegation summary unavailable</div>
                   <div className="text-xs text-gray-400 mb-3">Try again now or open Transparency to inspect live data.</div>
-                  {delegationSummary?.meta?.trace_id && (
-                    <div className="text-[10px] text-gray-400 mt-1 mb-3">
-                      Trace: {delegationSummary.meta.trace_id.slice(0, 8)}...
-                    </div>
-                  )}
                   <div className="flex justify-center gap-2">
                     <Button
                       variant="secondary"
