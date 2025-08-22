@@ -5,7 +5,7 @@ export interface DelegationSummary {
   ok: boolean;
   counts: { mine: number; inbound: number };
   adoption?: { commonsPct: number; legacyPct: number; transitions?: number };
-  meta?: { errors?: string[]; trace_id?: string; generated_at: string };
+  meta?: { errors?: string[]; trace_id?: string; generated_at?: string };
 }
 
 export interface Delegation {
@@ -63,21 +63,32 @@ export type CreateDelegationResponse = {
 function parseSummary(x: unknown): DelegationSummary {
   const d = x as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   return {
-    ok: !!d?.ok,
-    counts: { mine: Number(d?.counts?.mine || 0), inbound: Number(d?.counts?.inbound || 0) },
-    adoption: d?.adoption && {
-      commonsPct: Number(d.adoption.commonsPct || 0),
-      legacyPct: Number(d.adoption.legacyPct || 0),
-      transitions: Number(d.adoption.transitions || 0),
+    ok: Boolean(d?.ok),
+    counts: {
+      mine: Number(d?.counts?.mine ?? 0),
+      inbound: Number(d?.counts?.inbound ?? 0),
     },
-    meta: d?.meta && { ...d.meta, generated_at: String(d.meta.generated_at || new Date().toISOString()) }
+    adoption: d?.adoption && {
+      commonsPct: Number(d.adoption.commonsPct ?? 0),
+      legacyPct: Number(d.adoption.legacyPct ?? 0),
+      transitions: d.adoption.transitions != null ? Number(d.adoption.transitions) : undefined,
+    },
+    meta: d?.meta && {
+      generated_at: d.meta.generated_at ? String(d.meta.generated_at) : undefined,
+      errors: Array.isArray(d.meta.errors) ? d.meta.errors : undefined,
+      trace_id: d.meta.trace_id ? String(d.meta.trace_id) : undefined,
+    },
   };
 }
 
 export async function fetchDelegationSummary(): Promise<DelegationSummary> {
-  const r = await fetch('/api/delegations/summary');
-  const j = await r.json().catch(() => ({}));
-  return parseSummary(j);
+  try {
+    const r = await fetch('/api/delegations/summary');
+    const j = await r.json().catch(() => ({}));
+    return parseSummary(j);
+  } catch (e: any) {
+    return { ok: false, counts: { mine: 0, inbound: 0 }, meta: { errors: [e?.message ?? 'fetch failed'] } };
+  }
 }
 
 // --- Search endpoints ---
