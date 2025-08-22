@@ -465,6 +465,8 @@ export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary>
   }
 };
 
+
+
 export const setDelegation = async (delegateId: string, labelSlug?: string): Promise<DelegationInfo> => {
   try {
     const payload: { delegatee_id: string; label_slug?: string } = { delegatee_id: delegateId };
