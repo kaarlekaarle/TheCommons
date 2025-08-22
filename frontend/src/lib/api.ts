@@ -441,8 +441,14 @@ export const EMPTY_DELEGATION_SUMMARY: SafeDelegationSummary = {
 export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary> => {
   try {
     const { data } = await api.get('/api/delegations/summary');
-    // minimal safety parsing
-    return {
+
+    // Ensure we always return a valid object, never undefined
+    if (!data) {
+      return EMPTY_DELEGATION_SUMMARY;
+    }
+
+    // minimal safety parsing with additional guards
+    const result = {
       ok: Boolean(data?.ok),
       global_delegate: data?.global_delegate,
       per_label: Array.isArray(data?.per_label) ? data.per_label : [],
@@ -457,6 +463,9 @@ export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary>
         duration_ms: Number(data.meta.duration_ms ?? 0),
       },
     };
+
+    // Final safety check - ensure we never return undefined
+    return result || EMPTY_DELEGATION_SUMMARY;
   } catch (error: unknown) {
     const err = error as AxiosErrorResponse;
     // Return a safe fallback instead of throwing
