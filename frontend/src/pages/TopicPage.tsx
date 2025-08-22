@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { getLabelOverview, getPopularLabels } from '../lib/api';
 import type { LabelOverview, PopularLabel, PollSummary } from '../types';
+
+// Topic page specific types
+type PollItem = { id: string; label?: string; value?: number };
 import Button from '../components/ui/Button';
 import LabelChip from '../components/ui/LabelChip';
 import { useToast } from '../components/ui/useToast';
@@ -74,7 +77,7 @@ export default function TopicPage() {
   }, [overview]);
 
   // Retry logic with exponential backoff
-  const retryWithBackoff = useCallback(async (fn: () => Promise<any>, maxRetries = 3) => {
+  const retryWithBackoff = useCallback(async (fn: () => Promise<unknown>, maxRetries = 3) => {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await fn();
@@ -115,8 +118,8 @@ export default function TopicPage() {
       setError(null);
 
       // Try to fetch both endpoints independently
-      let overviewData = null;
-      let popularData = [];
+      let overviewData: LabelOverview | null = null;
+      let popularData: PopularLabel[] = [];
 
       try {
         overviewData = await retryWithBackoff(() => getLabelOverview(slug, {
@@ -124,7 +127,7 @@ export default function TopicPage() {
           page: currentPage,
           per_page: perPage,
           sort: sortOrder
-        }, abortControllerRef.current?.signal));
+        }, abortControllerRef.current?.signal)) as LabelOverview;
 
         // Log the raw data from API
         if (overviewData.items) {
@@ -153,7 +156,7 @@ export default function TopicPage() {
       }
 
       try {
-        popularData = await retryWithBackoff(() => getPopularLabels(8, abortControllerRef.current?.signal));
+        popularData = await retryWithBackoff(() => getPopularLabels(8, abortControllerRef.current?.signal)) as PopularLabel[];
       } catch (popularErr) {
         console.error('Failed to fetch popular labels:', popularErr);
         // Don't set error for popular labels - it's not critical
@@ -467,7 +470,7 @@ export default function TopicPage() {
             {(() => {
               // Log final rendered array
               logSet("render:final", overview.items);
-              return overview.items.map((poll) => (
+              return (overview.items ?? []).map((poll) => (
                 <motion.div
                   key={poll.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -502,7 +505,7 @@ export default function TopicPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1">
-                    {poll.labels.map((label) => (
+                    {(poll.labels ?? []).map((label) => (
                       <LabelChip
                         key={`${poll.id}:${label.slug}`}
                         label={{
@@ -542,7 +545,7 @@ export default function TopicPage() {
         <div className="mt-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Popular Topics</h2>
           <div className="flex flex-wrap gap-2">
-            {popularLabels.map((label) => (
+            {(popularLabels ?? []).map((label) => (
               <LabelChip
                 key={`popular-label-${label.id}`}
                 label={{

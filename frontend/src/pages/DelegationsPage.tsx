@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import InlineTraditionalForm from "../components/delegations/InlineTraditionalForm";
 import InlineCommonsForm from "../components/delegations/InlineCommonsForm";
 import TransparencyPanel from "../components/delegations/TransparencyPanel";
@@ -225,13 +225,14 @@ export default function DelegationsPage() {
     cascadeHealth.p95Ms >= 1480;
 
   // Fetch warnings for people when search results change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (people.length > 0) {
       fetchPeopleWarnings();
     }
   }, [people]);
 
-  const fetchPeopleWarnings = async () => {
+  const fetchPeopleWarnings = useCallback(async () => {
     const warnings: Record<string, { concentration?: boolean; superDelegate?: boolean }> = {};
 
     // Fetch inbound delegations for each person to check for warnings
@@ -255,7 +256,7 @@ export default function DelegationsPage() {
     }
 
     setPeopleWarnings(warnings);
-  };
+  }, [people]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">

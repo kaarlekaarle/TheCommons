@@ -2,12 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
   Target,
   Compass,
   TrendingUp,
   ExternalLink,
-  UserX,
   AlertTriangle,
   ChevronDown
 } from 'lucide-react';
@@ -42,7 +40,7 @@ export default function TopicPage() {
   const [popularLabels, setPopularLabels] = useState<PopularLabel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+  const [_retryCount, setRetryCount] = useState(0);
   const [fallbackData, setFallbackData] = useState<LabelOverview | null>(null);
   const { error: showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -228,7 +226,7 @@ export default function TopicPage() {
     }
   }, [activeTab]);
 
-  const getTabCount = useCallback(() => {
+  const _getTabCount = useCallback(() => {
     if (!overview) return 0;
 
     switch (activeTab) {
@@ -434,7 +432,7 @@ export default function TopicPage() {
             {(() => {
               // Log final rendered array
               logSet("render:final", overview.items);
-              return overview.items.map((poll, pollIndex) => (
+              return overview.items.map((poll, _pollIndex) => (
                 <motion.div
                   key={poll.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -469,7 +467,7 @@ export default function TopicPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1">
-                    {poll.labels.map((label, labelIndex) => (
+                    {poll.labels.map((label, _labelIndex) => (
                       <LabelChip
                         key={`${poll.id}:${label.slug}`}
                         label={{
