@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, RefreshCw, Compass, Target } from 'lucide-react';
 import { getActivityFeed } from '../lib/api';
@@ -17,7 +17,7 @@ export default function ActivityFeed() {
   const [activeFilter, setActiveFilter] = useState<LevelFilterType>('all');
   const { error: showError } = useToast();
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -38,7 +38,7 @@ export default function ActivityFeed() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
 
   useEffect(() => {
     fetchActivities();

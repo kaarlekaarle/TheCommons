@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Send, Trash2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { listComments, createComment, deleteComment, setCommentReaction } from '../lib/api';
@@ -25,7 +25,7 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
     return { stance: null, clean: text };
   };
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true);
       const data = await listComments(pollId);
@@ -37,11 +37,11 @@ export default function ProposalComments({ pollId }: ProposalCommentsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pollId, showError]);
 
   useEffect(() => {
     fetchComments();
-  }, [pollId, fetchComments]);
+  }, [fetchComments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
