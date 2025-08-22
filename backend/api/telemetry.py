@@ -23,6 +23,10 @@ class DelegationCreatedRequest(BaseModel):
     mode: str
 
 
+class DelegationSummaryLoadedRequest(BaseModel):
+    ok: bool
+
+
 @router.post("/composer-open")
 async def track_composer_open(
     request: ComposerOpenRequest,
@@ -97,3 +101,41 @@ async def track_delegation_created(
             exc_info=True,
         )
         raise HTTPException(status_code=500, detail="Failed to track delegation created")
+
+
+@router.post("/delegation-summary-loaded")
+async def track_delegation_summary_loaded(
+    request: DelegationSummaryLoadedRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> Dict[str, Any]:
+    """Track when a delegation summary is loaded successfully or with errors.
+    
+    Args:
+        request: The delegation summary loaded request with ok status
+        current_user: Currently authenticated user
+        db: Database session
+        
+    Returns:
+        dict: Success response
+    """
+    try:
+        logger.info(
+            "Delegation summary loaded",
+            extra={
+                "user_id": str(current_user.id),
+                "ok": request.ok,
+            },
+        )
+        
+        # For now, just log the event
+        # In the future, this could be stored in a telemetry table
+        return {"status": "success", "message": "Delegation summary loaded tracked"}
+        
+    except Exception as e:
+        logger.error(
+            "Failed to track delegation summary loaded",
+            extra={"error": str(e), "user_id": str(current_user.id)},
+            exc_info=True,
+        )
+        raise HTTPException(status_code=500, detail="Failed to track delegation summary loaded")
