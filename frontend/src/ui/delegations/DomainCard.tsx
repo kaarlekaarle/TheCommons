@@ -1,6 +1,7 @@
-import type { DomainDelegation } from '@/lib/delegations/types';
+import { useToast } from '../../components/ui/useToast';
 
 export function DomainCard({ domainName, delegatedTo }: { domainName: string; delegatedTo: string }) {
+  const { success } = useToast();
   return (
     <div className="rounded-2xl border bg-white p-4 shadow-sm">
       <div className="mb-1 flex items-center justify-between">
@@ -15,25 +16,19 @@ export function DomainCard({ domainName, delegatedTo }: { domainName: string; de
       <div className="flex gap-2">
         <button
           className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
-          // onClick={() => openManageModal(domain.domainId)}
-          disabled
-          title="Manage coming soon"
+          onClick={() => success('Coming soon: delegate by field')}
         >
           Manage
         </button>
         <button
           className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
-          // onClick={() => openChainModal(domain.domainId)}
-          disabled
-          title="Chain coming soon"
+          onClick={() => success('Coming soon: view delegation chain')}
         >
           View chain
         </button>
         <button
           className="ml-auto rounded-xl border px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
-          // onClick={() => interrupt(domain.domainId)}
-          disabled
-          title="Interrupt coming soon"
+          onClick={() => success('Coming soon: interrupt delegation')}
         >
           Interrupt
         </button>
