@@ -66,8 +66,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
   // Core data
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [_selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [myAlignment, setMyAlignment] = useState<string | null>(null);
   const [myVote, setMyVote] = useState<Vote | null>(null);
   const [tally, setTally] = useState<Array<{ optionId: string; count: number }>>([]);
@@ -75,8 +74,7 @@ export default function CompassPage({ scheduler = defaultScheduler }: CompassPag
   // Section state machines
   const [directionsState, setDirectionsState] = useState<SectionState>({ status: 'idle', retryCount: 0 });
   const [tallyState, setTallyState] = useState<SectionState>({ status: 'idle', retryCount: 0 });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [conversationState, setConversationState] = useState<SectionState>({ status: 'idle', retryCount: 0 });
+  const [_conversationState, setConversationState] = useState<SectionState>({ status: 'idle', retryCount: 0 });
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);

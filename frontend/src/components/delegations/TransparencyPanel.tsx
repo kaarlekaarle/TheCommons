@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Users, User, BarChart3, Loader2, AlertCircle, RefreshCw, ChevronDown } from 'lucide-react';
 import { getMyChains, getInbound, getHealthSummary } from '../../api/delegationsApi';
+import { asObj, asArr } from '../../lib/guards';
 import Button from '../ui/Button';
 
 type TransparencyTab = 'chains' | 'inbound' | 'health';
@@ -22,9 +23,7 @@ type ChainsByField = ReadonlyArray<Chain>;
 type HealthTop = ReadonlyArray<Readonly<{ id: string; name?: string; pct: number }>>;
 type HealthSummary = Readonly<{ topDelegatees?: HealthTop; byField?: ReadonlyArray<Readonly<{ fieldId: string; pct: number; top?: HealthTop }>> }>;
 
-// Tiny guards
-const asObj = (v: unknown) => (v && typeof v === 'object') ? v as Record<string, unknown> : {};
-const asArr = (v: unknown) => Array.isArray(v) ? v as unknown[] : [];
+
 
 export default function TransparencyPanel({
   isOpen,
@@ -245,13 +244,13 @@ export default function TransparencyPanel({
         <p className="text-sm text-fg-muted">
           Your delegation chains grouped by field:
         </p>
-        {chains.map((chain, index: number) => (
+        {(chains ?? []).map((chain, index: number) => (
           <div key={index} className="p-4 bg-surface-muted rounded-lg border">
             <h4 className="font-medium text-fg-strong mb-2">
               {chain.fieldId || 'Global'}
             </h4>
             <div className="space-y-2">
-              {chain.path.map((link, linkIndex: number) => (
+              {(chain.path ?? []).map((link, linkIndex: number) => (
                 <div key={linkIndex} className="flex items-center gap-2 text-sm">
                   <span className="text-fg-muted">
                     {link.name || link.id}

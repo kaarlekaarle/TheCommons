@@ -1,8 +1,5 @@
 import api from '../lib/api';
-
-// Tiny guards for API responses
-const asObj = (v: unknown) => (v && typeof v === 'object') ? v as Record<string, unknown> : {};
-const asArr = (v: unknown) => Array.isArray(v) ? v as unknown[] : [];
+import { asObj, asArr } from '../lib/guards';
 
 // --- Delegation summary types ---
 export interface DelegationSummary {
