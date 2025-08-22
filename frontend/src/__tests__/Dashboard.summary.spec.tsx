@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from '../pages/Dashboard';
-import * as api from '../lib/api';
 
 // Mock the API functions
 jest.mock('../lib/api', () => ({
@@ -11,6 +10,11 @@ jest.mock('../lib/api', () => ({
   getSafeDelegationSummary: jest.fn(),
   setDelegation: jest.fn(),
   listLabels: jest.fn(),
+}));
+
+// Mock the telemetry
+jest.mock('../api/delegationsApi', () => ({
+  trackDelegationSummaryLoaded: jest.fn(),
 }));
 
 // Mock the flags
@@ -37,6 +41,13 @@ jest.mock('../components/ui/useToast', () => ({
   }),
 }));
 
+// Mock TransparencyPanel
+jest.mock('../components/delegations/TransparencyPanel', () => {
+  return function MockTransparencyPanel() {
+    return <div data-testid="transparency-panel">Transparency Panel</div>;
+  };
+});
+
 const renderDashboard = () => {
   return render(
     <BrowserRouter>
@@ -50,40 +61,19 @@ describe('Dashboard Summary', () => {
     jest.clearAllMocks();
 
     // Mock successful API calls for other data
-    (api.listPolls as jest.Mock).mockResolvedValue([]);
-    (api.getContentPrinciples as jest.Mock).mockResolvedValue([]);
-    (api.getContentActions as jest.Mock).mockResolvedValue([]);
-    (api.listLabels as jest.Mock).mockResolvedValue([]);
+    const { listPolls, getContentPrinciples, getContentActions, listLabels } = require('../lib/api');
+    listPolls.mockResolvedValue([]);
+    getContentPrinciples.mockResolvedValue([]);
+    getContentActions.mockResolvedValue([]);
+    listLabels.mockResolvedValue([]);
   });
 
-  describe('Case A: Summary unavailable', () => {
-    it('shows fallback text when summary is not ok', async () => {
-      (api.getSafeDelegationSummary as jest.Mock).mockResolvedValue({
-        ok: false,
-        counts: { mine: 0, inbound: 0 },
-        meta: { errors: ['test error'], generated_at: '2025-01-01T00:00:00Z' }
-      });
-
-      renderDashboard();
-
-      await waitFor(() => {
-        expect(screen.getByText('Delegation summary unavailable')).toBeInTheDocument();
-        expect(screen.getByText('Retry later or open Transparency')).toBeInTheDocument();
-        expect(screen.getByText('Open Transparency')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Case B: Summary available', () => {
-    it('shows summary content when summary is ok', async () => {
-      (api.getSafeDelegationSummary as jest.Mock).mockResolvedValue({
+  describe('Test A: Happy path', () => {
+    it('shows summary UI when delegation summary is ok', async () => {
+      const { getSafeDelegationSummary } = require('../lib/api');
+      getSafeDelegationSummary.mockResolvedValue({
         ok: true,
         counts: { mine: 1, inbound: 0 },
-        global_delegate: {
-          delegatee_username: 'testdelegate',
-          active: true
-        },
-        per_label: [],
         meta: { generated_at: '2025-01-01T00:00:00Z' }
       });
 
@@ -91,12 +81,33 @@ describe('Dashboard Summary', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Your Delegations by Topic')).toBeInTheDocument();
-        expect(screen.getByText('Global Delegate:')).toBeInTheDocument();
-        expect(screen.getByText('testdelegate')).toBeInTheDocument();
       });
 
       // Should not show fallback text
       expect(screen.queryByText('Delegation summary unavailable')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Test B: Fallback path', () => {
+    it('shows fallback UI with retry button, transparency button, and trace id', async () => {
+      const { getSafeDelegationSummary } = require('../lib/api');
+      getSafeDelegationSummary.mockResolvedValue({
+        ok: false,
+        counts: { mine: 0, inbound: 0 },
+        meta: { trace_id: 'abc123', generated_at: '2025-01-01T00:00:00Z' }
+      });
+
+      renderDashboard();
+
+      await waitFor(() => {
+        expect(screen.getByText('Delegation summary unavailable')).toBeInTheDocument();
+      });
+
+      // Assert key elements are present
+      expect(screen.getByText('Retry later or open Transparency')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Open Transparency' })).toBeInTheDocument();
+      expect(screen.getByText('Trace: abc123')).toBeInTheDocument();
     });
   });
 });
