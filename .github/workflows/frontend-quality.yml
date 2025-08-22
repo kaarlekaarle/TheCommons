@@ -36,4 +36,4 @@ jobs:
     - name: Lint with warnings limit
       run: |
         cd frontend
-        npm run lint -- --max-warnings=15
+        npm run lint -- --max-warnings=10

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, ExternalLink, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { listPolls } from '../lib/api';
@@ -25,7 +25,7 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const fetchLinkedPrinciples = async () => {
+  const fetchLinkedPrinciples = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -46,13 +46,13 @@ export const LinkedPrinciplesDrawer: React.FC<LinkedPrinciplesDrawerProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [label.slug, currentPollId]);
 
   useEffect(() => {
     if (isOpen && flags.labelsEnabled) {
       fetchLinkedPrinciples();
     }
-  }, [isOpen, label.slug, fetchLinkedPrinciples]);
+  }, [isOpen, flags.labelsEnabled, fetchLinkedPrinciples]);
 
   const handleExploreAll = () => {
     navigate(`/principles?label=${label.slug}`);

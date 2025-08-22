@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FileText, Plus, Tag, X } from 'lucide-react';
 import { listPolls } from '../lib/api';
@@ -83,7 +83,7 @@ export default function ProposalGrid({
     }
   }, [useHardcodedData, decisionType, searchParams]);
 
-    const fetchPolls = async () => {
+  const fetchPolls = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -104,7 +104,7 @@ export default function ProposalGrid({
     } finally {
       setLoading(false);
     }
-  };
+  }, [decisionType, searchParams, showError]);
 
   const handleLabelFilterChange = (slug: string | null) => {
     if (slug) {
