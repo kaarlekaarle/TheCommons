@@ -1,6 +1,14 @@
 import { useToast } from '../../components/ui/useToast';
 
-export function DomainCard({ domainName, delegatedTo }: { domainName: string; delegatedTo: string }) {
+export function DomainCard({
+  domainName,
+  delegatedTo,
+  onSelectField
+}: {
+  domainName: string;
+  delegatedTo: string;
+  onSelectField?: (fieldId: string) => void;
+}) {
   const { success } = useToast();
   return (
     <div className="rounded-2xl border bg-white p-4 shadow-sm">
@@ -16,19 +24,19 @@ export function DomainCard({ domainName, delegatedTo }: { domainName: string; de
       <div className="flex gap-2">
         <button
           className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
-          onClick={() => success('Coming soon: delegate by field')}
+          onClick={() => onSelectField ? onSelectField(domainName) : success('Coming soon: delegate by field')}
         >
           Manage
         </button>
         <button
           className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
-          onClick={() => success('Coming soon: view delegation chain')}
+          onClick={() => onSelectField ? onSelectField(domainName) : success('Coming soon: view delegation chain')}
         >
           View chain
         </button>
         <button
           className="ml-auto rounded-xl border px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
-          onClick={() => success('Coming soon: interrupt delegation')}
+          onClick={() => onSelectField ? onSelectField(domainName) : success('Coming soon: interrupt delegation')}
         >
           Interrupt
         </button>
