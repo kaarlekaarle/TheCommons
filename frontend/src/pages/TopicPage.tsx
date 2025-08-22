@@ -216,6 +216,7 @@ export default function TopicPage() {
       setLoading(false);
       isLoadingRef.current = false;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time fetch when URL params change
   }, [slug, activeTab, currentPage, perPage, sortOrder, retryWithBackoff]);
 
   // Fetch data when URL parameters change with debounce

@@ -226,7 +226,7 @@ export default function DelegationsPage() {
     cascadeHealth.p95Ms >= 1480;
 
   // Fetch warnings for people when search results change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time fetch when people change
   useEffect(() => {
     if (people.length > 0) {
       fetchPeopleWarnings();

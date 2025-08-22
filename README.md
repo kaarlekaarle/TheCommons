@@ -27,10 +27,13 @@ For a deeper exploration of the philosophy behind The Commons, see [VISION.md](V
 ## Project Structure
 Detailed architecture in [docs/architecture.md](docs/architecture.md).
 
+## Frontend Quality Gates
+Frontend code quality is enforced through automated checks and pre-commit hooks. See [Frontend Quality Gates](docs/FRONTEND_QUALITY_GATES.md) for details.
+
 ## Topic Labels (A↔B connector)
 Topic Labels serve as connective tissue between Level A (Principles) and Level B (Actions) decisions, enabling:
 - **Delegation by topic area** - delegate specific subjects to trusted experts
-- **A↔B relationships** - see how immediate actions connect to long-term values  
+- **A↔B relationships** - see how immediate actions connect to long-term values
 - **Controlled categorization** - consistent, community-focused topic areas
 
 📖 **Documentation**: [Labels Overview](docs/labels_overview.md) | [Labels Playbook](docs/labels_playbook.md)
@@ -86,10 +89,10 @@ Topic Labels serve as connective tissue between Level A (Principles) and Level B
    ```bash
    # Get principles (Level A content)
    curl http://localhost:8000/api/content/principles
-   
+
    # Get actions (Level B content)
    curl http://localhost:8000/api/content/actions
-   
+
    # Get stories (case studies)
    curl http://localhost:8000/api/content/stories
    ```
@@ -119,7 +122,7 @@ The Commons includes a flexible content pipeline that allows you to serve real c
 
 ### Content Types
 - **Principles** (Level A): Long-term baseline policies and values
-- **Actions** (Level B): Specific proposals and initiatives  
+- **Actions** (Level B): Specific proposals and initiatives
 - **Stories**: Case studies and success stories for the landing page
 
 ### Configuration
@@ -190,10 +193,10 @@ The Commons uses standardized Level-A direction categories. To modify these pres
    ```bash
    # Preview changes (dry run)
    make fix-old-directions
-   
+
    # Apply changes
    make fix-old-directions FORCE=1
-   
+
    # Or wipe all Level-A demo data
    cd backend && python scripts/cleanup_old_directions.py --wipe-level-a --force
    ```
@@ -204,7 +207,7 @@ The Commons uses standardized Level-A direction categories. To modify these pres
    npm run clear-local
    # Then hard refresh your browser (Ctrl+F5 / Cmd+Shift+R)
    ```
-   
+
    Or use the Debug Overlay (when `VITE_DEBUG_OVERLAY=true`):
    - Click the "D" button in the top-right corner
    - Click "Clear Local Storage" button
