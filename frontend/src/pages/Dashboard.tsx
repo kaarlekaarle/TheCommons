@@ -135,7 +135,7 @@ export default function Dashboard() {
 
     } catch (err) {
       console.error('[DEBUG] fetchDelegationSummary: Unexpected error:', err);
-      // Set a minimal error state
+      // Set a minimal error state with friendly fallback
       setDelegationSummary({
         ok: false,
         counts: { mine: 0, inbound: 0 },
@@ -438,7 +438,7 @@ export default function Dashboard() {
           )}
 
           {/* Label-Specific Delegations */}
-          {flags.labelsEnabled && delegationSummary && delegationSummary.ok && user && (
+          {flags.labelsEnabled && user && (
             <div className="gov-card mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gov-primary flex items-center gap-2">
@@ -449,15 +449,20 @@ export default function Dashboard() {
                 </h3>
               </div>
 
-              <div className="space-y-4">
+              {!delegationSummary?.ok ? (
+                <div className="p-4 text-center text-gray-500">
+                  Delegation summary unavailable
+                </div>
+              ) : (
+                <div className="space-y-4">
                 {/* Global Delegation */}
-                {delegationSummary.global_delegate && (
+                {delegationSummary?.global_delegate && (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-sm font-medium text-blue-800">Global Delegate:</span>
                         <span className="ml-2 text-sm text-blue-600">
-                          {delegationSummary.global_delegate.delegatee_username || 'Not set'}
+                          {delegationSummary.global_delegate?.delegatee_username || 'Not set'}
                         </span>
                       </div>
                       {user && (
@@ -500,6 +505,7 @@ export default function Dashboard() {
                   })}
                 </div>
               </div>
+              )}
             </div>
           )}
 
