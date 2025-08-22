@@ -28,10 +28,7 @@
     "prepare": "husky install"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "git add"
-    ]
+    "*.{ts,tsx}": "eslint --max-warnings=0"
   },
   "dependencies": {
     "@sentry/react": "^10.4.0",
