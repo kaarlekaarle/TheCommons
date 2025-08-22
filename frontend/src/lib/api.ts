@@ -432,6 +432,12 @@ export interface SafeDelegationSummary {
   };
 }
 
+export const EMPTY_DELEGATION_SUMMARY: SafeDelegationSummary = {
+  ok: false,
+  counts: { mine: 0, inbound: 0 },
+  meta: { generated_at: new Date().toISOString() }
+};
+
 export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary> => {
   try {
     const { data } = await api.get('/api/delegations/summary');
@@ -455,8 +461,7 @@ export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary>
     const err = error as AxiosErrorResponse;
     // Return a safe fallback instead of throwing
     return {
-      ok: false,
-      counts: { mine: 0, inbound: 0 },
+      ...EMPTY_DELEGATION_SUMMARY,
       meta: {
         errors: [`api_error: ${err.response?.data?.detail || err.message || 'Network error'}`],
         generated_at: new Date().toISOString()
