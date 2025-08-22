@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -48,6 +48,7 @@ export default function Dashboard() {
   const [delegationSummaryLoading, setDelegationSummaryLoading] = useState(false);
   const [transparencyOpen, setTransparencyOpen] = useState(false);
   const { error: showError, success: showSuccess } = useToast();
+  const telemetrySentRef = useRef(false);
   const { user, loading: userLoading } = useCurrentUser();
 
   // Counts for dashboard sections
@@ -130,8 +131,11 @@ export default function Dashboard() {
 
       setDelegationSummary(summary);
 
-      // Track telemetry
-      trackDelegationSummaryLoaded(!!summary?.ok);
+      // Track telemetry once per mount
+      if (!telemetrySentRef.current) {
+        trackDelegationSummaryLoaded(!!summary?.ok);
+        telemetrySentRef.current = true;
+      }
 
       // Show non-blocking warning if there are errors but some data is available
       if (!summary.ok && summary.meta?.errors?.length) {
