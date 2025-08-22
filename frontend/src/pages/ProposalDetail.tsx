@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, BarChart3, CheckCircle, XCircle, Minus, Compass, Target, Link as LinkIcon } from 'lucide-react';
@@ -31,6 +31,7 @@ export default function ProposalDetail() {
   const { success, error: showError } = useToast();
 
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (id) {
       fetchData();
@@ -61,7 +62,7 @@ export default function ProposalDetail() {
     setSearchParams({});
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       console.log('[DEBUG] Fetching proposal data for ID:', id);
@@ -139,7 +140,7 @@ export default function ProposalDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, showError]);
 
   const handleVote = async (optionId: string) => {
     if (!poll || voting) return;

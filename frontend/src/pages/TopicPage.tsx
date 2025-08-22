@@ -12,8 +12,7 @@ import {
 import { getLabelOverview, getPopularLabels } from '../lib/api';
 import type { LabelOverview, PopularLabel, PollSummary } from '../types';
 
-// Topic page specific types
-type PollItem = { id: string; label?: string; value?: number };
+
 import Button from '../components/ui/Button';
 import LabelChip from '../components/ui/LabelChip';
 import { useToast } from '../components/ui/useToast';
@@ -25,8 +24,8 @@ import { getProposalHrefById } from '../utils/navigation';
 // Dev logger for array transitions
 function logSet(tag: string, arr: PollSummary[]) {
   if (import.meta.env.DEV) {
-    const ids = arr.map(p => String(p.id));
-    const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+    const ids = arr.map((p: PollSummary) => String(p.id));
+    const dupes = ids.filter((id: string, i: number) => ids.indexOf(id) !== i);
     if (dupes.length) {
       console.warn(`[TopicPage] ${tag} dupes`, { dupes: Array.from(new Set(dupes)), ids });
       // Dev telemetry guard: log compact message for monitoring
@@ -470,7 +469,7 @@ export default function TopicPage() {
             {(() => {
               // Log final rendered array
               logSet("render:final", overview.items);
-              return (overview.items ?? []).map((poll) => (
+              return (overview.items ?? []).map((poll: PollSummary) => (
                 <motion.div
                   key={poll.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -505,7 +504,7 @@ export default function TopicPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1">
-                    {(poll.labels ?? []).map((label) => (
+                    {(poll.labels ?? []).map((label: { name: string; slug: string }) => (
                       <LabelChip
                         key={`${poll.id}:${label.slug}`}
                         label={{
@@ -545,7 +544,7 @@ export default function TopicPage() {
         <div className="mt-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Popular Topics</h2>
           <div className="flex flex-wrap gap-2">
-            {(popularLabels ?? []).map((label) => (
+            {(popularLabels ?? []).map((label: PopularLabel) => (
               <LabelChip
                 key={`popular-label-${label.id}`}
                 label={{

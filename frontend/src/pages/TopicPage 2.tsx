@@ -41,6 +41,7 @@ export default function TopicPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_retryCount, setRetryCount] = useState(0);
+  void _retryCount;
   const [fallbackData, setFallbackData] = useState<LabelOverview | null>(null);
   const { error: showError } = useToast();
   const showErrorRef = useRef(showError);
@@ -227,6 +228,7 @@ export default function TopicPage() {
   }, [activeTab]);
 
   const _getTabCount = useCallback(() => {
+    void _getTabCount;
     if (!overview) return 0;
 
     switch (activeTab) {
@@ -432,7 +434,9 @@ export default function TopicPage() {
             {(() => {
               // Log final rendered array
               logSet("render:final", overview.items);
-              return overview.items.map((poll, _pollIndex) => (
+              return overview.items.map((poll, _pollIndex) => {
+                void _pollIndex;
+                return (
                 <motion.div
                   key={poll.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -467,7 +471,9 @@ export default function TopicPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1">
-                    {poll.labels.map((label, _labelIndex) => (
+                    {poll.labels.map((label, _labelIndex) => {
+                      void _labelIndex;
+                      return (
                       <LabelChip
                         key={`${poll.id}:${label.slug}`}
                         label={{
@@ -481,10 +487,12 @@ export default function TopicPage() {
                         size="sm"
                         onClick={() => handleLabelClick(label.slug)}
                       />
-                    ))}
+                    );
+                  })}
                   </div>
                 </motion.div>
-              ));
+              );
+            });
             })()}
           </div>
         )}

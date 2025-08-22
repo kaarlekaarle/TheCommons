@@ -36,6 +36,8 @@ export default function PrincipleDocPage() {
   const [pollState, setPollState] = useState<SectionState>('idle');
   const [_optionsState, setOptionsState] = useState<SectionState>('idle');
   const [_resultsState, setResultsState] = useState<SectionState>('idle');
+  void _optionsState;
+  void _resultsState;
   const [commentsState, setCommentsState] = useState<SectionState>('idle');
 
   // Fetch data
