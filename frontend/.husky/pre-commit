@@ -1,2 +1,2 @@
 echo "🔎 lint-staged running…"
-cd frontend && npx lint-staged || { echo "❌ Lint failed"; exit 1; }
+npx lint-staged || { echo "❌ Lint failed"; exit 1; }
