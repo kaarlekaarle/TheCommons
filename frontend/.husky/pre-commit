@@ -1,5 +1,2 @@
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
 echo "🔎 lint-staged running…"
 cd frontend && npx lint-staged || { echo "❌ Lint failed"; exit 1; }
