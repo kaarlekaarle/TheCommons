@@ -1,0 +1,13 @@
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/__tests__/**
+**/__mocks__/**
+
+# Build outputs
+coverage/**
+dist/**
+build/**
+
+# Generated files
+src/config/features.generated.json
