@@ -30,6 +30,7 @@ import LabelChip from '../components/ui/LabelChip';
 import { Skeleton } from '../components/ui/Skeleton';
 import { flags } from '../config/flags';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import TransparencyPanel from '../components/delegations/TransparencyPanel';
 
 type PerLabelStat = { label: { slug: string }; delegate: { username: string }; [k: string]: unknown };
 const getPerLabel = (s?: { per_label?: PerLabelStat[] } | null): PerLabelStat[] =>
@@ -694,5 +695,11 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+
+    <TransparencyPanel
+      isOpen={transparencyOpen}
+      onClose={() => setTransparencyOpen(false)}
+      defaultTab="health"
+    />
   );
 }

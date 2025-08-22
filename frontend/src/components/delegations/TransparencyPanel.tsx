@@ -3,41 +3,52 @@ import { X, Users, User, BarChart3, Loader2, AlertCircle, RefreshCw, ChevronDown
 import { getMyChains, getInbound, getHealthSummary } from '../../api/delegationsApi';
 import Button from '../ui/Button';
 
+type TransparencyTab = 'chains' | 'inbound' | 'health';
+
 interface TransparencyPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultTab?: TransparencyTab;
 }
 
 type TabType = 'chains' | 'inbound' | 'health';
 
 export default function TransparencyPanel({
   isOpen,
-  onClose
+  onClose,
+  defaultTab
 }: TransparencyPanelProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('chains');
+  const [activeTab, setActiveTab] = useState<TabType>(defaultTab || 'chains');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Chains data
   const [chains, setChains] = useState<any>(null);
-  
+
   // Inbound data
   const [delegateeId, setDelegateeId] = useState('');
   const [fieldId, setFieldId] = useState('');
   const [inboundData, setInboundData] = useState<any>(null);
   const [inboundCursor, setInboundCursor] = useState<string | null>(null);
   const [hasMoreInbound, setHasMoreInbound] = useState(false);
-  
+
   // Health data
   const [healthData, setHealthData] = useState<any>(null);
+
+  // Reset to defaultTab when opened
+  useEffect(() => {
+    if (isOpen && defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [isOpen, defaultTab]);
 
   // Load data based on active tab
   useEffect(() => {
     if (!isOpen) return;
-    
+
     setError(null);
     setLoading(true);
-    
+
     switch (activeTab) {
       case 'chains':
         loadChains();
@@ -63,17 +74,17 @@ export default function TransparencyPanel({
 
   const loadInbound = async (isLoadMore = false) => {
     if (!delegateeId.trim()) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams();
       if (fieldId) params.append('fieldId', fieldId);
       if (isLoadMore && inboundCursor) params.append('cursor', inboundCursor);
-      
+
       const data = await getInbound(delegateeId, fieldId || undefined);
-      
+
       if (isLoadMore && inboundData) {
         // Append to existing data
         setInboundData({
@@ -83,7 +94,7 @@ export default function TransparencyPanel({
       } else {
         setInboundData(data);
       }
-      
+
       setInboundCursor(data.pagination?.nextCursor || null);
       setHasMoreInbound(data.pagination?.hasMore || false);
     } catch (err: any) {
@@ -128,7 +139,7 @@ export default function TransparencyPanel({
           <Users className="w-12 h-12 mx-auto mb-4 text-fg-muted/50" />
           <p className="font-medium mb-2">No delegation chains found</p>
           <p className="text-sm mb-4">You haven't created any delegations yet.</p>
-          <Button 
+          <Button
             onClick={loadChains}
             variant="outline"
             size="sm"
@@ -241,7 +252,7 @@ export default function TransparencyPanel({
               <p className="font-medium">{error}</p>
               <p className="text-sm text-danger-fg/80 mt-1">Please check your input and try again.</p>
             </div>
-            <Button 
+            <Button
               onClick={() => loadInbound()}
               variant="outline"
               size="sm"
@@ -300,7 +311,7 @@ export default function TransparencyPanel({
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Load More Button */}
                 {hasMoreInbound && (
                   <div className="mt-4 text-center">
@@ -353,7 +364,7 @@ export default function TransparencyPanel({
             <p className="font-medium">{error}</p>
             <p className="text-sm text-danger-fg/80 mt-1">Please try again later.</p>
           </div>
-          <Button 
+          <Button
             onClick={loadHealth}
             variant="outline"
             size="sm"
@@ -371,7 +382,7 @@ export default function TransparencyPanel({
           <BarChart3 className="w-12 h-12 mx-auto mb-4 text-fg-muted/50" />
           <p className="font-medium mb-2">No health data available</p>
           <p className="text-sm mb-4">Health metrics are not currently available.</p>
-          <Button 
+          <Button
             onClick={loadHealth}
             variant="outline"
             size="sm"
