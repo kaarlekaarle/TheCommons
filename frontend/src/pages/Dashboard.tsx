@@ -26,6 +26,7 @@ import { useToast } from '../components/ui/useToast';
 import ProposalCard from '../components/ProposalCard';
 import ContentList from '../components/content/ContentList';
 import LabelChip from '../components/ui/LabelChip';
+import { Skeleton } from '../components/ui/Skeleton';
 import { flags } from '../config/flags';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 
@@ -43,6 +44,7 @@ export default function Dashboard() {
   const [contentLoading, setContentLoading] = useState(true);
   const [contentError, setContentError] = useState<string | null>(null);
   const [delegationLoading, setDelegationLoading] = useState(false);
+  const [delegationSummaryLoading, setDelegationSummaryLoading] = useState(false);
   const { error: showError, success: showSuccess } = useToast();
   const { user, loading: userLoading } = useCurrentUser();
 
@@ -112,6 +114,7 @@ export default function Dashboard() {
 
   const fetchDelegationSummary = async () => {
     try {
+      setDelegationSummaryLoading(true);
       console.log('[DEBUG] fetchDelegationSummary: Starting safe API call');
       const summary = await getSafeDelegationSummary();
       console.log('[DEBUG] fetchDelegationSummary: Response:', summary);
@@ -144,6 +147,8 @@ export default function Dashboard() {
           generated_at: new Date().toISOString()
         }
       });
+    } finally {
+      setDelegationSummaryLoading(false);
     }
   };
 
@@ -449,9 +454,18 @@ export default function Dashboard() {
                 </h3>
               </div>
 
-              {!delegationSummary?.ok ? (
-                <div className="p-4 text-center text-gray-500">
-                  Delegation summary unavailable
+              {delegationSummaryLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-12 w-full" />
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                </div>
+              ) : !delegationSummary?.ok ? (
+                <div className="p-4 text-center">
+                  <div className="text-gray-500 mb-2">Delegation summary unavailable</div>
+                  <div className="text-xs text-gray-400">Retry later or open Transparency</div>
                 </div>
               ) : (
                 <div className="space-y-4">
