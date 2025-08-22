@@ -5,6 +5,7 @@ import type { UserSearchResult } from '../../types';
 import type { DelegationInfo } from '../../types/delegation';
 import { delegationCopy } from '../../i18n/en/delegation';
 import Button from '../ui/Button';
+import { useToast } from '../ui/useToast';
 import { trackDelegationCreated, trackDelegationRevoked } from '../../lib/analytics';
 
 interface ManageDelegationModalProps {
@@ -12,16 +13,18 @@ interface ManageDelegationModalProps {
   onClose: () => void;
   pollId?: string;
   onDelegationChange?: (delegationInfo: DelegationInfo | null) => void;
+  onChanged?: () => void;
 }
 
 type Mode = 'create' | 'revoke';
 type Scope = 'poll' | 'global';
 
-export default function ManageDelegationModal({ 
-  open, 
-  onClose, 
+export default function ManageDelegationModal({
+  open,
+  onClose,
   pollId,
-  onDelegationChange 
+  onDelegationChange,
+  onChanged
 }: ManageDelegationModalProps) {
   const [mode, setMode] = useState<Mode>('create');
   const [scope, setScope] = useState<Scope>(pollId ? 'poll' : 'global');
@@ -33,16 +36,17 @@ export default function ManageDelegationModal({
   const [searching, setSearching] = useState(false);
   const [currentDelegation, setCurrentDelegation] = useState<DelegationInfo | null>(null);
   const [chainExpanded, setChainExpanded] = useState(false);
-  
+
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const modalRef = useRef<HTMLDivElement>(null);
+  const { success, error: showError } = useToast();
 
   // Debounced search
   const debouncedSearch = useCallback((searchQuery: string) => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setSearching(false);
@@ -125,7 +129,7 @@ export default function ManageDelegationModal({
           chain: [{ user_id: 'current-user', user_name: 'You' }]
         }
       };
-      
+
       if (onDelegationChange) {
         onDelegationChange(optimisticDelegation);
       }
@@ -138,12 +142,23 @@ export default function ManageDelegationModal({
 
       trackDelegationCreated(scope);
 
+      // Show success toast
+      success(`Delegation ${scope === 'poll' ? 'for this poll' : 'globally'} created successfully`);
+
       // Refresh delegation to get full chain
       await loadCurrentDelegation();
+
+      // Notify parent of change
+      if (onChanged) {
+        onChanged();
+      }
+
       onClose();
     } catch (err: unknown) {
       const error = err as { message?: string };
-      setError(error.message || delegationCopy.error_generic);
+      const errorMessage = error.message || delegationCopy.error_generic;
+      setError(errorMessage);
+      showError(errorMessage);
       // Revert optimistic update
       if (onDelegationChange) {
         onDelegationChange(currentDelegation);
@@ -163,7 +178,7 @@ export default function ManageDelegationModal({
         ...currentDelegation,
         [scope]: undefined
       };
-      
+
       if (onDelegationChange) {
         onDelegationChange(optimisticDelegation);
       }
@@ -175,12 +190,23 @@ export default function ManageDelegationModal({
 
       trackDelegationRevoked(scope);
 
+      // Show success toast
+      success(`Delegation ${scope === 'poll' ? 'for this poll' : 'globally'} revoked successfully`);
+
       // Refresh delegation
       await loadCurrentDelegation();
+
+      // Notify parent of change
+      if (onChanged) {
+        onChanged();
+      }
+
       onClose();
     } catch (err: unknown) {
       const error = err as { message?: string };
-      setError(error.message || delegationCopy.error_generic);
+      const errorMessage = error.message || delegationCopy.error_generic;
+      setError(errorMessage);
+      showError(errorMessage);
       // Revert optimistic update
       if (onDelegationChange) {
         onDelegationChange(currentDelegation);
@@ -213,11 +239,11 @@ export default function ManageDelegationModal({
   if (!open) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div 
+      <div
         ref={modalRef}
         className="bg-surface border border-border rounded-lg p-6 w-full max-w-md mx-4"
         role="dialog"
@@ -307,15 +333,15 @@ export default function ManageDelegationModal({
                 {searchResults.map((searchUser) => {
                   const isCurrentUser = false; // TODO: Implement current user check
                   const isSelected = selectedUser?.id === searchUser.id;
-                  
+
                   return (
                     <button
                       key={searchUser.id}
                       onClick={() => !isCurrentUser && setSelectedUser(searchUser)}
                       disabled={isCurrentUser}
                       className={`w-full p-3 rounded-lg border text-left transition-colors ${
-                        isSelected 
-                          ? 'border-primary bg-primary/10' 
+                        isSelected
+                          ? 'border-primary bg-primary/10'
                           : 'border-border hover:border-primary/50'
                       } ${isCurrentUser ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
@@ -366,7 +392,7 @@ export default function ManageDelegationModal({
                   {currentDelegationInfo?.to_user_name || currentDelegationInfo?.to_user_id?.slice(0, 8)}
                 </span>
               </div>
-              
+
               {/* Chain Display */}
               {currentDelegationInfo?.chain && currentDelegationInfo.chain.length > 0 && (
                 <div className="mt-3">
@@ -381,7 +407,7 @@ export default function ManageDelegationModal({
                     )}
                     <span>Chain ({currentDelegationInfo.chain.length})</span>
                   </button>
-                  
+
                   {chainExpanded && (
                     <div className="mt-2 space-y-1">
                       {currentDelegationInfo.chain.map((link, index) => (
