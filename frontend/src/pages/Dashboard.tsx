@@ -486,6 +486,19 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                {/* Empty State CTA */}
+                {delegationSummary?.ok && delegationSummary?.counts?.mine === 0 && delegationSummary?.counts?.inbound === 0 && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                    <div className="text-blue-800 mb-2">No delegations set up yet</div>
+                    <div className="text-blue-600 text-sm mb-3">Start delegating your voting power to trusted community members</div>
+                    <Link to="/delegations">
+                      <Button variant="secondary" size="sm" className="text-blue-600 hover:text-blue-700">
+                        Set up your first delegation
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+
                 {/* Global Delegation */}
                 {delegationSummary?.global_delegate && (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
