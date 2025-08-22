@@ -14,11 +14,11 @@ interface DelegationStatusProps {
   onOpenModal?: () => void;
 }
 
-export default function DelegationStatus({ 
-  pollId, 
-  className = '', 
+export default function DelegationStatus({
+  pollId,
+  className = '',
   compact = false,
-  onOpenModal 
+  onOpenModal
 }: DelegationStatusProps) {
   const [delegationInfo, setDelegationInfo] = useState<DelegationInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,20 +47,20 @@ export default function DelegationStatus({
 
   const formatChain = (chain: Array<{ user_id: string; user_name?: string }>) => {
     if (chain.length === 0) return '';
-    
+
     const chainParts = chain.map(link => link.user_name || link.user_id.slice(0, 8));
     return chainParts.join(' → ');
   };
 
   const formatDelegationDate = (dateString?: string) => {
     if (!dateString) return '';
-    
+
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
+      return date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
       });
     } catch {
       return '';
@@ -107,14 +107,14 @@ export default function DelegationStatus({
     if (pollId && delegationInfo.poll && delegationInfo.poll.active) {
       const { poll } = delegationInfo;
       const delegateName = poll.to_user_name || poll.to_user_id.slice(0, 8);
-      const depth = poll.chain.length;
+      const depth = poll.chain?.length || 0;
       const delegationDate = formatDelegationDate(delegationInfo.created_at);
-      
+
       return (
         <div className="flex items-center gap-1.5 text-xs">
           <Users className="w-3 h-3 text-blue-400 flex-shrink-0" />
           <span className="truncate" title={delegationCopy.delegates_poll.replace('{name}', delegateName)}>
-            {depth > 0 
+            {depth > 0
               ? delegationCopy.compact_delegating_chain
                   .replace('{name}', delegateName)
                   .replace('{depth}', depth.toString())
@@ -130,14 +130,14 @@ export default function DelegationStatus({
     if (delegationInfo.global && delegationInfo.global.active) {
       const { global } = delegationInfo;
       const delegateName = global.to_user_name || global.to_user_id.slice(0, 8);
-      const depth = global.chain.length;
+      const depth = global.chain?.length || 0;
       const delegationDate = formatDelegationDate(delegationInfo.created_at);
-      
+
       return (
         <div className="flex items-center gap-1.5 text-xs">
           <Users className="w-3 h-3 text-blue-400 flex-shrink-0" />
           <span className="truncate" title={delegationCopy.delegates_global.replace('{name}', delegateName)}>
-            {depth > 0 
+            {depth > 0
               ? delegationCopy.compact_delegating_chain
                   .replace('{name}', delegateName)
                   .replace('{depth}', depth.toString())
@@ -189,9 +189,9 @@ export default function DelegationStatus({
     if (pollId && delegationInfo.poll && delegationInfo.poll.active) {
       const { poll } = delegationInfo;
       const delegateName = poll.to_user_name || poll.to_user_id.slice(0, 8);
-      const chain = formatChain(poll.chain);
+      const chain = formatChain(poll.chain || []);
       const delegationDate = formatDelegationDate(delegationInfo.created_at);
-      
+
       return (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm">
@@ -200,7 +200,7 @@ export default function DelegationStatus({
           </div>
           {chain && (
             <div className="text-xs text-muted">
-              {delegationCopy.chain_label.replace('{chain}', chain)} (depth {poll.chain.length})
+              {delegationCopy.chain_label.replace('{chain}', chain)} (depth {poll.chain?.length || 0})
             </div>
           )}
           {delegationDate && (
@@ -216,9 +216,9 @@ export default function DelegationStatus({
     if (delegationInfo.global && delegationInfo.global.active) {
       const { global } = delegationInfo;
       const delegateName = global.to_user_name || global.to_user_id.slice(0, 8);
-      const chain = formatChain(global.chain);
+      const chain = formatChain(global.chain || []);
       const delegationDate = formatDelegationDate(delegationInfo.created_at);
-      
+
       return (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm">
@@ -227,7 +227,7 @@ export default function DelegationStatus({
           </div>
           {chain && (
             <div className="text-xs text-muted">
-              {delegationCopy.chain_label.replace('{chain}', chain)} (depth {global.chain.length})
+              {delegationCopy.chain_label.replace('{chain}', chain)} (depth {global.chain?.length || 0})
             </div>
           )}
           {delegationDate && (
@@ -251,7 +251,7 @@ export default function DelegationStatus({
   if (compact) {
     return (
       <>
-        <div 
+        <div
           ref={statusRef}
           className={`flex items-center justify-between ${className} cursor-pointer hover:bg-surface/50 rounded px-2 py-1 transition-colors`}
           onClick={handleOpenModal}
