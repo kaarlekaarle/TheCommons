@@ -48,6 +48,7 @@ export default function Dashboard() {
   const [delegationLoading, setDelegationLoading] = useState(false);
   const [delegationSummaryLoading, setDelegationSummaryLoading] = useState(false);
   const [transparencyOpen, setTransparencyOpen] = useState(false);
+  const [transparencyDefaultTab, setTransparencyDefaultTab] = useState<'chains' | 'inbound' | 'health'>('health');
   const { error: showError, success: showSuccess } = useToast();
   const telemetrySentRef = useRef(false);
   const { user, loading: userLoading } = useCurrentUser();
@@ -493,7 +494,7 @@ export default function Dashboard() {
               ) : !delegationSummary?.ok ? (
                 <div className="p-4 text-center">
                   <div className="text-gray-500 mb-2">Delegation summary unavailable</div>
-                  <div className="text-xs text-gray-400 mb-3">Retry later or open Transparency</div>
+                  <div className="text-xs text-gray-400 mb-3">Try again now or open Transparency to inspect live data.</div>
                   {delegationSummary?.meta?.trace_id && (
                     <div className="text-[10px] text-gray-400 mt-1 mb-3">
                       Trace: {delegationSummary.meta.trace_id}
@@ -511,7 +512,10 @@ export default function Dashboard() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => setTransparencyOpen(true)}
+                      onClick={() => {
+                        setTransparencyDefaultTab('health');
+                        setTransparencyOpen(true);
+                      }}
                       className="text-purple-600 hover:text-purple-700"
                     >
                       Open Transparency
@@ -523,13 +527,26 @@ export default function Dashboard() {
                 {/* Empty State CTA */}
                 {delegationSummary?.ok && delegationSummary?.counts?.mine === 0 && delegationSummary?.counts?.inbound === 0 && (
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-                    <div className="text-blue-800 mb-2">No delegations set up yet</div>
-                    <div className="text-blue-600 text-sm mb-3">Start delegating your voting power to trusted community members</div>
-                    <Link to="/delegations">
-                      <Button variant="secondary" size="sm" className="text-blue-600 hover:text-blue-700">
-                        Set up your first delegation
+                    <div className="text-blue-800 mb-2">No delegations yet</div>
+                    <div className="text-blue-600 text-sm mb-3">Delegate all power for 4 years, or start with a single field. You can revoke anytime.</div>
+                    <div className="flex justify-center gap-2">
+                      <Link to="/delegations">
+                        <Button variant="secondary" size="sm" className="text-blue-600 hover:text-blue-700">
+                          Start a delegation
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setTransparencyDefaultTab('chains');
+                          setTransparencyOpen(true);
+                        }}
+                        className="text-purple-600 hover:text-purple-700"
+                      >
+                        Open Transparency
                       </Button>
-                    </Link>
+                    </div>
                   </div>
                 )}
 
@@ -699,7 +716,7 @@ export default function Dashboard() {
     <TransparencyPanel
       isOpen={transparencyOpen}
       onClose={() => setTransparencyOpen(false)}
-      defaultTab="health"
+      defaultTab={transparencyDefaultTab}
     />
   );
 }
