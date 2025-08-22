@@ -68,16 +68,24 @@ export default function Dashboard() {
     } catch (err: unknown) {
       const error = err as { message: string };
       console.error('Failed to load recent polls:', error.message);
-      showError('Failed to load recent proposals');
+      // Don't show error toast to avoid dependency issues
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+  }, []);
 
   useEffect(() => {
     console.log('[DEBUG] Dashboard useEffect - user:', user, 'userLoading:', userLoading, 'labelsEnabled:', flags.labelsEnabled);
 
-    fetchRecentPolls();
+    // Only fetch polls if user is authenticated
+    if (!userLoading && user) {
+      fetchRecentPolls();
+    } else if (!userLoading && !user) {
+      // Clear polls when not authenticated
+      setRecentPolls([]);
+      setLoading(false);
+    }
+
     if (!flags.useDemoContent) {
       fetchContent();
     } else {
@@ -605,7 +613,25 @@ export default function Dashboard() {
           {/* Recent Community Activity */}
           <div>
             <h2 className="text-2xl font-semibold text-gov-primary mb-6">Recent Community Activity</h2>
-          {userLoading || loading ? (
+          {userLoading ? (
+            <div className="space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="gov-card animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded mb-3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : !user ? (
+            <div className="gov-card">
+              <div className="text-center py-8">
+                <p className="text-gov-text-muted mb-2">Sign in to see recent community activity</p>
+                <Link to="/login">
+                  <Button variant="primary">Sign In</Button>
+                </Link>
+              </div>
+            </div>
+          ) : loading ? (
             <div className="space-y-4">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="gov-card animate-pulse">
