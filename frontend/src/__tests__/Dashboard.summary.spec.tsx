@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from '../pages/Dashboard';
+import * as api from '../lib/api';
 
 // Mock the API functions
 jest.mock('../lib/api', () => ({
@@ -61,17 +62,15 @@ describe('Dashboard Summary', () => {
     jest.clearAllMocks();
 
     // Mock successful API calls for other data
-    const { listPolls, getContentPrinciples, getContentActions, listLabels } = require('../lib/api');
-    listPolls.mockResolvedValue([]);
-    getContentPrinciples.mockResolvedValue([]);
-    getContentActions.mockResolvedValue([]);
-    listLabels.mockResolvedValue([]);
+    (api.listPolls as jest.Mock).mockResolvedValue([]);
+    (api.getContentPrinciples as jest.Mock).mockResolvedValue([]);
+    (api.getContentActions as jest.Mock).mockResolvedValue([]);
+    (api.listLabels as jest.Mock).mockResolvedValue([]);
   });
 
   describe('Test A: Happy path', () => {
     it('shows summary UI when delegation summary is ok', async () => {
-      const { getSafeDelegationSummary } = require('../lib/api');
-      getSafeDelegationSummary.mockResolvedValue({
+      (api.getSafeDelegationSummary as jest.Mock).mockResolvedValue({
         ok: true,
         counts: { mine: 1, inbound: 0 },
         meta: { generated_at: '2025-01-01T00:00:00Z' }
@@ -90,8 +89,7 @@ describe('Dashboard Summary', () => {
 
   describe('Test B: Fallback path', () => {
     it('shows fallback UI with retry button, transparency button, and trace id', async () => {
-      const { getSafeDelegationSummary } = require('../lib/api');
-      getSafeDelegationSummary.mockResolvedValue({
+      (api.getSafeDelegationSummary as jest.Mock).mockResolvedValue({
         ok: false,
         counts: { mine: 0, inbound: 0 },
         meta: { trace_id: 'abc123', generated_at: '2025-01-01T00:00:00Z' }

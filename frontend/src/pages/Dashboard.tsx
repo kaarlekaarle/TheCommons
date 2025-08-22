@@ -324,6 +324,7 @@ export default function Dashboard() {
   ];
 
   return (
+    <>
     <div className="gov-container gov-section">
       {/* Hero Section - Government Style */}
       <div className="text-center mb-12">
@@ -718,5 +719,6 @@ export default function Dashboard() {
       onClose={() => setTransparencyOpen(false)}
       defaultTab={transparencyDefaultTab}
     />
+    </>
   );
 }
