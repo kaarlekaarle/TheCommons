@@ -25,7 +25,7 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
 
       // Reset height to auto to get the correct scrollHeight
       textarea.style.height = 'auto';
-      
+
       // Calculate new height based on content
       const computedStyle = window.getComputedStyle(textarea);
       const lineHeight = parseInt(computedStyle.lineHeight) || 20;
@@ -33,10 +33,10 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       const paddingBottom = parseInt(computedStyle.paddingBottom) || 0;
       const borderTop = parseInt(computedStyle.borderTopWidth) || 0;
       const borderBottom = parseInt(computedStyle.borderBottomWidth) || 0;
-      
+
       const minHeight = lineHeight * rows + paddingTop + paddingBottom + borderTop + borderBottom;
       const scrollHeight = textarea.scrollHeight;
-      
+
       textarea.style.height = `${Math.max(minHeight, scrollHeight)}px`;
     };
 
@@ -44,14 +44,15 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       if (resizeTimeoutRef.current) {
         cancelAnimationFrame(resizeTimeoutRef.current);
       }
-      
+
       resizeTimeoutRef.current = requestAnimationFrame(adjustHeight);
-      
+
       return () => {
         if (resizeTimeoutRef.current) {
           cancelAnimationFrame(resizeTimeoutRef.current);
         }
       };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time height adjustment
     }, [value]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

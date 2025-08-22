@@ -43,6 +43,7 @@ export default function InlineTraditionalForm({
     if (!expiry) {
       setExpiry(defaultExpiry.toISOString().split('T')[0]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time initialization
   }, [expiry]);
 
   // Search people
@@ -74,7 +75,7 @@ export default function InlineTraditionalForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedPerson) {
       showError('Please select a person to delegate to');
       return;
@@ -91,7 +92,7 @@ export default function InlineTraditionalForm({
       };
 
       const response = await createDelegation(input);
-      
+
       if (response.warnings) {
         setWarnings(response.warnings);
       }

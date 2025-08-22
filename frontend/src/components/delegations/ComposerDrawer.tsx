@@ -59,6 +59,7 @@ export default function ComposerDrawer({
         setExpiry(defaultExpiry.toISOString().split('T')[0]);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time initialization
   }, [open, defaultPerson, defaultField, defaultTab, activeTab, expiry]);
 
   // Search people
@@ -239,9 +240,9 @@ export default function ComposerDrawer({
                         <p className="text-sm text-warn-fg">
                           <strong>High concentration:</strong> ~{(warnings.concentration.percent * 100).toFixed(1)}% of delegations in this field go to this person.
                         </p>
-                        <a 
-                          href="/docs/cascade_rules.md" 
-                          target="_blank" 
+                        <a
+                          href="/docs/cascade_rules.md"
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-warn-fg/80 hover:text-warn-fg underline mt-1 inline-block"
                         >
@@ -259,9 +260,9 @@ export default function ComposerDrawer({
                         <p className="text-sm text-warn-fg">
                           <strong>Super-delegate:</strong> This could create a 'super-delegate' pattern: {warnings.superDelegateRisk.reason}
                         </p>
-                        <a 
-                          href="/docs/cascade_rules.md" 
-                          target="_blank" 
+                        <a
+                          href="/docs/cascade_rules.md"
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-warn-fg/80 hover:text-warn-fg underline mt-1 inline-block"
                         >

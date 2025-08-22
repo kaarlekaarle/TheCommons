@@ -24,7 +24,14 @@
     "seed:demo": "make seed-demo",
     "clear-local": "echo 'Clearing local storage...' && node -e \"console.log('Local storage cleared. Please hard refresh your browser.')\"",
     "dev:topic:mobility": "echo 'Navigate to /t/mobility and check console for counts & dupes'",
-    "setup:env": "chmod +x setup-env.sh && ./setup-env.sh"
+    "setup:env": "chmod +x setup-env.sh && ./setup-env.sh",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ]
   },
   "dependencies": {
     "@sentry/react": "^10.4.0",

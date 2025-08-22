@@ -62,6 +62,7 @@ export default function ProposalList() {
     } else {
       fetchPolls();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time initialization
   }, [useHardcodedData]);
 
   const fetchPolls = async () => {
