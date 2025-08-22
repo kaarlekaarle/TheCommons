@@ -13,6 +13,19 @@ interface TransparencyPanelProps {
 
 type TabType = 'chains' | 'inbound' | 'health';
 
+// Local read-only shapes
+type InboundItem = Readonly<{ delegatorId: string; delegatorName?: string; fieldId?: string|null; createdAt?: string }>;
+type InboundSummary = Readonly<{ total: number; byField?: ReadonlyArray<Readonly<{ fieldId: string; count: number }>>; recent?: ReadonlyArray<InboundItem> }>;
+type ChainNode = Readonly<{ id: string; name?: string; mode?: string }>;
+type Chain = Readonly<{ fieldId?: string|null; path: ReadonlyArray<ChainNode> }>;
+type ChainsByField = ReadonlyArray<Chain>;
+type HealthTop = ReadonlyArray<Readonly<{ id: string; name?: string; pct: number }>>;
+type HealthSummary = Readonly<{ topDelegatees?: HealthTop; byField?: ReadonlyArray<Readonly<{ fieldId: string; pct: number; top?: HealthTop }>> }>;
+
+// Tiny guards
+const asObj = (v: unknown) => (v && typeof v === 'object') ? v as Record<string, unknown> : {};
+const asArr = (v: unknown) => Array.isArray(v) ? v as unknown[] : [];
+
 export default function TransparencyPanel({
   isOpen,
   onClose,
@@ -23,17 +36,17 @@ export default function TransparencyPanel({
   const [error, setError] = useState<string | null>(null);
 
   // Chains data
-  const [chains, setChains] = useState<unknown>(null);
+  const [chains, setChains] = useState<ChainsByField | null>(null);
 
   // Inbound data
   const [delegateeId, setDelegateeId] = useState('');
   const [fieldId, setFieldId] = useState('');
-  const [inboundData, setInboundData] = useState<unknown>(null);
+  const [inboundData, setInboundData] = useState<InboundSummary | null>(null);
   const [inboundCursor, setInboundCursor] = useState<string | null>(null);
   const [hasMoreInbound, setHasMoreInbound] = useState(false);
 
   // Health data
-  const [healthData, setHealthData] = useState<unknown>(null);
+  const [healthData, setHealthData] = useState<HealthSummary | null>(null);
 
   // Reset to defaultTab when opened
   useEffect(() => {
@@ -63,8 +76,22 @@ export default function TransparencyPanel({
 
   const loadChains = async () => {
     try {
-      const data = await getMyChains();
-      setChains(data);
+      const raw = await getMyChains();
+      const chains = asArr(raw).map(chain => {
+        const co = asObj(chain);
+        return {
+          fieldId: co.fieldId == null ? null : String(co.fieldId),
+          path: asArr(co.path).map(node => {
+            const no = asObj(node);
+            return {
+              id: String(no.id ?? ''),
+              name: no.name ? String(no.name) : undefined,
+              mode: no.mode ? String(no.mode) : undefined,
+            };
+          }),
+        };
+      });
+      setChains(chains);
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || 'Failed to load delegation chains');
@@ -84,20 +111,39 @@ export default function TransparencyPanel({
       if (fieldId) params.append('fieldId', fieldId);
       if (isLoadMore && inboundCursor) params.append('cursor', inboundCursor);
 
-      const data = await getInbound(delegateeId, fieldId || undefined);
+      const raw = await getInbound(delegateeId, fieldId || undefined);
+      const o = asObj(raw);
+
+      const inbound: InboundSummary = {
+        total: Number(o.total ?? 0),
+        byField: asArr(o.byField).map(b => {
+          const bo = asObj(b);
+          return { fieldId: String(bo.fieldId ?? ''), count: Number(bo.count ?? 0) };
+        }),
+        recent: asArr(o.recent).map(r => {
+          const ro = asObj(r);
+          return {
+            delegatorId: String(ro.delegatorId ?? ''),
+            delegatorName: ro.delegatorName ? String(ro.delegatorName) : undefined,
+            fieldId: ro.fieldId == null ? null : String(ro.fieldId),
+            createdAt: ro.createdAt ? String(ro.createdAt) : undefined,
+          };
+        }),
+      };
 
       if (isLoadMore && inboundData) {
         // Append to existing data
         setInboundData({
-          ...data,
-          inbound: [...inboundData.inbound, ...data.inbound]
+          ...inbound,
+          recent: [...(inboundData.recent ?? []), ...(inbound.recent ?? [])]
         });
       } else {
-        setInboundData(data);
+        setInboundData(inbound);
       }
 
-      setInboundCursor(data.pagination?.nextCursor || null);
-      setHasMoreInbound(data.pagination?.hasMore || false);
+      const pagination = asObj(o.pagination);
+      setInboundCursor(pagination.nextCursor ? String(pagination.nextCursor) : null);
+      setHasMoreInbound(Boolean(pagination.hasMore));
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || 'Failed to load inbound delegations');
@@ -108,8 +154,35 @@ export default function TransparencyPanel({
 
   const loadHealth = async () => {
     try {
-      const data = await getHealthSummary();
-      setHealthData(data);
+      const raw = await getHealthSummary();
+      const o = asObj(raw);
+
+      const health: HealthSummary = {
+        topDelegatees: asArr(o.topDelegatees).map(item => {
+          const io = asObj(item);
+          return {
+            id: String(io.id ?? ''),
+            name: io.name ? String(io.name) : undefined,
+            pct: Number(io.pct ?? 0),
+          };
+        }),
+        byField: asArr(o.byField).map(field => {
+          const fo = asObj(field);
+          return {
+            fieldId: String(fo.fieldId ?? ''),
+            pct: Number(fo.pct ?? 0),
+            top: asArr(fo.top).map(item => {
+              const io = asObj(item);
+              return {
+                id: String(io.id ?? ''),
+                name: io.name ? String(io.name) : undefined,
+                pct: Number(io.pct ?? 0),
+              };
+            }),
+          };
+        }),
+      };
+      setHealthData(health);
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || 'Failed to load health summary');
@@ -136,7 +209,7 @@ export default function TransparencyPanel({
       );
     }
 
-    if (!chains || chains.chains.length === 0) {
+    if (!chains || chains.length === 0) {
       return (
         <div className="text-center text-fg-muted py-8">
           <Users className="w-12 h-12 mx-auto mb-4 text-fg-muted/50" />
@@ -157,47 +230,35 @@ export default function TransparencyPanel({
     return (
       <div className="space-y-4">
         {/* Summary */}
-        {chains.summary && (
-          <div className="p-4 bg-primary-bg border border-primary-fg/20 rounded-lg">
-            <h4 className="font-medium text-primary-fg mb-2">Summary</h4>
-            <div className="text-sm text-primary-fg">
-              <span className="text-primary-fg/80">Total chains:</span>
-              <span className="font-medium text-primary-fg ml-2">{chains.totalChains}</span>
-              <span className="text-primary-fg/80 ml-4">·</span>
-              <span className="text-primary-fg/80 ml-4">Fields:</span>
-              <span className="font-medium text-primary-fg ml-2">{Object.keys(chains.summary.byField || {}).length}</span>
-            </div>
-            {chains.summary.byField && Object.keys(chains.summary.byField).length > 0 && (
-              <div className="mt-2 text-xs text-primary-fg/80">
-                {Object.entries(chains.summary.byField).map(([fieldId, count]: [string, any], index: number) => (
-                  <span key={fieldId}>
-                    {index > 0 && ', '}
-                    {fieldId === 'global' ? 'Global' : fieldId} ({count})
-                  </span>
-                ))}
-              </div>
-            )}
+        <div className="p-4 bg-primary-bg border border-primary-fg/20 rounded-lg">
+          <h4 className="font-medium text-primary-fg mb-2">Summary</h4>
+          <div className="text-sm text-primary-fg">
+            <span className="text-primary-fg/80">Total chains:</span>
+            <span className="font-medium text-primary-fg ml-2">{chains.length}</span>
+            <span className="text-primary-fg/80 ml-4">·</span>
+            <span className="text-primary-fg/80 ml-4">Fields:</span>
+            <span className="font-medium text-primary-fg ml-2">{chains.filter(c => c.fieldId).length}</span>
           </div>
-        )}
+        </div>
 
         {/* Chains */}
         <p className="text-sm text-fg-muted">
           Your delegation chains grouped by field:
         </p>
-        {chains.chains.map((chain: any, index: number) => (
+        {chains.map((chain, index: number) => (
           <div key={index} className="p-4 bg-surface-muted rounded-lg border">
             <h4 className="font-medium text-fg-strong mb-2">
-              {chain.fieldName || chain.fieldId || 'Global'}
+              {chain.fieldId || 'Global'}
             </h4>
             <div className="space-y-2">
-              {chain.path.map((link: any, linkIndex: number) => (
+              {chain.path.map((link, linkIndex: number) => (
                 <div key={linkIndex} className="flex items-center gap-2 text-sm">
                   <span className="text-fg-muted">
-                    {link.delegatorName || link.delegatorId}
+                    {link.name || link.id}
                   </span>
                   <span className="text-fg-muted">→</span>
                   <span className="font-medium">
-                    {link.delegateeName || link.delegateeId}
+                    {link.name || link.id}
                   </span>
                   <span className="text-xs text-fg-muted">
                     ({link.mode})
@@ -271,20 +332,20 @@ export default function TransparencyPanel({
             {/* Summary */}
             <div className="p-4 bg-primary-bg border border-primary-fg/20 rounded-lg">
               <h4 className="font-medium text-primary-fg mb-2">
-                {inboundData.delegateeName || inboundData.delegateeId}
+                {delegateeId}
               </h4>
               <div className="text-sm text-primary-fg">
                 <span className="text-primary-fg/80">Total inbound:</span>
-                <span className="font-medium text-primary-fg ml-2">{inboundData.counts.total}</span>
-                {inboundData.summary?.topFields && inboundData.summary.topFields.length > 0 && (
+                <span className="font-medium text-primary-fg ml-2">{inboundData.total}</span>
+                {(inboundData.byField ?? []).length > 0 && (
                   <>
                     <span className="text-primary-fg/80 ml-4">·</span>
                     <span className="text-primary-fg/80 ml-4">Top fields:</span>
                     <span className="font-medium text-primary-fg ml-2">
-                      {inboundData.summary.topFields.slice(0, 3).map((field: any, index: number) => (
+                      {(inboundData.byField ?? []).slice(0, 3).map((field, index: number) => (
                         <span key={index}>
                           {index > 0 && ', '}
-                          {field.fieldName}
+                          {field.fieldId}
                         </span>
                       ))}
                     </span>
@@ -294,18 +355,18 @@ export default function TransparencyPanel({
             </div>
 
             {/* Delegations */}
-            {inboundData.inbound.length > 0 && (
+            {(inboundData.recent ?? []).length > 0 && (
               <div>
                 <h5 className="font-medium text-fg-strong mb-2">Recent delegations:</h5>
                 <div className="space-y-2">
-                  {inboundData.inbound.map((delegation: any, index: number) => (
+                  {(inboundData.recent ?? []).map((delegation, index: number) => (
                     <div key={index} className="p-3 bg-surface-muted rounded-lg border text-sm">
                       <div className="flex items-center justify-between">
                         <span className="font-medium">
                           {delegation.delegatorName || delegation.delegatorId}
                         </span>
                         <span className="text-fg-muted text-xs">
-                          {delegation.fieldName || delegation.fieldId || 'Global'}
+                          {delegation.fieldId || 'Global'}
                         </span>
                       </div>
                       <div className="text-xs text-fg-muted mt-1">
@@ -337,7 +398,7 @@ export default function TransparencyPanel({
             )}
 
             {/* Empty state for no delegations */}
-            {inboundData.inbound.length === 0 && inboundData.counts.total === 0 && (
+            {(inboundData.recent ?? []).length === 0 && inboundData.total === 0 && (
               <div className="text-center text-fg-muted py-8">
                 <User className="w-12 h-12 mx-auto mb-4 text-fg-muted/50" />
                 <p className="font-medium mb-2">No inbound delegations found</p>
@@ -402,32 +463,32 @@ export default function TransparencyPanel({
         <div className="p-4 bg-surface-muted rounded-lg border">
           <h4 className="font-medium text-fg-strong mb-3">Top Delegatees</h4>
           <div className="space-y-2">
-            {healthData.topDelegatees?.map((delegatee: any, index: number) => (
+            {(healthData.topDelegatees ?? []).map((delegatee, index: number) => (
               <div key={index} className="flex items-center justify-between text-sm">
                 <span className="font-medium">
                   {delegatee.name || delegatee.id}
                 </span>
                 <span className="text-fg-muted">
-                  {delegatee.percent ? `${(delegatee.percent * 100).toFixed(1)}%` : 'N/A'}
+                  {delegatee.pct ? `${delegatee.pct.toFixed(1)}%` : 'N/A'}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        {healthData.byField && Object.keys(healthData.byField).length > 0 && (
+        {(healthData.byField ?? []).length > 0 && (
           <div className="p-4 bg-surface-muted rounded-lg border">
             <h4 className="font-medium text-fg-strong mb-3">By Field</h4>
             <div className="space-y-3">
-              {Object.entries(healthData.byField).map(([fieldId, fieldData]: [string, any]) => (
-                <div key={fieldId}>
-                  <h5 className="font-medium text-fg-strong mb-2">{fieldData.fieldName || fieldId}</h5>
+              {(healthData.byField ?? []).map((fieldData) => (
+                <div key={fieldData.fieldId}>
+                  <h5 className="font-medium text-fg-strong mb-2">{fieldData.fieldId}</h5>
                   <div className="space-y-1">
-                    {fieldData.top?.map((delegatee: any, index: number) => (
+                    {(fieldData.top ?? []).map((delegatee, index: number) => (
                       <div key={index} className="flex items-center justify-between text-sm">
                         <span>{delegatee.name || delegatee.id}</span>
                         <span className="text-fg-muted">
-                          {delegatee.percent ? `${(delegatee.percent * 100).toFixed(1)}%` : 'N/A'}
+                          {delegatee.pct ? `${delegatee.pct.toFixed(1)}%` : 'N/A'}
                         </span>
                       </div>
                     ))}
