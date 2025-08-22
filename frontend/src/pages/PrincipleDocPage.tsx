@@ -34,8 +34,8 @@ export default function PrincipleDocPage() {
 
   // Section states
   const [pollState, setPollState] = useState<SectionState>('idle');
-  const [optionsState, setOptionsState] = useState<SectionState>('idle');
-  const [resultsState, setResultsState] = useState<SectionState>('idle');
+  const [_optionsState, setOptionsState] = useState<SectionState>('idle');
+  const [_resultsState, setResultsState] = useState<SectionState>('idle');
   const [commentsState, setCommentsState] = useState<SectionState>('idle');
 
   // Fetch data
@@ -52,7 +52,7 @@ export default function PrincipleDocPage() {
       setPollState('error');
       showError('Failed to load principle');
     }
-  }, [id]);
+  }, [id, showError]);
 
   const fetchPollOptions = useCallback(async () => {
     if (!id) return;
@@ -103,7 +103,7 @@ export default function PrincipleDocPage() {
       fetchResults();
       fetchComments();
     }
-  }, [id]);
+  }, [id, fetchPoll, fetchPollOptions, fetchResults, fetchComments]);
 
   // Compute primary perspective based on results
   const primaryOption = pollOptions.length > 0 && results ? computePrimaryOption(pollOptions, results) : null;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -32,8 +32,9 @@ import { flags } from '../config/flags';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import TransparencyPanel from '../components/delegations/TransparencyPanel';
 
-type PerLabelStat = { label: { slug: string }; delegate: { username: string }; [k: string]: unknown };
-const getPerLabel = (s?: { per_label?: PerLabelStat[] } | null): PerLabelStat[] =>
+import type { DelegationPerLabel } from '../types/http';
+
+const getPerLabel = (s?: { per_label?: DelegationPerLabel[] } | null): DelegationPerLabel[] =>
   Array.isArray(s?.per_label) ? s!.per_label : [];
 
 export default function Dashboard() {
@@ -56,6 +57,22 @@ export default function Dashboard() {
   // Counts for dashboard sections
   const levelACount = recentPolls.filter(poll => poll.decision_type === 'level_a').length;
   const levelBCount = recentPolls.filter(poll => poll.decision_type === 'level_b').length;
+
+  const fetchRecentPolls = useCallback(async () => {
+    try {
+      setLoading(true);
+      const polls = await listPolls();
+      // Get the 6 most recent polls
+      const recent = polls.slice(0, 6);
+      setRecentPolls(recent);
+    } catch (err: unknown) {
+      const error = err as { message: string };
+      console.error('Failed to load recent polls:', error.message);
+      showError('Failed to load recent proposals');
+    } finally {
+      setLoading(false);
+    }
+  }, [showError]);
 
   useEffect(() => {
     console.log('[DEBUG] Dashboard useEffect - user:', user, 'userLoading:', userLoading, 'labelsEnabled:', flags.labelsEnabled);
@@ -81,23 +98,7 @@ export default function Dashboard() {
       setDelegationSummary(null);
       setLabels([]);
     }
-  }, [user, userLoading]);
-
-  const fetchRecentPolls = async () => {
-    try {
-      setLoading(true);
-      const polls = await listPolls();
-      // Get the 6 most recent polls
-      const recent = polls.slice(0, 6);
-      setRecentPolls(recent);
-    } catch (err: unknown) {
-      const error = err as { message: string };
-      console.error('Failed to load recent polls:', error.message);
-      showError('Failed to load recent proposals');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, userLoading, fetchRecentPolls]);
 
   const fetchContent = async () => {
     try {

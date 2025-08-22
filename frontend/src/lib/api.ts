@@ -2,6 +2,8 @@ import axios from 'axios';
 import type { Poll, PollOption, Vote, PollResults, User, DelegationInfo, ActivityItem, CommentList, Comment, ReactionResponse, AxiosErrorResponse, DecisionType, Label, LabelOverview, PopularLabel } from '../types';
 import type { DelegationInfo as NewDelegationInfo, CreateDelegationRequest, RemoveDelegationRequest } from '../types/delegation';
 import type { PrincipleItem, ActionItem, StoryItem } from '../types/content';
+import type { DelegationGlobal, DelegationPerLabel } from '../types/http';
+import { asObj, asArr } from './guards';
 
 
 
@@ -421,8 +423,8 @@ export const getDelegationSummary = async (): Promise<SafeDelegationSummary> => 
 // Enhanced delegation summary with graceful error handling
 export interface SafeDelegationSummary {
   ok: boolean;
-  global_delegate?: any;
-  per_label?: any[];
+  global_delegate?: DelegationGlobal;
+  per_label?: DelegationPerLabel[];
   counts?: { mine: number; inbound: number };
   meta?: {
     errors?: string[];
@@ -448,19 +450,30 @@ export const getSafeDelegationSummary = async (): Promise<SafeDelegationSummary>
     }
 
     // minimal safety parsing with additional guards
+    const d = asObj(data);
+    const counts = asObj(d.counts);
+    const meta = asObj(d.meta);
+
     const result = {
-      ok: Boolean(data?.ok),
-      global_delegate: data?.global_delegate,
-      per_label: Array.isArray(data?.per_label) ? data.per_label : [],
+      ok: Boolean(d.ok),
+      global_delegate: d.global_delegate ? asObj(d.global_delegate) as DelegationGlobal : undefined,
+      per_label: asArr(d.per_label).map(item => {
+        const obj = asObj(item);
+        return {
+          label: asObj(obj.label),
+          delegate: asObj(obj.delegate),
+          created_at: obj.created_at ? String(obj.created_at) : undefined,
+        } as DelegationPerLabel;
+      }),
       counts: {
-        mine: Number(data?.counts?.mine ?? 0),
-        inbound: Number(data?.counts?.inbound ?? 0),
+        mine: Number(counts.mine ?? 0),
+        inbound: Number(counts.inbound ?? 0),
       },
-      meta: data?.meta && {
-        errors: Array.isArray(data.meta.errors) ? data.meta.errors : undefined,
-        trace_id: data.meta.trace_id ? String(data.meta.trace_id) : undefined,
-        generated_at: String(data.meta.generated_at ?? ''),
-        duration_ms: Number(data.meta.duration_ms ?? 0),
+      meta: meta && {
+        errors: asArr(meta.errors).map(err => String(err)),
+        trace_id: meta.trace_id ? String(meta.trace_id) : undefined,
+        generated_at: String(meta.generated_at ?? ''),
+        duration_ms: Number(meta.duration_ms ?? 0),
       },
     };
 

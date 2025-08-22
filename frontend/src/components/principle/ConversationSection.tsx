@@ -6,6 +6,12 @@ import Badge from '../ui/Badge';
 import { principlesCopy } from '../../copy/principles';
 import type { Comment } from '../../types';
 
+// Extended comment type with perspective/stance
+interface ExtendedComment extends Comment {
+  perspective?: 'primary' | 'alternate';
+  stance?: 'primary' | 'alternate';
+}
+
 interface ConversationSectionProps {
   comments: Comment[];
   onSubmit: (body: string, perspective: 'primary' | 'alternate') => Promise<void>;
@@ -41,12 +47,14 @@ export default function ConversationSection({
 
   const getPerspectiveLabel = (comment: Comment) => {
     // Map comment metadata to perspective label
-    const commentPerspective = (comment as any).perspective || (comment as any).stance || 'primary';
+    const extendedComment = comment as ExtendedComment;
+    const commentPerspective = extendedComment.perspective || extendedComment.stance || 'primary';
     return commentPerspective === 'primary' ? 'Primary' : 'Alternate';
   };
 
   const getPerspectiveVariant = (comment: Comment) => {
-    const commentPerspective = (comment as any).perspective || (comment as any).stance || 'primary';
+    const extendedComment = comment as ExtendedComment;
+    const commentPerspective = extendedComment.perspective || extendedComment.stance || 'primary';
     return commentPerspective === 'primary' ? 'default' : 'secondary';
   };
 
@@ -152,7 +160,7 @@ export default function ConversationSection({
 
         {!loading && !error && comments.length > 0 && (
           <div className="space-y-4">
-            {comments.map((comment) => (
+            {(comments ?? []).map((comment) => (
               <div
                 key={comment.id}
                 className="bg-white rounded-lg border border-gray-200 p-4"
